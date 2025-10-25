@@ -12,13 +12,18 @@ __pycache__/
 .vscode/
 .idea/
 
-# Data files
-# *.npy
-# *.pkl
-# dataHan256/
+# Generated results 
+# results/current/*.png
+# results/current/*.pkl
 
-# Generated images
-# *.png
+# Large data files (keep small phantoms, exclude large raw data)
+data/victre_phantom/*.raw
+data/victre_phantom/*.vti
+*.raw
+*.vti
 
-# PDFs
-# *.pdf
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
