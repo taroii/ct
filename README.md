@@ -31,10 +31,11 @@ ct/
 ### Prerequisites
 ```bash
 # Create conda environment (Python 3.13.7 recommended)
-conda create -n dbt python=3.13.7
-conda activate dbt
+conda create -n ct python=3.13.7
+conda activate ct
 
 # Install dependencies
+conda install pip
 pip install -r requirements.txt
 ```
 
