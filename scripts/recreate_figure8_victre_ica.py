@@ -62,7 +62,7 @@ print("="*70)
 # ============================================================================
 
 from pathlib import Path
-data_path = Path('../data/phantoms')
+data_path = Path('../data/generated_roi')
 
 print("\nLoading VICTRE phantom ROI...")
 phantom_victre = np.load(data_path / 'victre_phantom_roi.npy')

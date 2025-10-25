@@ -9,15 +9,23 @@ ct/
 ├── README.md                   # This file
 ├── requirements.txt            # Python dependencies
 ├── scripts/                    # Python scripts
-│   ├── recreate_figures6_7_analytic.py      # Figures 6 & 7: Analytic phantom with overlapping spheres
-│   ├── recreate_figure8_victre_ica.py       # Figure 8: VICTRE phantom with ICA distribution
-│   ├── preprocess_victre_phantom.py         # Extract ROI from VICTRE phantom data
-│   ├── compare_methods.py                   # Original method comparison (legacy)
-│   ├── compare_methods_gpt.py               # Two-channel method comparison (legacy)
-│   └── DTVminHan.py                         # DTV minimization (Han's original)
+│   ├── recreate_figures6_7_analytic.py           # Figures 6 & 7: Analytic phantom with overlapping spheres
+│   ├── recreate_figure8_victre_ica.py            # Figure 8: VICTRE phantom with ICA distribution
+│   ├── preprocess_victre_phantom.py              # Extract centered ROI from VICTRE phantom
+│   ├── preprocess_victre_phantom_variance.py     # Extract high-variance ROI from VICTRE phantom
+│   ├── compare_methods.py                        # Original method comparison (legacy)
+│   ├── compare_methods_gpt.py                    # Two-channel method comparison (legacy)
+│   └── DTVminHan.py                              # DTV minimization (Han's original)
 ├── notebooks/                  # Jupyter notebooks
 ├── data/                       # Data files
-│   ├── phantoms/               # Phantom arrays (.npy files)
+│   ├── generated_roi/          # Generated VICTRE ROIs (output from preprocessing)
+│   │   ├── victre_phantom_roi.npy     # Current ROI (256×256×20)
+│   │   ├── victre_lesions_roi.npy     # Lesion coordinates in ROI
+│   │   └── old rois/                  # Archive of previous ROIs
+│   ├── phantoms_from_paper/    # Analytic phantoms from paper
+│   │   ├── Phantom_Adipose.npy
+│   │   ├── Phantom_Calcification.npy
+│   │   └── Phantom_Fibroglandular.npy
 │   ├── victre_phantom/         # VICTRE raw data (.raw, .mhd, .loc)
 │   └── dataHan256/             # Han's original data
 ├── results/                    # Output images and results
@@ -68,15 +76,25 @@ python recreate_figures6_7_analytic.py
 **Purpose:** Demonstrate clinical applicability using realistic breast phantom with contrast-enhanced lesions
 
 **Step 1:** Preprocess VICTRE phantom (one-time setup)
+
+Choose one of two ROI selection methods:
+
+**Option A: Centered ROI** (centers on all lesions)
 ```bash
 cd scripts
 python preprocess_victre_phantom.py
 ```
 
+**Option B: High-Variance ROI** (finds region with most tissue heterogeneity)
+```bash
+cd scripts
+python preprocess_victre_phantom_variance.py
+```
+
 **Output:**
-- `data/phantoms/victre_phantom_roi.npy` - Extracted 256×256×20 ROI
-- `data/phantoms/victre_lesions_roi.npy` - 6 lesion coordinates
-- `results/current/victre_phantom_roi.png` - Visualization
+- `data/generated_roi/victre_phantom_roi.npy` - Extracted 256×256×20 ROI
+- `data/generated_roi/victre_lesions_roi.npy` - Lesion coordinates in ROI
+- `results/current/victre_phantom_roi_*.png` - Visualization
 
 **Step 2:** Reconstruct ICA distribution
 ```bash
@@ -85,9 +103,9 @@ python recreate_figure8_victre_ica.py
 ```
 
 **What it does:**
-- Loads VICTRE phantom ROI
+- Loads VICTRE phantom ROI from `data/generated_roi/`
 - Creates ICA distribution (tumor=0.4, background=0.08)
-- Places contrast-enhanced tumors at 6 lesion locations
+- Places contrast-enhanced tumors at lesion locations
 - Reconstructs with both L1-DTV methods
 
 **Output:** (saved to `results/current/`)
