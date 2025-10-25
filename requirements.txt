@@ -4,3 +4,5 @@ linalg
 numba
 scipy
 argparse
+scikit-image
+plotly
