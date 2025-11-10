@@ -7,12 +7,17 @@ Recreating results from "Accurate volume image reconstruction for digital breast
 ```
 ct/
 ├── README.md                   # This file
+├── EXPERIMENT_GUIDE.md         # Detailed experiment runner guide
 ├── requirements.txt            # Python dependencies
 ├── scripts/                    # Python scripts
 │   ├── recreate_figures6_7_analytic.py           # Figures 6 & 7: Analytic phantom with overlapping spheres
 │   ├── recreate_figure8_victre_ica.py            # Figure 8: VICTRE phantom with ICA distribution
 │   ├── preprocess_victre_phantom.py              # Extract centered ROI from VICTRE phantom
 │   ├── preprocess_victre_phantom_variance.py     # Extract high-variance ROI from VICTRE phantom
+│   ├── run_experiments.py                        # Main experiment runner (NEW)
+│   ├── run_reconstruction_comparison.py          # Modular reconstruction comparison (NEW)
+│   ├── ecp_optimizer.py                          # ECP parameter optimization (NEW)
+│   ├── optimize_victre_params.py                 # ECP-VICTRE integration (NEW)
 │   ├── compare_methods.py                        # Original method comparison (legacy)
 │   ├── compare_methods_gpt.py                    # Two-channel method comparison (legacy)
 │   └── DTVminHan.py                              # DTV minimization (Han's original)
@@ -30,8 +35,12 @@ ct/
 │   └── dataHan256/             # Han's original data
 ├── results/                    # Output images and results
 │   ├── current/                # Latest reconstruction results
-│   └── previous_runs/          # Archived previous runs
+│   ├── 10.25_results_high_variance/   # Archived: Original two-channel comparison
+│   └── previous_runs/          # Other archived results
 └── papers/                     # Reference papers (PDFs)
+    ├── Sidky_2012_Phys._Med._Biol._57_3065.pdf
+    ├── ECP.pdf                 # Every Call is Precious paper
+    └── ...
 ```
 
 ## Getting Started
@@ -47,7 +56,39 @@ conda install pip
 pip install -r requirements.txt
 ```
 
-## Reconstruction Workflows
+## Quick Start
+
+### **🚀 Main Experiment Runner** (Recommended)
+
+To run reconstruction algorithm comparisons with the new modular system:
+
+```bash
+cd scripts
+python run_experiments.py
+```
+
+This will compare all available algorithms and generate comprehensive plots in `results/current/`.
+
+**Available algorithms:**
+- `single_channel` - Original L1-DTV (Sidky et al.)
+- `two_channel` - Frequency-split extension
+- `ecp_optimized` - ECP parameter optimization (NEW)
+
+**Quick options:**
+```bash
+# Run specific algorithms
+python run_experiments.py --algorithms single_channel ecp_optimized
+
+# Quick test (fewer iterations)
+python run_experiments.py --quick
+
+# Help and options
+python run_experiments.py --help
+```
+
+---
+
+## Detailed Workflows
 
 ### Workflow 1: Figures 6 & 7 (Analytic Phantom)
 
@@ -71,21 +112,9 @@ python recreate_figures6_7_analytic.py
 
 ---
 
-### Workflow 2: Figure 8 (VICTRE Phantom with ICA)
+### Workflow 2: VICTRE Phantom Preparation (One-time Setup)
 
-**Purpose:** Demonstrate clinical applicability using realistic breast phantom with contrast-enhanced lesions
-
-**Step 1:** Preprocess VICTRE phantom (one-time setup)
-
-Choose one of two ROI selection methods:
-
-**Option A: Centered ROI** (centers on all lesions)
-```bash
-cd scripts
-python preprocess_victre_phantom.py
-```
-
-**Option B: High-Variance ROI** (finds region with most tissue heterogeneity)
+**Step 1:** Extract high-variance ROI from VICTRE phantom
 ```bash
 cd scripts
 python preprocess_victre_phantom_variance.py
@@ -94,29 +123,25 @@ python preprocess_victre_phantom_variance.py
 **Output:**
 - `data/generated_roi/victre_phantom_roi.npy` - Extracted 256×256×20 ROI
 - `data/generated_roi/victre_lesions_roi.npy` - Lesion coordinates in ROI
-- `results/current/victre_phantom_roi_*.png` - Visualization
+- `results/current/victre_phantom_roi_variance.png` - ROI visualization
 
-**Step 2:** Reconstruct ICA distribution
+**Step 2:** Run algorithm comparison (see Quick Start above)
+
+---
+
+### Workflow 3: Legacy Paper Recreation
+
+To recreate the exact Figure 8 from the paper:
+
 ```bash
 cd scripts
 python recreate_figure8_victre_ica.py
 ```
 
-**What it does:**
-- Loads VICTRE phantom ROI from `data/generated_roi/`
-- Creates ICA distribution (tumor=0.4, background=0.08)
-- Places contrast-enhanced tumors at lesion locations
-- Reconstructs with both L1-DTV methods
-
 **Output:** (saved to `results/current/`)
 - `figure_8_victre_ica.png` - x-y and x-z plane views
 - `figure_8_profile.png` - Depth profile through phantom
 - `figure_8_convergence.png` - Iteration convergence
-
-**Parameters:**
-- Image size: 256×256×20 voxels
-- Iterations: 500 per slice
-- DBT geometry: 50° arc, 25 views
 
 ## Methods Comparison
 
