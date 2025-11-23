@@ -739,6 +739,19 @@ else:
 
 print(f"\nAbsolute difference: {abs(avg_rmse_single - avg_rmse_two):.8f}")
 
+# Save results for later use
+print("\nSaving reconstruction data...")
+results = {
+    'single_channel': recon_single_3d,
+    'two_channel': recon_two_3d,
+    'single_errors': ierrs_single_all,
+    'two_errors': ierrs_two_all,
+    'phantom': phantom_3d
+}
+with open(RESULTS_FILE, 'wb') as f:
+    pickle.dump(results, f)
+print(f"Saved results to {RESULTS_FILE}")
+
 print("\n" + "="*70)
 print("3D RECONSTRUCTION COMPLETE!")
 print("="*70)

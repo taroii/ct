@@ -31,3 +31,5 @@ data/victre_phantom/*.vti
 *.swp
 *.swo
 *~
+
+.DS_Store
