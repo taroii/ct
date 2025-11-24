@@ -14,13 +14,11 @@ ct/
 │   ├── recreate_figure8_victre_ica.py            # Figure 8: VICTRE phantom with ICA distribution
 │   ├── preprocess_victre_phantom.py              # Extract centered ROI from VICTRE phantom
 │   ├── preprocess_victre_phantom_variance.py     # Extract high-variance ROI from VICTRE phantom
-│   ├── run_experiments.py                        # Main experiment runner (NEW)
-│   ├── run_reconstruction_comparison.py          # Modular reconstruction comparison (NEW)
-│   ├── ecp_optimizer.py                          # ECP parameter optimization (NEW)
-│   ├── optimize_victre_params.py                 # ECP-VICTRE integration (NEW)
-│   ├── compare_methods.py                        # Original method comparison (legacy)
-│   ├── compare_methods_gpt.py                    # Two-channel method comparison (legacy)
-│   └── DTVminHan.py                              # DTV minimization (Han's original)
+│   ├── run_reconstruction_comparison.py          # Main reconstruction comparison script
+│   ├── compare_best_worst_slices.py              # Detailed slice-by-slice visualization
+│   ├── plot_convergence_slices.py                # Plot convergence for specific slices
+│   ├── DTVminHan.py                              # DTV minimization (Han's original)
+│   └── old/                                      # Deprecated/experimental scripts
 ├── notebooks/                  # Jupyter notebooks
 ├── data/                       # Data files
 │   ├── generated_roi/          # Generated VICTRE ROIs (output from preprocessing)
@@ -58,32 +56,44 @@ pip install -r requirements.txt
 
 ## Quick Start
 
-### **🚀 Main Experiment Runner** (Recommended)
+### **🚀 Algorithm Comparison** (Recommended)
 
-To run reconstruction algorithm comparisons with the new modular system:
+To compare single-channel vs two-channel L1-DTV reconstruction:
 
 ```bash
 cd scripts
-python run_experiments.py
+python run_reconstruction_comparison.py --algorithms single_channel two_channel
 ```
 
-This will compare all available algorithms and generate comprehensive plots in `results/current/`.
-
-**Available algorithms:**
-- `single_channel` - Original L1-DTV (Sidky et al.)
-- `two_channel` - Frequency-split extension
-- `ecp_optimized` - ECP parameter optimization (NEW)
+This will reconstruct all 20 slices of the VICTRE phantom and generate comprehensive comparison plots in `results/current/`.
 
 **Quick options:**
 ```bash
-# Run specific algorithms
-python run_experiments.py --algorithms single_channel ecp_optimized
+# Quick test (1 slice, 200 iterations instead of 500)
+python run_reconstruction_comparison.py --quick
 
-# Quick test (fewer iterations)
-python run_experiments.py --quick
+# Run single algorithm only
+python run_reconstruction_comparison.py --algorithms single_channel
+```
 
-# Help and options
-python run_experiments.py --help
+**Output:**
+- `figure_8_victre_ica.png` - x-y and x-z plane reconstructions
+- `figure_8_profile.png` - Depth profile comparison
+- `figure_8_convergence.png` - Iteration convergence (high-variance slice)
+- `performance_summary_all_slices.png` - Slice-by-slice performance comparison
+- `fig8_victre_results.pkl` - Saved results for post-processing
+
+**Post-processing options:**
+
+After running the main comparison, you can generate additional visualizations:
+
+```bash
+# Detailed comparison of best/worst performing slices
+python compare_best_worst_slices.py
+
+# Convergence plots for specific slices
+python plot_convergence_slices.py                    # Auto: best single, best two, median
+python plot_convergence_slices.py --slices 4 9 14    # Specific slices (0-indexed)
 ```
 
 ---

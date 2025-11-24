@@ -29,6 +29,9 @@ except ImportError as e:
 import argparse
 import sys
 
+# Set random seed for reproducibility
+np.random.seed(42)
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -471,6 +474,7 @@ print(f"Total norm={totalnorm_single:.4f}, sig={sig_single:.6f}, tau={tau_single
 recon_single_3d = zeros([nx, ny, nz])
 ierrs_single_all = []  # Store final errors for all slices
 ierrs_single_mid = []  # Store iteration errors for high variance slice (for convergence plot)
+ierrs_single_history = {}  # Store full convergence history for all slices
 
 t0_total = time.time()
 
@@ -541,7 +545,10 @@ for iz in iz_loop:
     recon_single_3d[:, :, iz] = xbarim.copy()
     ierrs_single_all.append(ierrs_single[-1])
 
-    # Save convergence history for high variance slice
+    # Save convergence history for ALL slices
+    ierrs_single_history[iz] = ierrs_single.copy()
+
+    # Save convergence history for high variance slice (for default plot)
     if iz == high_variance_slice:
         ierrs_single_mid = ierrs_single.copy()
 
@@ -662,6 +669,7 @@ print(f"Total norm={totalnorm_two:.4f}, sig_hi={sig_hi:.6f}, sig_lo={sig_lo:.6f}
 recon_two_3d = zeros([nx, ny, nz])
 ierrs_two_all = []  # Store final errors for all slices
 ierrs_two_mid = []  # Store iteration errors for high variance slice (for convergence plot)
+ierrs_two_history = {}  # Store full convergence history for all slices
 
 t0_total = time.time()
 
@@ -742,7 +750,10 @@ for iz in iz_loop:
     recon_two_3d[:, :, iz] = xbarim.copy()
     ierrs_two_all.append(ierrs_two[-1])
 
-    # Save convergence history for high variance slice
+    # Save convergence history for ALL slices
+    ierrs_two_history[iz] = ierrs_two.copy()
+
+    # Save convergence history for high variance slice (for default plot)
     if iz == high_variance_slice:
         ierrs_two_mid = ierrs_two.copy()
 
@@ -879,6 +890,58 @@ print("Saved: ../results/current/figure_8_convergence.png")
 print("Convergence plot shows high variance slice (used in Figure 8 top row)")
 
 # ============================================================================
+# PERFORMANCE SUMMARY PLOT (all slices)
+# ============================================================================
+
+print("\n" + "="*70)
+print("CREATING PERFORMANCE SUMMARY - ALL SLICES")
+print("="*70)
+
+fig = plt.figure(figsize=(15, 10))
+
+# Compute differences for plotting
+differences = np.array(ierrs_two_all) - np.array(ierrs_single_all)
+slice_numbers = np.arange(1, nz_loop+1)
+
+# Plot 1: RMSE for all slices
+ax1 = plt.subplot(3, 1, 1)
+ax1.plot(slice_numbers, ierrs_single_all, 'r-', linewidth=2, label='Single-channel', alpha=0.8, marker='o', markersize=4)
+ax1.plot(slice_numbers, ierrs_two_all, 'b-', linewidth=2, label='Two-channel', alpha=0.8, marker='s', markersize=4)
+ax1.set_xlabel('Slice Number', fontsize=12)
+ax1.set_ylabel('RMSE', fontsize=12)
+ax1.set_title('Reconstruction Error Across All Slices', fontsize=14, fontweight='bold')
+ax1.legend(fontsize=11)
+ax1.grid(True, alpha=0.3)
+
+# Plot 2: Difference (positive = single better, negative = two better)
+ax2 = plt.subplot(3, 1, 2)
+colors = ['red' if d > 0 else 'blue' for d in differences]
+ax2.bar(slice_numbers, differences, color=colors, alpha=0.7)
+ax2.set_xlabel('Slice Number', fontsize=12)
+ax2.set_ylabel('RMSE Difference\n(Two - Single)', fontsize=12)
+ax2.set_title('Performance Difference per Slice (Red: Single Better, Blue: Two Better)', fontsize=14, fontweight='bold')
+ax2.axhline(0, color='black', linewidth=1)
+ax2.grid(True, alpha=0.3, axis='y')
+
+# Plot 3: Histogram of differences
+ax3 = plt.subplot(3, 1, 3)
+# Use builtins to avoid numpy min/max which expect arrays
+import builtins
+n_bins = builtins.max(5, builtins.min(20, nz_loop//2))  # At least 5 bins, max 20 bins
+ax3.hist(differences, bins=n_bins, edgecolor='black', alpha=0.7, color='gray')
+ax3.set_xlabel('RMSE Difference (Two - Single)', fontsize=12)
+ax3.set_ylabel('Number of Slices', fontsize=12)
+ax3.set_title('Distribution of Performance Differences', fontsize=14, fontweight='bold')
+ax3.axvline(0, color='black', linewidth=2, linestyle='--', label='Equal performance')
+ax3.axvline(np.mean(differences), color='green', linewidth=2, label=f'Mean = {np.mean(differences):.6f}')
+ax3.legend(fontsize=11)
+ax3.grid(True, alpha=0.3, axis='y')
+
+plt.tight_layout()
+plt.savefig('../results/current/performance_summary_all_slices.png', dpi=150, bbox_inches='tight')
+print("Saved: ../results/current/performance_summary_all_slices.png")
+
+# ============================================================================
 # SUMMARY
 # ============================================================================
 
@@ -886,25 +949,35 @@ print("\n" + "="*70)
 print("FINAL COMPARISON SUMMARY - 3D RECONSTRUCTION")
 print("="*70)
 
+# Compute slice-by-slice wins
+differences = np.array(ierrs_two_all) - np.array(ierrs_single_all)
+single_wins = np.sum(differences > 0)  # Two-channel had higher error
+two_wins = np.sum(differences < 0)     # Two-channel had lower error
+ties = np.sum(differences == 0)
+
 print(f"\nSingle-channel L1-DTV (Paper method):")
-print(f"  Average RMSE across {nz} slices: {avg_rmse_single:.6f}")
-print(f"  Runtime: {single_time:.2f}s ({single_time/nz:.2f}s per slice)")
+print(f"  Wins: {single_wins}/{nz_loop} slices ({single_wins/nz_loop*100:.1f}%)")
+print(f"  Average RMSE: {avg_rmse_single:.6f}")
+print(f"  Runtime: {single_time:.2f}s ({single_time/nz_loop:.2f}s per slice)")
 
 print(f"\nTwo-channel L1-DTV (Frequency-split method):")
-print(f"  Average RMSE across {nz} slices: {avg_rmse_two:.6f}")
-print(f"  Runtime: {two_time:.2f}s ({two_time/nz:.2f}s per slice)")
+print(f"  Wins: {two_wins}/{nz_loop} slices ({two_wins/nz_loop*100:.1f}%)")
+print(f"  Average RMSE: {avg_rmse_two:.6f}")
+print(f"  Runtime: {two_time:.2f}s ({two_time/nz_loop:.2f}s per slice)")
 
-# Compute relative improvement
-if avg_rmse_two < avg_rmse_single:
-    improvement = (avg_rmse_single - avg_rmse_two) / avg_rmse_single * 100
-    print(f"\n✓ Two-channel is BETTER by {improvement:.2f}%")
-elif avg_rmse_single < avg_rmse_two:
-    improvement = (avg_rmse_two - avg_rmse_single) / avg_rmse_two * 100
-    print(f"\n✓ Single-channel is BETTER by {improvement:.2f}%")
+if ties > 0:
+    print(f"\nTies: {ties}/{nz_loop} slices")
+
+# Overall winner
+if single_wins > two_wins:
+    print(f"\nSingle-channel WINS on more slices ({single_wins} vs {two_wins})")
+elif two_wins > single_wins:
+    print(f"\nTwo-channel WINS on more slices ({two_wins} vs {single_wins})")
 else:
-    print(f"\n≈ Both methods have equivalent performance")
+    print(f"\n≈ Both methods win equal number of slices ({single_wins} each)")
 
-print(f"\nAbsolute difference: {abs(avg_rmse_single - avg_rmse_two):.8f}")
+print(f"\nAverage RMSE difference: {np.mean(differences):.8f}")
+print(f"Median RMSE difference: {np.median(differences):.8f}")
 
 print("\n" + "="*70)
 print("3D RECONSTRUCTION COMPLETE!")
@@ -915,5 +988,27 @@ print("\nFigures saved:")
 print("  - ../results/current/figure_8_victre_ica.png (x-y and x-z planes)")
 print("  - ../results/current/figure_8_profile.png (depth profile)")
 print("  - ../results/current/figure_8_convergence.png (iteration convergence)")
+print("  - ../results/current/performance_summary_all_slices.png (slice-by-slice comparison)")
+
+# ============================================================================
+# SAVE RESULTS FOR POST-PROCESSING
+# ============================================================================
+
+print("\nSaving results for post-processing scripts...")
+results_data = {
+    'single_channel': recon_single_3d,
+    'two_channel': recon_two_3d,
+    'single_errors': ierrs_single_all,
+    'two_errors': ierrs_two_all,
+    'phantom': phantom_3d,
+    'single_convergence': ierrs_single_history,  # Convergence for all slices
+    'two_convergence': ierrs_two_history         # Convergence for all slices
+}
+with open('fig8_victre_results.pkl', 'wb') as f:
+    pickle.dump(results_data, f)
+print("Saved: fig8_victre_results.pkl")
+print("  (Use this with compare_best_worst_slices.py for detailed slice analysis)")
+print("  (Includes convergence histories for all slices)")
+
 print("="*70)
 plt.show()
