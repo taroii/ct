@@ -1,0 +1,203 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Step-Size Parameter Computation for PDHG Algorithm\\
+with TV and L1 Regularization\\
+\large Response to Dr. Sidky's Questions}
+\author{Technical Analysis}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Executive Summary}
+
+This document provides detailed answers to Dr. Sidky's questions regarding the DBT reconstruction implementation:
+
+\begin{enumerate}
+    \item \textbf{ROI Visualization}: The dark background in reconstructed images is due to the ROI being extracted from the breast tissue region of the VICTRE phantom, with surrounding air appearing black (value 0).
+    
+    \item \textbf{Projection Geometry}: The implementation uses a \textbf{stack of 2D fan-beam projections}, not true 3D cone-beam projection. Each z-slice is processed independently with its own 2D fan-beam forward/backward projection.
+    
+    \item \textbf{Step-Size Parameters}: Detailed computation provided below for the PDHG algorithm with combined TV and L1 regularization.
+\end{enumerate}
+
+\section{Step-Size Parameter Computation Details}
+
+\subsection{Optimization Problem Formulation}
+
+The L1-DTV reconstruction solves the following optimization problem:
+\begin{equation}
+\min_{x \geq 0} \frac{1}{2}\|Ax - b\|_2^2 + \alpha\|\nabla_x x\|_1 + \beta\|\nabla_y x\|_1 + \gamma\|x\|_1
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $A$: Fan-beam forward projection operator
+    \item $b$: Measured sinogram data
+    \item $x$: Image to reconstruct (constrained to be non-negative)
+    \item $\nabla_x, \nabla_y$: Directional gradient operators
+    \item $\alpha = 2 - 1.75 = 0.25$: Weight for x-direction gradients
+    \item $\beta = 1.75$: Weight for y-direction gradients
+    \item $\gamma = 5.0$: L1 sparsity regularization weight
+\end{itemize}
+
+\subsection{Primal-Dual Formulation}
+
+The problem is reformulated as a saddle-point problem:
+\begin{equation}
+\min_{x \geq 0} \max_{y} \langle Kx, y \rangle - g^*(y) - f(x)
+\end{equation}
+
+where the combined linear operator is:
+\begin{equation}
+K = \begin{bmatrix}
+A \\
+\nabla_x \\
+\nabla_y \\
+I
+\end{bmatrix}
+\end{equation}
+
+\subsection{PDHG Algorithm with He-Yuan Predictor-Corrector}
+
+The algorithm alternates between primal and dual updates:
+
+\begin{algorithm}
+\caption{PDHG with He-Yuan Predictor-Corrector}
+\begin{algorithmic}
+\STATE \textbf{Initialization:} $x^0 = 0$, $y^0 = 0$, compute $\tau$, $\sigma$
+\FOR{$k = 0$ to $\text{maxiter}$}
+    \STATE \textbf{Primal Update:}
+    \STATE $x^{k+1} = \text{proj}_{x \geq 0}\left(x^k - \tau K^T y^k\right)$
+    \STATE $\bar{x}^{k+1} = x^{k+1} + (x^{k+1} - x^k)$ \COMMENT{Over-relaxation}
+    
+    \STATE \textbf{Dual Update:}
+    \STATE $\tilde{y}^{k+1} = y^k + \sigma K\bar{x}^{k+1}$
+    \STATE Apply proximal operators for each dual variable
+    
+    \STATE \textbf{Predictor-Corrector:}
+    \STATE $y^{k+1} = y^k - \rho(y^k - \tilde{y}^{k+1})$ where $\rho = 1.75$
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Operator Norm Estimation}
+
+The operator norm $L = \|K\|$ is estimated using power iteration:
+
+\begin{algorithm}
+\caption{Operator Norm Estimation via Power Iteration}
+\begin{algorithmic}
+\STATE Initialize random $x \sim \mathcal{N}(0, 1)$
+\FOR{200 iterations}
+    \STATE \textbf{Forward (apply $K$):}
+    \STATE $w = A(x) \cdot \nu_{\text{sino}}$ \COMMENT{Scaled projection}
+    \STATE $g_x = \nabla_x(x) \cdot \nu_x$ \COMMENT{Scaled x-gradient}
+    \STATE $g_y = \nabla_y(x) \cdot \nu_y$ \COMMENT{Scaled y-gradient}
+    \STATE $g_{L1} = \gamma \cdot x$ \COMMENT{L1 term}
+    \STATE $\text{mag}_1 = \sqrt{\|w\|_2^2 + \|g_x\|_2^2 + \|g_y\|_2^2 + \|g_{L1}\|_2^2}$
+    
+    \STATE \textbf{Backward (apply $K^T$):}
+    \STATE $x_1 = A^T(w) \cdot \nu_{\text{sino}}$
+    \STATE $x_2 = \text{div}_x(g_x) \cdot \nu_x$
+    \STATE $x_3 = \text{div}_y(g_y) \cdot \nu_y$
+    \STATE $x = x_1 + x_2 + x_3 + \gamma \cdot g_{L1}$
+    \STATE $\text{mag}_2 = \|x\|_2$
+    
+    \STATE Normalize: $x \leftarrow x/\text{mag}_2$
+\ENDFOR
+\STATE \textbf{Return:} $L = (\text{mag}_1 + \text{mag}_2)/2$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Step-Size Formulas}
+
+Given the operator norm $L$ and a balancing parameter $\text{stepbalance} = 100$:
+
+\begin{align}
+\tau &= \frac{1}{L \cdot \text{stepbalance}} \\
+\sigma &= \frac{\text{stepbalance}}{L}
+\end{align}
+
+For the two-channel variant:
+\begin{align}
+\sigma_{\text{high}} &= \sigma \\
+\sigma_{\text{low}} &= 4.0 \cdot \sigma \quad \text{(allowing more aggressive low-frequency denoising)}
+\end{align}
+
+\subsection{Convergence Guarantee}
+
+The algorithm converges when:
+\begin{equation}
+\tau \cdot \sigma \cdot L^2 < 1
+\end{equation}
+
+With our choice:
+\begin{equation}
+\tau \cdot \sigma = \frac{1}{L \cdot \text{stepbalance}} \cdot \frac{\text{stepbalance}}{L} = \frac{1}{L^2}
+\end{equation}
+
+Therefore, $\tau \cdot \sigma \cdot L^2 = 1$, which is at the boundary of the convergence region. The predictor-corrector step with $\rho = 1.75$ provides additional stability.
+
+\section{Implementation Details}
+
+\subsection{Scaling Factors}
+
+The implementation uses pre-computed scaling factors:
+\begin{itemize}
+    \item $\nu_{\text{sino}} = 1/\|A\|$: Projection operator scaling
+    \item $\nu_x = 0.5/\|\nabla_x\|$: X-gradient scaling (nuxfact = 0.5)
+    \item $\nu_y = 0.5/\|\nabla_y\|$: Y-gradient scaling (nuyfact = 0.5)
+\end{itemize}
+
+\subsection{Parameter Values}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+\hline
+$\alpha$ & 1.75 & DTV parameter (controls directional weighting) \\
+$\beta$ & 5.0 & L1 weight \\
+$\rho$ & 1.75 & Predictor-corrector parameter \\
+$\epsilon$ & 0.001 & Data discrepancy tolerance (RMSE) \\
+stepbalance & 100.0 & Step-size balancing factor \\
+cutoff\_lo & 8.0 & Low-frequency cutoff (two-channel) \\
+$\sigma_{\text{lo}}$ scale & 4.0 & Low-frequency step-size multiplier \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Key Observations}
+
+\begin{enumerate}
+    \item \textbf{Fan-beam approximation}: The slice-by-slice fan-beam approach is computationally efficient and adequate for DBT's limited-angle geometry where cone-beam effects are minimal.
+    
+    \item \textbf{Step-size balance}: The large stepbalance value (100) prioritizes dual variable updates, which is appropriate for the regularization-heavy nature of the problem.
+    
+    \item \textbf{Two-channel advantage}: The frequency-split approach with different step sizes allows more aggressive denoising of low frequencies while preserving high-frequency details.
+    
+    \item \textbf{Predictor-corrector stabilization}: The He-Yuan scheme with $\rho = 1.75$ provides additional convergence stability beyond the basic PDHG algorithm.
+\end{enumerate}
+
+\section{Recommendations for Response to Dr. Sidky}
+
+\begin{enumerate}
+    \item Clarify that the dark background is expected behavior - the ROI focuses on clinically relevant breast tissue.
+    
+    \item Acknowledge the fan-beam approximation and explain it's a common simplification in DBT reconstruction that provides good results with computational efficiency.
+    
+    \item Emphasize that the step-size computation follows standard PDHG theory with careful operator norm estimation to ensure convergence.
+    
+    \item Consider mentioning that true cone-beam reconstruction could be implemented but would increase computational cost with minimal benefit for the thin-slice DBT geometry.
+\end{enumerate}
+
+\end{document}

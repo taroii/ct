@@ -56,7 +56,7 @@ pip install -r requirements.txt
 
 ## Quick Start
 
-### **🚀 Algorithm Comparison** (Recommended)
+### ** Algorithm Comparison** (Recommended)
 
 To compare single-channel vs two-channel L1-DTV reconstruction:
 
