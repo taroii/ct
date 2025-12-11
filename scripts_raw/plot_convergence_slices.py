@@ -92,9 +92,9 @@ for slice_idx, label in zip(slices_to_plot, slice_labels):
 
     fig, ax = plt.subplots(1, 1, figsize=(12, 7))
 
-    # Plot convergence curves
-    ax.plot(single_conv[slice_idx], 'r-', linewidth=2.5, label='Single-channel L1-DTV', alpha=0.8)
-    ax.plot(two_conv[slice_idx], 'b-', linewidth=2.5, label='Two-channel L1-DTV', alpha=0.8)
+    # Plot convergence curves (access 'ierrs' from the dict for each slice)
+    ax.plot(single_conv[slice_idx]['ierrs'], 'r-', linewidth=2.5, label='Single-channel L1-DTV', alpha=0.8)
+    ax.plot(two_conv[slice_idx]['ierrs'], 'b-', linewidth=2.5, label='Two-channel L1-DTV', alpha=0.8)
 
     ax.set_xlabel('Iteration', fontsize=14)
     ax.set_ylabel('Image RMSE', fontsize=14)
@@ -128,8 +128,8 @@ if len(slices_to_plot) > 1:
             continue
 
         ax = axes[i]
-        ax.plot(single_conv[slice_idx], 'r-', linewidth=2.5, label='Single-channel L1-DTV', alpha=0.8)
-        ax.plot(two_conv[slice_idx], 'b-', linewidth=2.5, label='Two-channel L1-DTV', alpha=0.8)
+        ax.plot(single_conv[slice_idx]['ierrs'], 'r-', linewidth=2.5, label='Single-channel L1-DTV', alpha=0.8)
+        ax.plot(two_conv[slice_idx]['ierrs'], 'b-', linewidth=2.5, label='Two-channel L1-DTV', alpha=0.8)
 
         ax.set_xlabel('Iteration', fontsize=12)
         ax.set_ylabel('Image RMSE', fontsize=12)

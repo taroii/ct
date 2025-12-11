@@ -64,7 +64,22 @@ slen0 = -np.pi/4.
 slen = np.pi/2.
 ximageside = detectorlength
 yimageside = detectorlength
-mask = ones([nx, ny])
+dx = ximageside/nx
+dy = yimageside/ny
+
+# Create circular FOV mask (matches fan-beam geometry)
+xar = arange(-ximageside/2. + dx/2, ximageside/2., dx)[:, newaxis]*ones([ny])
+yar = ones([nx, ny])*arange(-yimageside/2. + dy/2, yimageside/2., dy)
+rar = sqrt(xar**2 + yar**2)
+mask = zeros((nx, ny))
+mask[rar <= ximageside/2.] = 1.
+
+# Apply circular mask to 3D phantom - corners become zero (air)
+for iz in range(nz):
+    phantom_3d[:, :, iz] = phantom_3d[:, :, iz] * mask
+print(f"Applied circular FOV mask (radius = {ximageside/2:.1f})")
+n_valid_pixels = mask.sum()
+
 nrays = nviews*nbins
 epssc = eps*sqrt(nrays)
 epssc_hi = eps*sqrt(nrays)
@@ -264,8 +279,8 @@ def reconstruct_slice_two_channel(param_dict, sinodata, phimage, verbose=False):
         yim = yimold - rho*(yimold - yim)
         xim = ximold - rho*(ximold - xim)
     
-    # Calculate RMSE
-    rmse = sqrt(((xbarim - phimage)**2).sum()/(nx*ny))
+    # Calculate RMSE (using mask for valid FOV pixels only)
+    rmse = sqrt(((xbarim - phimage)**2 * mask).sum() / n_valid_pixels)
     return rmse
 
 

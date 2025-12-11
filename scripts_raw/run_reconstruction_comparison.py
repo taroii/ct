@@ -39,30 +39,32 @@ ALGORITHMS = {
 }
 
 # Main configuration dictionary
+# Default values match original compare_methods.py parameters
 CONFIG = {
     # Geometry
     'mfact': 2,  # Image size = 512/mfact
-    
-    # Algorithm parameters
+
+    # Algorithm parameters (from original compare_methods.py)
     'alpha': 1.75,  # DTV parameter (paper uses 1.7-1.9 depending on size)
-    'beta': 0.5,
+    'beta': 5.0,    # L1 sparsity penalty (original value from compare_methods.py)
     'rho': 1.75,
-    'eps': 0.001,  # data discrepancy RMSE
+    'eps': 0.001,   # data discrepancy RMSE
     'nuxfact': 0.5,
     'nuyfact': 0.5,
     'l1f': 1.0,
     'larc': 1.0,
     'stepbalance': 100.0,
     'cutoffparm': 4.0,
-    
-    # Two-channel parameters  
-    'cutoffparm_lo': 8.0,
-    'sigma_lo_scale': 4.0,
-    
+
+    # Two-channel parameters (from original compare_methods.py)
+    'cutoffparm_lo': 8.0,      # Low-frequency cutoff
+    'sigma_lo_scale': 4.0,     # sig_lo = sigma_lo_scale * sig_two
+    'eps_lo_ratio': 1.25,      # eps_lo = eps_lo_ratio * eps
+
     # Simulation
     'addnoise': 0,
     'nph': 1.e6,
-    
+
     # Iterations
     'itermax': 500,
     'istops': [1,2,5,10,20,50,100,200,300,400,500],
@@ -73,14 +75,16 @@ CONFIG = {
 RESULTS_FILE = 'reconstruction_results.pkl'
 FORCE_RECOMPUTE = True
 
-# Parse command line arguments for quick mode
-if __name__ == "__main__" and len(sys.argv) > 1:
-    parser = argparse.ArgumentParser()
+# Parse command line arguments
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Raw VICTRE phantom reconstruction comparison')
     parser.add_argument('--quick', action='store_true', help='Quick test with 200 iterations and 1 slice')
-    parser.add_argument('--algorithms', nargs='+', default=['single_channel', 'two_channel'], 
+    parser.add_argument('--algorithms', nargs='+', default=['single_channel', 'two_channel'],
                        help='Algorithms to run')
+    parser.add_argument('--no-optimized', action='store_true', dest='no_optimized',
+                       help='Use default parameters instead of ECP-optimized parameters')
     args = parser.parse_args()
-    
+
     if args.quick:
         CONFIG['itermax'] = 200
         print("Quick mode: Using 200 iterations and 1 slice only")
@@ -89,6 +93,7 @@ else:
     class MockArgs:
         quick = False
         algorithms = ['single_channel', 'two_channel']
+        no_optimized = False
     args = MockArgs()
 
 print("="*70)
@@ -115,7 +120,11 @@ print(f"\nOutput directory: {output_dir.resolve()}")
 # ============================================================================
 
 opt_params_file = output_dir / 'ecp_optimized_params.npz'
-if opt_params_file.exists():
+if args.no_optimized:
+    print("Using DEFAULT parameters (--no-optimized flag set)")
+    print(f"  beta={CONFIG['beta']}, cutoffparm_lo={CONFIG['cutoffparm_lo']}, "
+          f"sigma_lo_scale={CONFIG['sigma_lo_scale']}, eps_lo_ratio={CONFIG['eps_lo_ratio']}")
+elif opt_params_file.exists():
     try:
         saved = np.load(opt_params_file, allow_pickle=True)
         if 'best_params' in saved:
@@ -129,13 +138,16 @@ if opt_params_file.exists():
                 CONFIG['cutoffparm_lo'] = opt_params['cutoff_lo']
             if 'sigma_scale' in opt_params:
                 CONFIG['sigma_lo_scale'] = opt_params['sigma_scale']
+            if 'eps_ratio' in opt_params:
+                CONFIG['eps_lo_ratio'] = opt_params['eps_ratio']
             print(f"Using ECP-optimized parameters for raw phantom reconstruction")
+            print(f"  (Use --no-optimized to use default parameters instead)")
     except Exception as e:
         print(f"Warning: Could not load optimized params: {e}")
         print("Using default CONFIG parameters")
 else:
     print(f"No pre-optimized parameters found at {opt_params_file}")
-    print("Run optimize_victre_params.py first, or using default CONFIG parameters")
+    print("Using default CONFIG parameters (from original compare_methods.py)")
 
 # ============================================================================
 # LOAD RAW VICTRE PHANTOM
@@ -188,6 +200,13 @@ yar = ones([nx, ny])*arange(-yimageside/2. + dy/2, yimageside/2., dy)
 rar = sqrt(xar**2 + yar**2)
 mask = zeros((nx, ny))
 mask[rar <= ximageside/2.] = 1.
+
+# Apply circular FOV mask to 3D phantom - corners become zero (air)
+# This matches the circular fan-beam geometry used in the original compare_methods.py
+for iz in range(nz):
+    phantom_3d[:, :, iz] = phantom_3d[:, :, iz] * mask
+print(f"Applied circular FOV mask (radius = {ximageside/2:.1f})")
+n_valid_pixels = mask.sum()  # Number of valid pixels for RMSE calculation
 
 # Sinogram parameters
 radius = 50.0
@@ -492,8 +511,8 @@ print(f"Total norm={totalnorm_single:.4f}, sig={sig_single:.6f}, tau={tau_single
 # Storage for 3D reconstruction
 recon_single_3d = zeros([nx, ny, nz])
 ierrs_single_all = []  # Store final errors for all slices
-ierrs_single_mid = []  # Store iteration errors for high variance slice (for convergence plot)
-ierrs_single_history = {}  # Store full convergence history for all slices
+# Store full convergence history for ALL slices (keyed by slice index)
+single_convergence_history = {}  # {slice_idx: {'ierrs': [], 'derrs': [], 'tvs': []}}
 
 t0_total = time.time()
 
@@ -521,7 +540,9 @@ for iz in iz_loop:
     # Initialize
     xim = zeros([nx,ny]); yim = xim*0.; xbarim = xim*0.; wimp = xim*0.
     ysino_single = zeros([nviews, nbins]); ygradx = zeros([nx,ny]); ygrady = zeros([nx,ny])
-    ierrs_single = []
+    ierrs_single = []  # Image RMSE
+    derrs_single = []  # Data RMSE
+    tvs_single = []    # Total Variation
 
     t0 = time.time()
     for itr in range(1, CONFIG['itermax']+1):
@@ -556,20 +577,25 @@ for iz in iz_loop:
         yim = yimold - CONFIG['rho']*(yimold - yim)
         xim = ximold - CONFIG['rho']*(ximold - xim)
 
-        ierrs_single.append(sqrt(((xbarim - phimage)**2).sum()/(nx*ny)))
+        # Track metrics (using mask for valid FOV pixels only)
+        ierrs_single.append(sqrt(((xbarim - phimage)**2 * mask).sum() / n_valid_pixels))  # Image RMSE
+        derrs_single.append(sqrt((resid**2).sum())/(nusino*sqrt(nviews*nbins)))  # Data RMSE
+        tgx_tv, tgy_tv = gradim(xbarim)
+        tvs_single.append(sqrt((tgx_tv**2 + tgy_tv**2)).sum())  # Total Variation
+
         if itr in CONFIG['istops']:
-            print(f"[single] it {itr:4d}  img_err={ierrs_single[-1]:.6e}")
+            print(f"[single] it {itr:4d}  img_err={ierrs_single[-1]:.6e}  data_err={derrs_single[-1]:.6e}  TV={tvs_single[-1]:.2f}")
 
     slice_time = time.time()-t0
     recon_single_3d[:, :, iz] = xbarim.copy()
     ierrs_single_all.append(ierrs_single[-1])
 
-    # Save convergence history for ALL slices
-    ierrs_single_history[iz] = ierrs_single.copy()
-
-    # Save convergence history for high variance slice (for default plot)
-    if iz == high_variance_slice:
-        ierrs_single_mid = ierrs_single.copy()
+    # Save convergence history for this slice (all three metrics)
+    single_convergence_history[iz] = {
+        'ierrs': ierrs_single.copy(),
+        'derrs': derrs_single.copy(),
+        'tvs': tvs_single.copy()
+    }
 
     print(f"Slice {iz+1} done in {slice_time:.2f}s, final RMSE={ierrs_single[-1]:.6f}")
 
@@ -610,15 +636,15 @@ totalnorm_two = (mag1 + mag2)*0.5
 sig_two = CONFIG['stepbalance']/totalnorm_two; tau_two = 1./(totalnorm_two*CONFIG['stepbalance'])
 sig_hi = sig_two; sig_lo = CONFIG['sigma_lo_scale']*sig_two
 eps_hi = CONFIG['eps']
-eps_lo = CONFIG['sigma_lo_scale'] * CONFIG['eps']
+eps_lo = CONFIG['eps_lo_ratio'] * CONFIG['eps']  # Fixed: was incorrectly using sigma_lo_scale
 epssc_hi = eps_hi*sqrt(nrays); epssc_lo = eps_lo*sqrt(nrays)
 print(f"Total norm={totalnorm_two:.4f}, sig_hi={sig_hi:.6f}, sig_lo={sig_lo:.6f}, tau={tau_two:.6f}")
 
 # Storage for 3D reconstruction
 recon_two_3d = zeros([nx, ny, nz])
 ierrs_two_all = []  # Store final errors for all slices
-ierrs_two_mid = []  # Store iteration errors for high variance slice (for convergence plot)
-ierrs_two_history = {}  # Store full convergence history for all slices
+# Store full convergence history for ALL slices (keyed by slice index)
+two_convergence_history = {}  # {slice_idx: {'ierrs': [], 'derrs': [], 'tvs': []}}
 
 t0_total = time.time()
 
@@ -647,7 +673,9 @@ for iz in iz_loop:
     xim = zeros([nx,ny]); yim = xim*0.; xbarim = xim*0.; wimp = xim*0.
     ysino_hi = zeros([nviews, nbins]); ysino_lo = zeros([nviews, nbins])
     ygradx = zeros([nx,ny]); ygrady = zeros([nx,ny])
-    ierrs_two = []
+    ierrs_two = []   # Image RMSE
+    derrs_two = []   # Data RMSE
+    tvs_two = []     # Total Variation
 
     t0 = time.time()
     for itr in range(1, CONFIG['itermax']+1):
@@ -691,20 +719,26 @@ for iz in iz_loop:
         yim = yimold - CONFIG['rho']*(yimold - yim)
         xim = ximold - CONFIG['rho']*(ximold - xim)
 
-        ierrs_two.append(sqrt(((xbarim - phimage)**2).sum()/(nx*ny)))
+        # Track metrics (using mask for valid FOV pixels only)
+        ierrs_two.append(sqrt(((xbarim - phimage)**2 * mask).sum() / n_valid_pixels))  # Image RMSE
+        derr_two = sqrt(((resid_hi/nusino)**2).sum() + ((resid_lo/nusino)**2).sum())/sqrt(nviews*nbins)
+        derrs_two.append(derr_two)  # Data RMSE (combined hi+lo)
+        tgx_tv, tgy_tv = gradim(xbarim)
+        tvs_two.append(sqrt((tgx_tv**2 + tgy_tv**2)).sum())  # Total Variation
+
         if itr in CONFIG['istops']:
-            print(f"[two]    it {itr:4d}  img_err={ierrs_two[-1]:.6e}")
+            print(f"[two]    it {itr:4d}  img_err={ierrs_two[-1]:.6e}  data_err={derrs_two[-1]:.6e}  TV={tvs_two[-1]:.2f}")
 
     slice_time = time.time()-t0
     recon_two_3d[:, :, iz] = xbarim.copy()
     ierrs_two_all.append(ierrs_two[-1])
 
-    # Save convergence history for ALL slices
-    ierrs_two_history[iz] = ierrs_two.copy()
-
-    # Save convergence history for high variance slice (for default plot)
-    if iz == high_variance_slice:
-        ierrs_two_mid = ierrs_two.copy()
+    # Save convergence history for this slice (all three metrics)
+    two_convergence_history[iz] = {
+        'ierrs': ierrs_two.copy(),
+        'derrs': derrs_two.copy(),
+        'tvs': tvs_two.copy()
+    }
 
     print(f"Slice {iz+1} done in {slice_time:.2f}s, final RMSE={ierrs_two[-1]:.6f}")
 
@@ -826,8 +860,8 @@ print("This shows depth resolution on raw tissue structure")
 # ============================================================================
 
 fig, ax = plt.subplots(1, 1, figsize=(12, 7))
-ax.plot(ierrs_single_mid, 'r-', linewidth=2.5, label='Single-channel L1-DTV')
-ax.plot(ierrs_two_mid, 'b-', linewidth=2.5, label='Two-channel L1-DTV')
+ax.plot(single_convergence_history[high_variance_slice]['ierrs'], 'r-', linewidth=2.5, label='Single-channel L1-DTV')
+ax.plot(two_convergence_history[high_variance_slice]['ierrs'], 'b-', linewidth=2.5, label='Two-channel L1-DTV')
 ax.set_xlabel('Iteration', fontsize=14)
 ax.set_ylabel('Image RMSE', fontsize=14)
 ax.set_yscale('log')
@@ -953,8 +987,11 @@ results_data = {
     'phantom': phantom_3d,
     'phantom_raw': phantom_victre,  # Also save original raw phantom
     'attenuation_scale': ATTENUATION_SCALE,
-    'single_convergence': ierrs_single_history,  # Convergence for all slices
-    'two_convergence': ierrs_two_history         # Convergence for all slices
+    # Full convergence history for ALL slices (keyed by slice index)
+    # Each entry: {slice_idx: {'ierrs': [], 'derrs': [], 'tvs': []}}
+    'single_convergence': single_convergence_history,
+    'two_convergence': two_convergence_history,
+    'high_variance_slice': high_variance_slice
 }
 with open('raw_victre_results.pkl', 'wb') as f:
     pickle.dump(results_data, f)
