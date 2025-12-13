@@ -993,9 +993,9 @@ results_data = {
     'two_convergence': two_convergence_history,
     'high_variance_slice': high_variance_slice
 }
-with open('raw_victre_results.pkl', 'wb') as f:
+with open('raw_victre_results_no_gamma.pkl', 'wb') as f:
     pickle.dump(results_data, f)
-print("Saved: raw_victre_results.pkl")
+print("Saved: raw_victre_results_no_gamma.pkl")
 print("  (Use this with compare_best_worst_slices.py for detailed slice analysis)")
 print("  (Includes convergence histories for all slices)")
 print("  (Includes raw phantom data for reference)")
