@@ -13,11 +13,11 @@ import os
 import sys
 
 # Load results
-RESULTS_FILE = 'fig8_victre_results.pkl'
+RESULTS_FILE = 'raw_victre_results_gamma.pkl'
 
 if not os.path.exists(RESULTS_FILE):
     print(f"Results file {RESULTS_FILE} not found!")
-    print("Please run: python recreate_figure8_victre_ica.py first")
+    print("Please run: python run_reconstruction_comparison_gamma_decay.py first")
     sys.exit(1)
 
 print(f"Loading results from {RESULTS_FILE}...")
