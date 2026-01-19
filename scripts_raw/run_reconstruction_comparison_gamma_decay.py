@@ -401,9 +401,9 @@ print(f"  Filters are complementary: han_hi + han_lo = 1")
 complementarity_check = han_hi + han_lo
 print(f"  Complementarity verification: min={complementarity_check.min():.6f}, max={complementarity_check.max():.6f}")
 if np.allclose(complementarity_check, 1.0, atol=1e-10):
-    print(f"  ✓ Filters are properly complementary!")
+    print(f"Filters are properly complementary!")
 else:
-    print(f"  ⚠ Warning: Filters are not perfectly complementary!")
+    print(f"Warning: Filters are not perfectly complementary!")
 
 # ============================================================================
 # DATA GENERATION - 3D (sinograms for all slices)

@@ -1,0 +1,350 @@
+\documentclass[journal, a4paper]{IEEEtran}
+\usepackage{amssymb}
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{lipsum}		% Can be removed after putting your text content
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{doi}
+\usepackage{amsmath}
+\usepackage{physics}
+\usepackage{wrapfig}
+\usepackage{bm}
+\usepackage{algorithm,algpseudocode}
+\usepackage{xcolor}
+\usepackage{soul}
+\usepackage{forest}
+\usepackage{tcolorbox}
+\usepackage{tikz-cd}
+\usepackage{enumitem}
+
+
+\newenvironment{proof}{\paragraph{Proof:}}{\hfill$\square$}
+\newenvironment{solution}{\paragraph{Solution:}}{\hfill$\square$}
+
+
+%—– Blackboard‐bold sets —–
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+%—– Probability & expectation —–
+\newcommand{\Prb}{\mathbb{P}}        % probability
+\newcommand{\E}{\mathbb{E}}           % expectation
+\newcommand{\Var}{\mathrm{Var}}       % variance
+\newcommand{\Cov}{\mathrm{Cov}}       % covariance
+
+%—– Common math operators —–
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\argmax}{\operatorname*{arg\,max}}
+\newcommand{\argmin}{\operatorname*{arg\,min}}
+\newcommand{\ind}{\mathbf{1}}         % indicator
+
+%—– Norms, inner products, absolute value —–
+
+\newcommand{\inner}[2]{\left\langle #1, #2 \right\rangle}
+
+%—– Calligraphic sets —–
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cT}{\mathcal{T}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cE}{\mathcal{E}}
+
+%—– RL / MDP notation —–
+\newcommand{\SSS}{\mathcal{S}}        % state space
+\newcommand{\AAA}{\mathcal{A}}        % action space
+\newcommand{\PP}{\mathcal{P}}         % transition kernel
+\newcommand{\RRR}{\mathcal{R}}        % reward function
+\newcommand{\gammaRL}{\gamma}         % discount factor
+
+%—– Confidence bounds —–
+\newcommand{\olQ}{\overline{Q}}
+\newcommand{\ulQ}{\underline{Q}}
+\newcommand{\olV}{\overline{V}}
+\newcommand{\ulV}{\underline{V}}
+
+%—– Miscellaneous —–
+\newcommand{\eps}{\varepsilon}
+\newcommand{\dt}{\mathrm{d}t}
+\newcommand{\given}{\,\bigl\vert\,}    % conditioning bar
+
+%—– Shorthand for frequently used fractions —–
+\newcommand{\half}{\tfrac12}
+\newcommand{\thalf}{\tfrac32}
+
+%—– Styling —–
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+
+\newcommand{\note}[1]{\begin{tcolorbox}
+\textbf{Note:} #1\end{tcolorbox}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{conjecture}[theorem]{Conjecture}
+
+\begin{document}
+\title{Accelerating Low-Frequency Convergence for Limited-Angle DBT via Two-Channel Fidelity in PDHG}					% Or removing it
+
+\author{Taro Iyadomi,
+        Ricardo Parada, Anna Kim, Lily Jiang, William Chang, and Emil Sidky % <-this % stops a space
+\thanks{William Chang was with the Department of Mathematics, UCLA, CA, 90007, e-mail: chang314@g.ucla.edu.}% <-this % stops a space
+\thanks{Emil Sidky was with the Department of Radiology, University of Chicago, IL 60637}% <-this % stops a space
+\thanks{Manuscript received April 19, 2005; revised August 26, 2015.}}
+
+
+\maketitle
+
+% As a general rule, do not put math, special symbols or citations
+% in the abstract or keywords.
+\begin{abstract}
+Reconstruction in limited-angle digital breast tomosynthesis (DBT) suffers from slow convergence of low spatial-frequency components when using weighted data-fidelity terms within primal–dual optimization. We introduce a two-channel fidelity strategy that decomposes the sinogram residual into complementary low-pass and high-pass bands using square-root Hanning (Hann$^{1/2}$) filter families, each driven by an independent $\ell_2$-ball constraint and dual update in the PDHG (Chambolle–Pock) algorithm with He–Yuan predictor–corrector relaxation. By assigning a larger dual step-size and slightly looser tolerance to the low-frequency channel, the method delivers stronger per-iteration correction to the near-DC band without violating global PDHG stability. \hl{Experiments on a VICTRE-derived contrast-enhanced dual-energy DBT phantom show that the proposed approach improves depth-slice RMSE on 80\% of slices with a $3.67\%$ average RMSE reduction and visibly fewer large-scale artifacts, supporting more balanced spectral convergence in clinically realistic limited-angle regimes.}
+\end{abstract}
+
+
+% Note that keywords are not normally used for peerreview papers.
+\begin{IEEEkeywords}
+Computed tomography, Breast tissue, Sparse matrices, Filter banks
+\end{IEEEkeywords}
+
+
+\section{Introduction}
+
+% Dual-energy contrast-enhanced digital breast tomosynthesis (CE-DBT) and contrast-enhanced digital mammography (CE-DM) are emerging imaging approaches designed to improve detection and quantitative analysis of early-stage breast tumors with angiogenic neovasculature \cite{jong2003contrast, huang2019comparison, jochelson2021contrast}. Prior clinical success in contrast-enhanced digital mammography for highlighting tumor vascularity has inspired extensions of this technique to digital breast tomosynthesis, including CE-DBT\cite{huang2019comparison, carton2010dual, scaduto2016dependence, hu2017optimization} and dual-energy CE-DBT.\cite{huang2019comparison, carton2010dual, scaduto2016dependence, hu2017optimization}
+
+% Beyond detection, high-fidelity 3D contrast enhancement volumes enable clinically meaningful tasks, such as estimating contrast uptake, tracking tumor progression, evaluating treatment response after neoadjuvant chemotherapy, and improving localization for biopsy guidance. These applications require volumetric reconstructions with accurate spatial alignment and reliable quantification of ICA uptake.
+
+% A central challenge of CE-DBT reconstruction is depth blurring, which complicates identification of 3D tumor boundaries and degrades quantitative tumor volume estimation. Effective reduction of this blurring could improve tumor volume measurements and enhance the reliability of CE-DBT for treatment follow-up and biopsy planning.
+
+Limited angular range (LAR) scanning has been widely studied in the literature, but only recently have discrete-to-discrete models demonstrated stable inversion at clinically relevant scan arcs. Building on the observation that directional sparsity improves LAR recovery, \cite{zhang2021directional} introduced a globally convex formulation using directional total variation (DTV), enabling robust optimization-based reconstruction.
+
+We introduce a sparsity-constrained optimization framework for LAR DBT that combines directional TV penalties with pixel/voxel sparsity, enabling practical parameterization when true DTV values are unknown. The framework is compatible with dual-energy DBT pipelines used for \hl{contrast-enhanced imaging}.
+
+% Motivated by these developments, this work introduces a practical sparsity-constrained optimization framework for LAR reconstruction that integrates directional-TV penalties and direct pixel/voxel sparsity regularization. This parameterization facilitates adaptation to real DBT data, where noise levels can be estimated but true DTV values are unknown. The reconstruction framework is subsequently embedded into a dual-energy DBT processing pipeline that estimates ICA distributions via low- and high-energy scans.
+
+\section{Preliminary}
+We consider limited angular range (LAR) digital breast tomosynthesis (DBT) in a discrete-to-discrete setting. Let $f$ be the discretized attenuation image, $g$ is the measured sinogram data, and $X$ is the system matrix that encodes fan-beam (2D) or cone-beam (3D) projection. The idealized data model is
+\begin{equation}
+    g = Xf
+\end{equation}
+In the DBT geometry, the detector spans the in-plane directions $(x,y)$, while the $z$-direction is perpendicular to the (fixed) detector plane and is referred to as the depth direction. At clinically typical scanning arcs, the resulting linear system is generally underdetermined at useful (e.g., isotropic) discretizations, motivating the use of convex regularization.
+
+\subsection{Directional Finite Differences and Directional Total Variation}
+Let $\partial_x, \partial_y, \partial_z$ denote finite-difference operators approximating derivatives along the corresponding axes. The associated directional total-variation (DTV) seminorms are $\|\partial_x f\|_1$, $\|\partial_y f\|_1$, and $\|\partial_z f\|_1$ (in 2D studies, the $\partial_y$ term is omitted). Distinguishing in-plane and depth directional derivatives is particularly important in LAR/DBT because the data support and conditioning can differ substantially across directions.
+
+\subsection{Constrained Sparsity-regularized Reconstruction}
+\cite{zhang2021directional} showed that accurate image reconstruction from LAR data can be achieved using non-smooth convex optimization with directional total variation (DTV). Their key problem minimizes a least-squares (LSQ) data-fidelity term subject to separate $\ell_1$ bounds on the in-plane and depth finite-difference derivatives, forming DTV-constrained LSQ (DTV-LSQ):
+\begin{equation}
+    \begin{split}
+        f^* = \arg\min_f \; \frac{1}{2}\|g - Xf\|_2^2 
+\\
+\text{s.t.} \quad
+\|\partial_x f\|_1 \le \gamma_x, \;
+\|\partial_z f\|_1 \le \gamma_z.
+    \end{split}
+\end{equation}
+
+Constraining DTV is more effective than the standard total variation (TV) constraint based on gradient sparsity. DTV constraints are convenient for phantom studies where true DTV values are computable, but for real digital breast tomosynthesis (DBT) data the bounds must be estimated. The present work reformulates the problem with improved parameterization and design choices to support isotropic-resolution reconstruction in DBT.
+
+
+\section{The Single Channel Approach }
+In this section, we describe the single channel approach proposed by \cite{sidky2025accurate}. Let $X$ be the discrete projection operator for a limited-angle DBT scan, $g$ the measured sinogram, and $f \ge 0$ the unknown volume. The paper adopts a \emph{data-discrepancy constrained, sparsity-regularized} model:
+\begin{equation}
+\label{eq:model}
+\begin{split}
+    \min_{f \ge 0}\;\; 
+\alpha_x \|\partial_x f\|_1 + \alpha_y \|\partial_y f\|_1 + \alpha_z \|\partial_z f\|_1 + \beta \|f\|_1
+\\
+\text{s.t.} \quad 
+\big\|R[c]\,(g - X f)\big\|_2 \le \varepsilon \sqrt{\mathrm{size}(g)},
+\end{split}
+\end{equation}
+where $R[c]$ is a square-root Hanning (Hann$^{1/2}$) filter along detector channels with cutoff parameter $c$; $\partial_\bullet$ are finite differences (directional TV). The resulting problem is convex but non-smooth (indicator constraint, $\ell_1$ penalties), and is solved with a primal-dual hybrid gradient (PDHG / Chambolle--Pock) method with a He--Yuan predictor--corrector (relaxation) using $\rho \approx 1.75$ \cite{he2012convergence}. The limited-angle regime reports running $\sim 2000$ PD iterations to reach accurate convergence.
+
+There are two additional design choices emphasized in the paper:
+(i) using $R[c]$ \emph{inside the data-constraint} to de-emphasize low spatial-frequency inconsistencies; 
+(ii) including an optional voxel-sparsity term $\beta\|f\|_1$ in addition to DTV. 
+A post-reconstruction pipeline (robust polynomial background fitting via IRLS, then dual-energy weighted subtraction) is used for the CE/DE-DBT demonstration.
+
+\paragraph{Notation for PDHG} With $A := R[c]\,X$ and the residual $r := g - X f$, the data-constraint is $ \|A f - R[c]\,g\|_2 \le \varepsilon\sqrt{|g|}$. The PDHG dual variable $y$ lives in the sinogram space; the dual step is a projection onto an $\ell_2$ ball; the primal step applies the adjoint $A^\top = X^\top R[c]^\top$ followed by the proximal of the sum of $\ell_1$ terms and the indicator of $f\ge 0$.
+
+\section{Why low spatial frequencies converge slowly}
+
+The data-fidelity term can be written as $\tfrac{1}{2}\|W(g - Xf)\|_2^2$, where $W \equiv R[c]$. In the detector-frequency domain, this weighting strongly attenuates low spatial frequencies. Under a linearized analysis of the PDHG update, the correction applied to a residual Fourier mode at spatial frequency $k$ scales approximately with the squared singular value $s_k^2$ of the weighted system operator $WX$. In limited-angle DBT, the singular values $s_k$ are already small for low $k$ due to the severe ill-conditioning of $X$. The additional Hann$^{1/2}$ weighting $W$ further shrinks these low-$k$ singular values by design, creating a large spectral gap between frequency bands.
+
+This disparity in singular values destabilizes convergence behavior. Because PDHG must satisfy the global stability condition $\tau \sigma \|WX\|^2 < 1$ (Theorem 1 of \cite{chambolle2011first}), the allowable step sizes are dictated by the \emph{largest} singular values, which reside in the mid- and high-frequency bands. Step sizes that stabilize those bands therefore provide insufficient drive for near-DC modes, yielding extremely weak contraction factors for low spatial frequencies. Increasing the global step sizes to accelerate DC correction risks divergence, since PDHG cannot apply frequency-selective step-size amplification in its standard form. Consequently, mid- and high-frequency image components converge quickly, while low spatial frequencies decay slowly and dominate the tail of the iterations. This persistent low-frequency drift reveals a fundamental mode-dependent convergence bottleneck that motivates split-frequency or multi-dual fidelity strategies.
+
+\section{Two-channel fidelity for spectrally balanced PDHG}
+
+Single-dual weighted fidelity in limited-angle tomographic inversion entangles spatial-frequency bands with sharply different conditioning, which can destabilize convergence when the optimizer attempts to correct near-DC error using a step size dictated by high-frequency modes. To retain the noise robustness of the Hann$^{1/2}$ weighting while providing a stronger corrective signal to low spatial frequencies, we decompose the sinogram residual into complementary spectral channels and enforce independent consistency constraints:
+\begin{equation}
+\label{eq:twoconstraint}
+\begin{split}
+    \min_{f \ge 0}\;
+\alpha_x \|\partial_x f\|_1 + \alpha_y \|\partial_y f\|_1 + \alpha_z \|\partial_z f\|_1 + \beta \|f\|_1\\
+\text{s.t.}\;
+\begin{cases}
+\|R_{\mathrm{hi}}(g - Xf)\|_2 \le \varepsilon_{\mathrm{hi}}\sqrt{|g|},\\
+\|R_{\mathrm{lo}}(g - Xf)\|_2 \le \varepsilon_{\mathrm{lo}}\sqrt{|g|}.
+\end{cases}
+\end{split}
+\end{equation}
+
+We select both filters from the square-root Hanning family. The high-frequency channel preserves the original cutoff, $R_{\mathrm{hi}} = \text{Hann}^{1/2}(c)$, maintaining the fidelity weighting used in prior work. The low-frequency channel uses a substantially narrower cutoff, $R_{\mathrm{lo}} = \text{Hann}^{1/2}(c_{\mathrm{lo}})$ with $c_{\mathrm{lo}} \ll c$, forming a complementary pair that partitions spectral correction responsibilities while keeping $R_{\mathrm{hi}}^2 + R_{\mathrm{lo}}^2$ close to identity over the inversion-relevant passband. The low-frequency constraint tolerance is chosen slightly looser than the high-frequency channel to allow mild model mismatch at DC while still driving large-scale bias reduction.
+
+\begin{algorithm}[t]
+\caption{PDHG with split fidelity channels}
+\begin{algorithmic}[1]
+\State \textbf{Inputs:} $g, X, R_{\mathrm{hi}}, R_{\mathrm{lo}}, \alpha_{x,y,z}, \beta, \varepsilon_{\mathrm{hi}}, \varepsilon_{\mathrm{lo}}, \sigma_{\mathrm{hi}}, \sigma_{\mathrm{lo}}, \tau, \rho$
+\State Initialize $f^0$, $\bar f^0 = f^0$, $y_{\mathrm{hi}}^0 = y_{\mathrm{lo}}^0 = 0$
+\For{$k = 0,1,2,\dots$}
+    \State $y_{\mathrm{hi}}^{k+1} \gets \operatorname{Proj}_{B_{\mathrm{hi}}}\!\big(y_{\mathrm{hi}}^k + \sigma_{\mathrm{hi}} R_{\mathrm{hi}}(g - X\bar f^k)\big)$
+    \State $y_{\mathrm{lo}}^{k+1} \gets \operatorname{Proj}_{B_{\mathrm{lo}}}\!\big(y_{\mathrm{lo}}^k + \sigma_{\mathrm{lo}} R_{\mathrm{lo}}(g - X\bar f^k)\big)$
+    \State $f^{k+1} \gets \operatorname{prox}_{\tau\big(\alpha_x\|\partial_x \cdot\|_1 + \alpha_y\|\partial_y \cdot\|_1 + \alpha_z\|\partial_z \cdot\|_1 + \beta\|\cdot\|_1\big) + \mathbb{I}\{f \ge 0\}}$ $\Big(f^k - \tau X^\top(R_{\mathrm{hi}}^\top y_{\mathrm{hi}}^{k+1} + R_{\mathrm{lo}}^\top y_{\mathrm{lo}}^{k+1})\Big)$
+    \State $\bar f^{k+1} \gets f^{k+1} + \rho(f^{k+1} - f^k)$ \Comment{He–Yuan relaxation}
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Spectral rationale}
+In primal–dual gradient schemes, the convergence rate of each Fourier mode is governed by the corresponding singular values of the forward operator. In limited-angle systems, high-frequency modes are well represented and produce comparatively large singular values, while low spatial frequencies induce much smaller gains. The original Hann weighting amplifies this gap by further suppressing near-DC singular values. When a single dual is used, the step size must be set to stabilize the high-frequency spectrum, which unintentionally results in an under-driven update for the low-frequency band. The optimizer therefore applies only a weak correction to DC error each iteration, but a strong correction to high frequencies, creating oscillatory or stalled behavior in the low band.
+
+By assigning each channel an independent dual step size, the method reduces cross-band interference. The low-frequency dual ascent can safely be made larger, providing a stronger contraction factor for small $k$, without compromising the stability required to converge the high-frequency channel. The proximal update then combines both adjoint-filtered corrections while preserving non-negativity. This split-fidelity design yields a more spectrally uniform correction profile and mitigates frequency-induced convergence bottlenecks in limited-angle tomographic inversion.
+
+\section{Experimental Methodology}
+
+\subsection{Digital Phantom and Simulation Setup}
+
+To evaluate the proposed two-channel fidelity approach, we employ a digital breast phantom derived from the FDA's Virtual Imaging Clinical Trial for Regulatory Evaluation (VICTRE) project \cite{badano2018evaluation}. A 256$\times$256$\times$20 voxel region of interest was extracted using a variance-based selection algorithm that identifies regions containing high tissue heterogeneity and embedded lesions.
+
+The extracted ROI has physical dimensions of 25.6$\times$25.6$\times$2.0~mm with isotropic voxel spacing of 0.1~mm. To model contrast-enhanced imaging conditions, the phantom assigns an attenuation coefficient of 0.08~cm$^{-1}$ to glandular tissue and 0.4~cm$^{-1}$ to spherical lesions of 0.3~mm radius, yielding a 5$\times$ contrast ratio between lesions and background.
+
+\subsection{Projection Geometry and Data Generation}
+
+Sinogram data were generated using a fanbeam geometry representative of clinical DBT parameters. The source-to-isocenter distance was set to 50~cm with a source-to-detector distance of 100~cm. The angular range spans $\pm$25$^\circ$ with 25 uniformly distributed projection views, and the detector comprises 1024 bins. Forward projection was implemented using ray-driven integration with bilinear interpolation, accelerated via Numba compilation.
+
+Each of the 20 depth slices was projected independently to generate 2D sinograms, maintaining consistency with the 2D reconstruction framework employed throughout. This slice-by-slice approach provides sufficient statistical power for comparative evaluation while avoiding the computational burden of full 3D reconstruction.
+
+\subsection{Algorithm Parameters}
+
+Both reconstruction methods---single-channel and two-channel---were configured with identical regularization parameters to ensure fair comparison. The PDHG algorithm was run for 500 iterations using the He--Yuan predictor-corrector scheme with relaxation parameter $\rho = 1.75$ \cite{he2012convergence}. Regularization employed anisotropic DTV with weight $\alpha = 1.75$, pixel sparsity penalty $\beta = 5.0$, and data fidelity tolerance $\varepsilon = 0.001$.
+
+For the single-channel baseline, the data-discrepancy constraint uses a Hanning-windowed ramp filter with cutoff frequency $c = 4.0$ (as a fraction of Nyquist). The two-channel method employs complementary filters: a low-pass channel with cutoff $c_{\mathrm{lo}} = 8.0$ and a high-pass channel with cutoff $c_{\mathrm{hi}} = 4.0$. The low-frequency channel uses relaxed constraint parameters with $\sigma_{\mathrm{lo}} = 4.0 \times \sigma_{\mathrm{base}}$ and $\varepsilon_{\mathrm{lo}} = 1.25 \times \varepsilon_{\mathrm{hi}}$. Step sizes for PDHG were determined via power iteration to satisfy convergence conditions \cite{chambolle2011first}.
+
+All experiments used fixed random seeds to ensure reproducibility. Code for reproducing these experiments is available at \url{https://github.com/taroii/ct}.
+
+\section{Results}
+
+!!! \textbf{TODO: rerun experiments and regenerate figures to be more legible/refined.} 
+
+Quantitative comparison across all 20 reconstructed slices is summarized in Table~\ref{tab:summary} and Figure~\ref{fig:performance_summary}. The two-channel method achieves lower RMSE on 16 of 20 slices (80\%), compared to 4 slices where the single-channel approach performs better. The mean RMSE across all slices is $0.01201 \pm 0.00287$ for the single-channel method and $0.01157 \pm 0.00182$ for the two-channel approach, representing a 3.67\% improvement in average reconstruction error.
+
+\begin{table}[h]
+\centering
+\caption{Summary of reconstruction performance across 20 slices.}
+\label{tab:summary}
+\begin{tabular}{lcc}
+\toprule
+Metric & Single-channel & Two-channel \\
+\midrule
+Mean RMSE & 0.01201 & 0.01157 \\
+Slices won & 4 (20\%) & 16 (80\%) \\
+Computation time (s) & 358.7 & 544.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:performance_summary} presents three complementary analyses. The upper panel displays slice-by-slice RMSE values, revealing that the two-channel method (blue) consistently outperforms the single-channel baseline (red) across most depth positions. The middle panel shows per-slice RMSE differences, with blue bars indicating two-channel advantages and red bars indicating single-channel advantages. The lower panel presents the distribution of these differences, with mean $-0.00044$ (negative values favoring the two-channel method).
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{performance_summary.png}
+    \caption{Reconstruction performance comparison across 20 slices. Upper: slice-by-slice RMSE for both methods. Middle: per-slice performance difference (blue = two-channel better, red = single-channel better). Lower: histogram of RMSE differences with mean $= -0.00044$.}
+    \label{fig:performance_summary}
+\end{figure}
+
+The performance difference between methods varies substantially across slices. Figure~\ref{fig:single_channel_best} shows Slice~2, where the single-channel method achieves its largest advantage: RMSE of 0.00280 versus 0.00688 for the two-channel approach, a 59.3\% difference. Visual inspection of the error maps reveals that the two-channel method introduces artifacts in regions with relatively uniform attenuation in this particular slice configuration.
+
+\begin{figure}[h]
+    \centering    \includegraphics[width=\linewidth]{best_single_channel.png}
+    \caption{Slice~2: largest single-channel advantage. Single-channel RMSE = 0.00280; two-channel RMSE = 0.00688 (59.3\% difference). Such cases occur in 4 of 20 slices.}
+    \label{fig:single_channel_best}
+\end{figure}
+
+Conversely, Figure~\ref{fig:two_channel_best} presents Slice~6, a representative case where the two-channel approach excels. Here, the two-channel method achieves RMSE of 0.00743 compared to 0.01081 for the single-channel baseline, a 31.3\% improvement. The error maps demonstrate reduced artifacts throughout the reconstructed image, particularly in regions containing complex tissue boundaries where the frequency-split fidelity constraint appears to provide more balanced convergence.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{best_two_channel.png}
+    \caption{Slice~6: representative two-channel advantage. Two-channel RMSE = 0.00743; single-channel RMSE = 0.01081 (31.3\% improvement). Error maps show reduced artifacts near tissue boundaries.}
+    \label{fig:two_channel_best}
+\end{figure}
+
+The computational cost of the two-channel method is approximately 52\% higher than the single-channel approach (544.6~s vs.\ 358.7~s), attributable to the additional filter operations and constraint evaluations required for dual-channel processing.
+
+These results support the hypothesis that frequency-separated data fidelity enables more balanced convergence across the spatial frequency spectrum. However, the slice-dependent nature of the improvement magnitude suggests that the benefit is modulated by local tissue structure. Slices with complex heterogeneous boundaries appear to benefit most from the two-channel formulation, while more uniform regions may not require---and can be adversely affected by---the additional degrees of freedom in the dual-channel constraint.
+
+\section{Conclusion}
+
+We analyzed the fundamental causes of slow and unstable convergence in limited-angle digital breast tomosynthesis reconstruction when using a single, globally weighted fidelity term in primal–dual optimization. The square-root Hanning weighting creates a large singular-value gap between high and near-DC modes. Because PDHG step sizes must stabilize the largest gains (high frequencies), the low-frequency channel is under-driven, leading to stalled or unstable convergence at DC.
+
+To address this, we proposed a two-channel fidelity design that routes low and high spatial-frequency residuals through complementary square-root Hanning filters, each paired with an independent dual variable and step size. This strategy preserves noise robustness while reducing cross-band step-size interference, providing stronger corrective feedback to the ill-conditioned low-frequency channel without violating global PDHG stability. The resulting formulation better equalizes spectral corrections, mitigates low-band oscillations, and directly targets the most ill-conditioned modes in limited-angle inversion.
+
+These findings support the broader conclusion that reconstruction optimizers for limited-angle tomography must account for spectral conditioning gaps to avoid unstable convergence tails. Multi-dual or frequency-split fidelity designs offer a principled and practical path to improving stability and convergence uniformity in non-smooth convex tomographic reconstruction.  
+
+% \section{Experimental Results}
+
+% We conducted experiments comparing the proposed two-channel fidelity approach with the single-channel method from \cite{sidky2025accurate} using the methodology described above. The evaluation was performed across all 20 slices of the reconstructed volume with fixed random seeds for reproducibility.
+
+% The comprehensive quantitative analysis across all 20 slices, summarized in Figure~\ref{fig:performance_summary}, reveals that the two-channel method achieves substantially better overall performance. The method wins on 16 out of 20 slices (80.0\%) compared to only 4 slices for the single-channel approach. The average RMSE across all slices is 0.012013 for the single-channel method compared to 0.011572 for the two-channel approach, representing a 3.67\% improvement in reconstruction quality. This improvement comes at a modest computational cost increase, with the two-channel method requiring 544.57 seconds compared to 358.66 seconds for the single-channel approach.
+
+% Figure~\ref{fig:performance_summary} shows three key analyses: (1) the slice-by-slice RMSE comparison revealing that the two-channel method consistently outperforms the baseline across most depth positions, (2) the per-slice performance difference indicating which method wins each slice, with blue bars showing two-channel advantages and red bars showing single-channel advantages, and (3) the distribution of performance differences with a mean improvement of -0.000442 (negative indicating two-channel is better) and the majority of differences favoring the two-channel approach.
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=\linewidth]{performance_summary.png}
+%     \caption{Comprehensive analysis of reconstruction performance across all 20 slices. Top panel shows slice-by-slice RMSE comparison with two-channel method (blue) consistently outperforming single-channel (red) across most slices. Middle panel displays per-slice performance differences with blue bars indicating two-channel wins and red bars indicating single-channel wins. Bottom panel shows the distribution of RMSE differences with mean = -0.000442, demonstrating systematic improvement with the two-channel approach.}
+%     \label{fig:performance_summary}
+% \end{figure}
+
+% Figure~\ref{fig:single_channel_best} shows the most dramatic case where the single-channel method outperforms the two-channel approach (Slice 2), achieving a 59.3\% improvement in RMSE (0.00280 vs 0.00688). Despite this significant local advantage, such cases represent a minority of the test slices, occurring in only 4 out of 20 reconstructions.
+
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=\linewidth]{best_single_channel.png}
+%     \caption{Slice 2 comparison showing the most significant case where single-channel method outperforms two-channel approach by 59.3\%. The single-channel method achieves RMSE of 0.00280 compared to 0.00688 for two-channel. While such dramatic improvements for the baseline method occur in a minority of cases (4 out of 20 slices), they demonstrate that the two-channel approach does not uniformly dominate across all reconstruction scenarios.}
+%     \label{fig:single_channel_best}
+% \end{figure}
+
+% In contrast, Figure~\ref{fig:two_channel_best} demonstrates a representative case (Slice 6) where the two-channel approach excels, achieving a 31.3\% improvement in RMSE (0.00743 vs 0.01081). The error maps show reduced reconstruction artifacts throughout the phantom, particularly in regions with complex tissue boundaries, illustrating the benefit of the split frequency approach in handling the challenging limited-angle reconstruction problem.
+
+% The results strongly validate the theoretical motivation behind the two-channel approach: by providing separate handling of low and high spatial frequency components in the data fidelity term, the method achieves more balanced convergence across the frequency spectrum, leading to improved overall reconstruction quality in limited-angle tomosynthesis applications.
+
+
+
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=\linewidth]{best_two_channel.png}
+%     \caption{Slice 6 comparison demonstrating two-channel method outperforming single-channel approach by 31.3\%. The two-channel method achieves RMSE of 0.00743 compared to 0.01081 for single-channel. The error maps show substantially reduced reconstruction artifacts throughout the phantom, particularly around complex tissue boundaries, illustrating the effectiveness of the split low/high frequency fidelity approach in challenging reconstruction scenarios.}
+%     \label{fig:two_channel_best}
+% \end{figure}
+
+\bibliography{references}
+\bibliographystyle{abbrvnat}
+
+\end{document}

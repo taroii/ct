@@ -671,7 +671,7 @@ sig = stepbalance/totalnorm
 tau = 1./(totalnorm*stepbalance)
 
 theta = 1.0
-itermax = 2000
+itermax = 500
 
 
 itr = 0
@@ -690,7 +690,7 @@ tvxs = []
 tvys = []
 tvs = []
 istops = [1,2,5,10,20,50,100,200,300,400,500,600,700,800,900,1000,1200,1400,1600,1800,2000,3000,4000,5000]
-while itr< itermax:
+while itr<= itermax:
    itr += 1
 
    ysinoold = ysino*1.
