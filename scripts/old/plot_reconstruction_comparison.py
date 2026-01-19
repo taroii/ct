@@ -131,23 +131,23 @@ print(f"Saved: {RESULTS_DIR}convergence_256_loglog.png")
 # CONVERGENCE PLOT SIDE BY SIDE (256x256)
 # ============================================================================
 
-fig4, (ax_left, ax_right) = plt.subplots(1, 2, figsize=(10, 4))
+fig4, (ax_left, ax_right) = plt.subplots(1, 2, figsize=(10, 5))
 
 # Left: semilogy
 ax_left.semilogy(iterations, ierrs_single, 'r-', linewidth=1.5, label='Single-Channel')
 ax_left.semilogy(iterations, ierrs_two, 'b-', linewidth=1.5, label='Two-Channel')
-ax_left.set_xlabel('Iteration', fontsize=11)
-ax_left.set_ylabel('Image RMSE', fontsize=11)
 ax_left.legend(fontsize=10)
 ax_left.grid(True, alpha=0.3, which='both')
 
 # Right: loglog
 ax_right.loglog(iterations, ierrs_single, 'r-', linewidth=1.5, label='Single-Channel')
 ax_right.loglog(iterations, ierrs_two, 'b-', linewidth=1.5, label='Two-Channel')
-ax_right.set_xlabel('Iteration', fontsize=11)
-ax_right.set_ylabel('Image RMSE', fontsize=11)
 ax_right.legend(fontsize=10)
 ax_right.grid(True, alpha=0.3, which='both')
+
+# Shared axis labels
+fig4.supxlabel('Iteration', fontsize=11)
+fig4.supylabel('Image RMSE', fontsize=11)
 
 plt.tight_layout()
 plt.savefig(RESULTS_DIR + 'convergence_256_sidebyside.png', dpi=300, bbox_inches='tight')
