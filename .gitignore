@@ -34,3 +34,5 @@ data/victre_phantom/*.vti
 
 .DS_Store
 .claude/settings.local.json
+
+cache/*

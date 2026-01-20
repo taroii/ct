@@ -30,7 +30,7 @@ parser.add_argument('--force', action='store_true', help='Force recomputation')
 args = parser.parse_args()
 
 RESULTS_DIR = 'final_figures/'
-CACHE_FILE = 'multiresolution_results.pkl'
+CACHE_FILE = 'cache/multiresolution_results.pkl'
 
 # ============================================================================
 # SHARED CONFIGURATION
@@ -911,16 +911,3 @@ ax.set_ylim([0, 1])
 
 plt.tight_layout()
 plt.savefig(RESULTS_DIR + 'convergence_combined.png', dpi=300, bbox_inches='tight')
-
-
-# ============================================================================
-# SUMMARY
-# ============================================================================
-
-print("\n" + "="*60)
-print("COMPLETE!")
-print("="*60)
-print(f"\nGenerated files in '{RESULTS_DIR}':")
-print("  - rmse_table.txt")
-print("  - convergence_subplots.png")
-print("  - convergence_combined.png")

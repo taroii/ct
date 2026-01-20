@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 
-CACHE_FILE = 'multiresolution_results.pkl'
+CACHE_FILE = 'cache/multiresolution_results.pkl'
 RESULTS_DIR = 'final_figures/'
 
 # Load cached results
