@@ -18,7 +18,7 @@ conda install -c astra-toolbox -c nvidia astra-toolbox
 
 ## Quick Start
 
-### ** Algorithm Comparison** 
+### **Algorithm Comparison** 
 
 Compare single-channel algorithm (L1-DTV method in Sidky et al 2025) to our proposed two-channel approach across multiple image resolutions (512x512, 256x256, 128x128). 
 
@@ -31,7 +31,7 @@ This script generates:
 2. ```final_figures/convergence_subplots.png```
 3. ```final_figures/convergence_combined.png```
 
-### ** Generate Additional Plots**
+### **Generate Additional Plots**
 
 Run this script after running ```compare_methods_multiresolution.py``` to obtain other plots:
 
