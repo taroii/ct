@@ -13,6 +13,7 @@ conda activate ct
 # Install dependencies
 conda install pip
 pip install -r requirements.txt
+conda install -c astra-toolbox -c nvidia astra-toolbox
 ```
 
 ## Quick Start

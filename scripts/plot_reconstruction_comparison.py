@@ -1,5 +1,5 @@
 """
-Generate 2x2 reconstruction comparison figure for 256x256 case.
+Generate 2x2 reconstruction comparison figure for 512x512 case.
 
 Top row: Reconstructions
 Bottom row: Difference from ground truth
@@ -26,20 +26,20 @@ with open(CACHE_FILE, 'rb') as f:
     all_results = pickle.load(f)
 
 # Check if images are in the cache
-if 'xbarim_single' not in all_results[256]:
+if 'xbarim_single' not in all_results[512]:
     print("Error: Reconstructed images not found in cache.")
     print("Run compare_methods_multiresolution.py --force to regenerate with images.")
     exit(1)
 
-# Extract 256x256 results
-r = all_results[256]
+# Extract 512x512 results
+r = all_results[512]
 xbarim_single = r['xbarim_single']
 xbarim_two = r['xbarim_two']
 phimage = r['phimage']
 rmse_single = r['final_rmse_single']
 rmse_two = r['final_rmse_two']
 
-print(f"Loaded 256x256 results:")
+print(f"Loaded 512x512 results:")
 print(f"  Single-channel RMSE: {rmse_single:.6f}")
 print(f"  Two-channel RMSE: {rmse_two:.6f}")
 
@@ -83,11 +83,11 @@ ax.axis('off')
 plt.subplots_adjust(wspace=0, hspace=0)
 
 # Save
-plt.savefig(RESULTS_DIR + 'reconstruction_2x2_256.png', dpi=300, bbox_inches='tight')
-print(f"\nSaved: {RESULTS_DIR}reconstruction_2x2_256.png")
+plt.savefig(RESULTS_DIR + 'reconstruction_2x2_512.png', dpi=300, bbox_inches='tight')
+print(f"\nSaved: {RESULTS_DIR}reconstruction_2x2_512.png")
 
 # ============================================================================
-# CONVERGENCE PLOT (256x256)
+# CONVERGENCE PLOT (512x512)
 # ============================================================================
 
 ierrs_single = r['ierrs_single']
@@ -106,11 +106,11 @@ ax.grid(True, alpha=0.3, which='both')
 ax.set_ylim([0, 1])
 
 plt.tight_layout()
-plt.savefig(RESULTS_DIR + 'convergence_256.png', dpi=300, bbox_inches='tight')
-print(f"Saved: {RESULTS_DIR}convergence_256.png")
+plt.savefig(RESULTS_DIR + 'convergence_512.png', dpi=300, bbox_inches='tight')
+print(f"Saved: {RESULTS_DIR}convergence_512.png")
 
 # ============================================================================
-# CONVERGENCE PLOT LOG-LOG (256x256)
+# CONVERGENCE PLOT LOG-LOG (512x512)
 # ============================================================================
 
 fig3, ax = plt.subplots(figsize=(5, 4))
@@ -124,11 +124,11 @@ ax.legend(fontsize=10)
 ax.grid(True, alpha=0.3, which='both')
 
 plt.tight_layout()
-plt.savefig(RESULTS_DIR + 'convergence_256_loglog.png', dpi=300, bbox_inches='tight')
-print(f"Saved: {RESULTS_DIR}convergence_256_loglog.png")
+plt.savefig(RESULTS_DIR + 'convergence_512_loglog.png', dpi=300, bbox_inches='tight')
+print(f"Saved: {RESULTS_DIR}convergence_512_loglog.png")
 
 # ============================================================================
-# CONVERGENCE PLOT SIDE BY SIDE (256x256)
+# CONVERGENCE PLOT SIDE BY SIDE (512x512)
 # ============================================================================
 
 fig4, (ax_left, ax_right) = plt.subplots(1, 2, figsize=(10, 5))
@@ -150,7 +150,7 @@ fig4.supxlabel('Iteration', fontsize=11)
 fig4.supylabel('Image RMSE', fontsize=11)
 
 plt.tight_layout()
-plt.savefig(RESULTS_DIR + 'convergence_256_sidebyside.png', dpi=300, bbox_inches='tight')
-print(f"Saved: {RESULTS_DIR}convergence_256_sidebyside.png")
+plt.savefig(RESULTS_DIR + 'convergence_512_sidebyside.png', dpi=300, bbox_inches='tight')
+print(f"Saved: {RESULTS_DIR}convergence_512_sidebyside.png")
 
 plt.show()
