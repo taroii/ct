@@ -1,0 +1,124 @@
+
+--force specified, running full reconstruction...
+
+============================================================
+RUNNING RECONSTRUCTION FOR 512x512 (mfact=1)
+alpha=1.7, beta=5.0, itermax=2000
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 4665.61
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4971, sig: 66.795996, tau: 0.006680
+  Iter 1: data_err=0.574231, img_err=0.603137, TV=0.00
+  Iter 2: data_err=0.522204, img_err=0.559762, TV=1025.46
+  Iter 5: data_err=0.320474, img_err=0.399054, TV=4543.07
+  Iter 10: data_err=0.358443, img_err=0.413924, TV=8512.98
+  Iter 20: data_err=0.179959, img_err=0.281471, TV=7089.27
+  Iter 50: data_err=0.258387, img_err=0.310433, TV=5448.55
+  Iter 100: data_err=0.057658, img_err=0.192654, TV=5727.70
+  Iter 200: data_err=0.062295, img_err=0.195283, TV=5078.80
+  Iter 300: data_err=0.042777, img_err=0.185101, TV=4606.06
+  Iter 400: data_err=0.010549, img_err=0.173769, TV=4544.66
+  Iter 500: data_err=0.005777, img_err=0.162521, TV=4610.87
+Running two-channel...
+  ||Sigma^(1/2) K||=1.9730  sig_hi=50.684462  sig_lo=202.737850  tau=0.005063  tau*sig_hi*||.||^2=0.999001  (< 1 required)
+  Iter 1: data_err=0.571389, img_err=0.603137, TV=0.00
+  Iter 2: data_err=0.455244, img_err=0.506211, TV=1264.55
+  Iter 5: data_err=0.138408, img_err=0.274630, TV=6600.42
+  Iter 10: data_err=0.366652, img_err=0.426113, TV=8299.68
+  Iter 20: data_err=0.132302, img_err=0.245117, TV=7545.33
+  Iter 50: data_err=0.093363, img_err=0.186804, TV=6921.28
+  Iter 100: data_err=0.077504, img_err=0.205852, TV=6123.96
+  Iter 200: data_err=0.013261, img_err=0.171893, TV=4937.06
+  Iter 300: data_err=0.006143, img_err=0.167134, TV=4654.57
+  Iter 400: data_err=0.003639, img_err=0.154371, TV=4218.15
+  Iter 500: data_err=0.001790, img_err=0.143733, TV=4125.54
+  Single-channel: 115.0s, final RMSE=0.118041
+  Two-channel: 174.9s, final RMSE=0.119338
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=2000
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4939, sig: 66.941119, tau: 0.006694
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489497, img_err=0.532448, TV=648.03
+  Iter 5: data_err=0.247493, img_err=0.342726, TV=2506.90
+  Iter 10: data_err=0.439366, img_err=0.483098, TV=3934.51
+  Iter 20: data_err=0.385301, img_err=0.427185, TV=3589.12
+  Iter 50: data_err=0.109406, img_err=0.183473, TV=4308.10
+  Iter 100: data_err=0.114287, img_err=0.220239, TV=3653.57
+  Iter 200: data_err=0.040453, img_err=0.182876, TV=3272.63
+  Iter 300: data_err=0.013056, img_err=0.148163, TV=2973.27
+  Iter 400: data_err=0.004673, img_err=0.116672, TV=2959.75
+  Iter 500: data_err=0.002350, img_err=0.098403, TV=2775.24
+Running two-channel...
+  ||Sigma^(1/2) K||=2.4844  sig_hi=40.251530  sig_lo=161.006119  tau=0.004021  tau*sig_hi*||.||^2=0.999001  (< 1 required)
+  Iter 1: data_err=0.571752, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.452339, img_err=0.503402, TV=475.51
+  Iter 5: data_err=0.126699, img_err=0.269032, TV=2568.24
+  Iter 10: data_err=0.344728, img_err=0.405887, TV=3505.88
+  Iter 20: data_err=0.134499, img_err=0.239997, TV=3463.33
+  Iter 50: data_err=0.104229, img_err=0.183606, TV=4175.22
+  Iter 100: data_err=0.058820, img_err=0.189000, TV=3838.51
+  Iter 200: data_err=0.011175, img_err=0.151920, TV=3135.46
+  Iter 300: data_err=0.006960, img_err=0.140882, TV=3026.10
+  Iter 400: data_err=0.003847, img_err=0.120186, TV=2693.60
+  Iter 500: data_err=0.002086, img_err=0.102623, TV=2619.65
+  Single-channel: 48.4s, final RMSE=0.019007
+  Two-channel: 72.7s, final RMSE=0.049586
+
+============================================================
+RUNNING RECONSTRUCTION FOR 128x128 (mfact=4)
+alpha=1.95, beta=10.0, itermax=2000
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 1179.57
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4982, sig: 66.746367, tau: 0.006675
+  Iter 1: data_err=0.574795, img_err=0.602931, TV=0.00
+  Iter 2: data_err=0.410298, img_err=0.467437, TV=485.55
+  Iter 5: data_err=0.179388, img_err=0.280690, TV=1620.50
+  Iter 10: data_err=0.176114, img_err=0.266370, TV=1872.41
+  Iter 20: data_err=0.314731, img_err=0.346388, TV=2084.78
+  Iter 50: data_err=0.071432, img_err=0.146437, TV=1710.62
+  Iter 100: data_err=0.027586, img_err=0.126393, TV=1616.42
+  Iter 200: data_err=0.005085, img_err=0.082706, TV=1409.42
+  Iter 300: data_err=0.003280, img_err=0.057668, TV=1327.41
+  Iter 400: data_err=0.001755, img_err=0.038884, TV=1280.84
+  Iter 500: data_err=0.001293, img_err=0.033217, TV=1252.97
+Running two-channel...
+  ||Sigma^(1/2) K||=3.5544  sig_hi=28.134424  sig_lo=112.537694  tau=0.002811  tau*sig_hi*||.||^2=0.999001  (< 1 required)
+  Iter 1: data_err=0.572262, img_err=0.602931, TV=0.00
+  Iter 2: data_err=0.457967, img_err=0.507210, TV=197.17
+  Iter 5: data_err=0.143109, img_err=0.274604, TV=1131.06
+  Iter 10: data_err=0.351216, img_err=0.409524, TV=1572.45
+  Iter 20: data_err=0.122062, img_err=0.226907, TV=1627.18
+  Iter 50: data_err=0.086113, img_err=0.151754, TV=1841.78
+  Iter 100: data_err=0.073922, img_err=0.169788, TV=1831.60
+  Iter 200: data_err=0.015396, img_err=0.116832, TV=1628.91
+  Iter 300: data_err=0.005895, img_err=0.081551, TV=1529.16
+  Iter 400: data_err=0.004240, img_err=0.056913, TV=1362.85
+  Iter 500: data_err=0.002858, img_err=0.042585, TV=1325.48
+  Single-channel: 26.0s, final RMSE=0.001395
+  Two-channel: 39.0s, final RMSE=0.008891
+
+Saving results to 'cache/multiresolution_results.pkl'...
+Traceback (most recent call last):
+  File "/Users/taro/Documents/ct/scripts/compare_methods_multiresolution.py", line 863, in <module>
+    with open(CACHE_FILE, 'wb') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'cache/multiresolution_results.pkl'
+ERROR conda.cli.main_run:execute(127): `conda run python scripts/compare_methods_multiresolution.py --force` failed. (See above for error)

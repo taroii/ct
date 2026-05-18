@@ -36,3 +36,4 @@ data/victre_phantom/*.vti
 .claude/settings.local.json
 
 cache/
+ct-2/

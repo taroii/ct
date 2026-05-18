@@ -21,14 +21,6 @@ import argparse
 # Set seed for reproducibility
 np.random.seed(42)
 
-# ============================================================================
-# COMMAND LINE ARGUMENTS
-# ============================================================================
-
-parser = argparse.ArgumentParser(description='Multi-resolution DTV comparison')
-parser.add_argument('--force', action='store_true', help='Force recomputation')
-args = parser.parse_args()
-
 RESULTS_DIR = 'final_figures/'
 CACHE_FILE = 'cache/multiresolution_results.pkl'
 
@@ -68,38 +60,28 @@ sigma_l1_scale = 1.0   # r_l1 = sig_l1 / sig_hi  (used for yim)
 # 256: alpha=1.9, beta=10
 # 512: alpha=1.7, beta=5
 RESOLUTION_PARAMS = {
-    128: {'alpha': 1.95, 'beta': 10.0, 'itermax': 500},
-    256: {'alpha': 1.9, 'beta': 10.0, 'itermax': 500},
-    512: {'alpha': 1.7, 'beta': 5.0, 'itermax': 500},
+    128: {'alpha': 1.95, 'beta': 10.0, 'itermax': 2000},
+    256: {'alpha': 1.9, 'beta': 10.0, 'itermax': 2000},
+    512: {'alpha': 1.7, 'beta': 5.0, 'itermax': 2000},
 }
 
 # mfact values: 1->512, 2->256, 4->128
 MFACT_VALUES = [1, 2, 4]
 
 # ============================================================================
-# CHECK FOR CACHED RESULTS
+# RECONSTRUCTION FUNCTION
 # ============================================================================
 
-if not args.force and os.path.exists(CACHE_FILE):
-    print(f"\nFound cached results in '{CACHE_FILE}'")
-    print("Loading cached results (use --force to recompute)...\n")
-    try:
-        with open(CACHE_FILE, 'rb') as f:
-            all_results = pickle.load(f)
-        RUN_RECONSTRUCTION = False
-        print("Cached results loaded!")
-    except Exception as e:
-        print(f"Error loading cache: {e}. Running full reconstruction...")
-        RUN_RECONSTRUCTION = True
-else:
-    if args.force:
-        print("\n--force specified, running full reconstruction...")
-    RUN_RECONSTRUCTION = True
-    all_results = {}
 
+def run_reconstruction_for_mfact(mfact, snapshot_iters=None):
+    """Run both single and two-channel reconstruction for a given mfact.
 
-def run_reconstruction_for_mfact(mfact):
-    """Run both single and two-channel reconstruction for a given mfact."""
+    If snapshot_iters is a list/set of iteration numbers, the result dict
+    will include 'snapshots_single' and 'snapshots_two' dicts mapping
+    each requested iteration to a copy of xbarim at that point.
+    """
+
+    snapshot_iters = set(snapshot_iters) if snapshot_iters else set()
 
     resolution = int(512/mfact)
     params = RESOLUTION_PARAMS[resolution]
@@ -535,6 +517,7 @@ def run_reconstruction_for_mfact(mfact):
     ierrs_single = []
     derrs_single = []
     tvs_single = []
+    snapshots_single = {}
     istops = [1, 2, 5, 10, 20, 50, 100, 200, 300, 400, 500]
     theta = 1.0
     start_time = time.time()
@@ -608,6 +591,9 @@ def run_reconstruction_for_mfact(mfact):
 
         idist = sqrt(((xbarim - phimage)**2).sum()/(nx*ny))
         ierrs_single.append(idist)
+
+        if itr in snapshot_iters:
+            snapshots_single[itr] = xbarim.copy()
 
         if itr in istops:
             print(f"  Iter {itr}: data_err={derrs_single[-1]:.6f}, img_err={ierrs_single[-1]:.6f}, TV={tvs_single[-1]:.2f}")
@@ -732,6 +718,7 @@ def run_reconstruction_for_mfact(mfact):
     ierrs_two = []
     derrs_two = []
     tvs_two = []
+    snapshots_two = {}
     theta = 1.0
     start_time = time.time()
 
@@ -825,6 +812,9 @@ def run_reconstruction_for_mfact(mfact):
         idist = sqrt(((xbarim - phimage)**2).sum()/(nx*ny))
         ierrs_two.append(idist)
 
+        if itr in snapshot_iters:
+            snapshots_two[itr] = xbarim.copy()
+
         if itr in istops:
             print(f"  Iter {itr}: data_err={derrs_two[-1]:.6f}, img_err={ierrs_two[-1]:.6f}, TV={tvs_two[-1]:.2f}")
 
@@ -846,116 +836,122 @@ def run_reconstruction_for_mfact(mfact):
         'xbarim_two': xbarim_two,
         'phimage': phimage,
         'truetv': truetv,
+        'snapshots_single': snapshots_single,
+        'snapshots_two': snapshots_two,
     }
 
 
-# ============================================================================
-# RUN RECONSTRUCTIONS
-# ============================================================================
+def main():
+    parser = argparse.ArgumentParser(description='Multi-resolution DTV comparison')
+    parser.add_argument('--force', action='store_true', help='Force recomputation')
+    args = parser.parse_args()
 
-if RUN_RECONSTRUCTION:
-    for mfact in MFACT_VALUES:
-        resolution = int(512/mfact)
-        result = run_reconstruction_for_mfact(mfact)
-        all_results[resolution] = result
+    if not args.force and os.path.exists(CACHE_FILE):
+        print(f"\nFound cached results in '{CACHE_FILE}'")
+        print("Loading cached results (use --force to recompute)...\n")
+        try:
+            with open(CACHE_FILE, 'rb') as f:
+                all_results = pickle.load(f)
+            run_reconstruction = False
+            print("Cached results loaded!")
+        except Exception as e:
+            print(f"Error loading cache: {e}. Running full reconstruction...")
+            run_reconstruction = True
+            all_results = {}
+    else:
+        if args.force:
+            print("\n--force specified, running full reconstruction...")
+        run_reconstruction = True
+        all_results = {}
 
-    print(f"\nSaving results to '{CACHE_FILE}'...")
-    with open(CACHE_FILE, 'wb') as f:
-        pickle.dump(all_results, f)
-    print("Results saved!")
+    if run_reconstruction:
+        for mfact in MFACT_VALUES:
+            resolution = int(512/mfact)
+            result = run_reconstruction_for_mfact(mfact)
+            all_results[resolution] = result
 
+        print(f"\nSaving results to '{CACHE_FILE}'...")
+        with open(CACHE_FILE, 'wb') as f:
+            pickle.dump(all_results, f)
+        print("Results saved!")
 
-# ============================================================================
-# GENERATE TABLE
-# ============================================================================
+    print("\n" + "="*60)
+    print("RMSE COMPARISON TABLE")
+    print("="*60)
 
-print("\n" + "="*60)
-print("RMSE COMPARISON TABLE")
-print("="*60)
+    print("\n| Resolution | Single-Channel RMSE | Two-Channel RMSE | Improvement |")
+    print("|------------|---------------------|------------------|-------------|")
 
-print("\n| Resolution | Single-Channel RMSE | Two-Channel RMSE | Improvement |")
-print("|------------|---------------------|------------------|-------------|")
-
-for res in [512, 256, 128]:
-    r = all_results[res]
-    improvement = (r['final_rmse_single'] - r['final_rmse_two']) / r['final_rmse_single'] * 100
-    print(f"| {res}x{res}    | {r['final_rmse_single']:.6f}            | {r['final_rmse_two']:.6f}         | {improvement:+.2f}%      |")
-
-# Save table as text file
-with open(RESULTS_DIR + 'rmse_table.txt', 'w') as f:
-    f.write("RMSE Comparison: Single-Channel vs Two-Channel DTV\n")
-    f.write("="*55 + "\n\n")
-    f.write("| Resolution | Single-Channel RMSE | Two-Channel RMSE | Improvement |\n")
-    f.write("|------------|---------------------|------------------|-------------|\n")
     for res in [512, 256, 128]:
         r = all_results[res]
         improvement = (r['final_rmse_single'] - r['final_rmse_two']) / r['final_rmse_single'] * 100
-        f.write(f"| {res}x{res}    | {r['final_rmse_single']:.6f}            | {r['final_rmse_two']:.6f}         | {improvement:+.2f}%      |\n")
+        print(f"| {res}x{res}    | {r['final_rmse_single']:.6f}            | {r['final_rmse_two']:.6f}         | {improvement:+.2f}%      |")
 
-print(f"\nTable saved to '{RESULTS_DIR}rmse_table.txt'")
+    with open(RESULTS_DIR + 'rmse_table.txt', 'w') as f:
+        f.write("RMSE Comparison: Single-Channel vs Two-Channel DTV\n")
+        f.write("="*55 + "\n\n")
+        f.write("| Resolution | Single-Channel RMSE | Two-Channel RMSE | Improvement |\n")
+        f.write("|------------|---------------------|------------------|-------------|\n")
+        for res in [512, 256, 128]:
+            r = all_results[res]
+            improvement = (r['final_rmse_single'] - r['final_rmse_two']) / r['final_rmse_single'] * 100
+            f.write(f"| {res}x{res}    | {r['final_rmse_single']:.6f}            | {r['final_rmse_two']:.6f}         | {improvement:+.2f}%      |\n")
 
+    print(f"\nTable saved to '{RESULTS_DIR}rmse_table.txt'")
 
-# ============================================================================
-# FIGURE 1: THREE SUBPLOTS (one per resolution)
-# ============================================================================
+    print("\nGenerating three-subplot figure...")
 
-print("\nGenerating three-subplot figure...")
+    fig, axes = plt.subplots(1, 3, figsize=(10, 3.5))
 
-fig, axes = plt.subplots(1, 3, figsize=(10, 3.5))
+    for idx, res in enumerate([512, 256, 128]):
+        ax = axes[idx]
+        r = all_results[res]
 
-for idx, res in enumerate([512, 256, 128]):
-    ax = axes[idx]
-    r = all_results[res]
+        iterations = range(1, len(r['ierrs_single']) + 1)
 
-    iterations = range(1, len(r['ierrs_single']) + 1)
+        ax.semilogy(iterations, r['ierrs_single'], 'r-', linewidth=1.5, label='Single-Channel')
+        ax.semilogy(iterations, r['ierrs_two'], 'b-', linewidth=1.5, label='Two-Channel')
 
-    ax.semilogy(iterations, r['ierrs_single'], 'r-', linewidth=1.5, label='Single-Channel')
-    ax.semilogy(iterations, r['ierrs_two'], 'b-', linewidth=1.5, label='Two-Channel')
+        ax.set_xlabel('Iteration', fontsize=10)
+        if idx == 0:
+            ax.set_ylabel('Image RMSE', fontsize=10)
+        ax.set_title(f'{res}x{res}', fontsize=11, fontweight='bold')
+        ax.grid(True, alpha=0.3, which='both')
+        ax.legend(fontsize=8, loc='upper right')
+
+        ax.set_ylim([0, 1])
+
+    plt.tight_layout()
+    plt.savefig(RESULTS_DIR + 'convergence_subplots.png', dpi=300, bbox_inches='tight')
+    print(f"Saved: {RESULTS_DIR}convergence_subplots.png")
+
+    print("Generating combined single-plot figure...")
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+
+    colors = {'512': '#1f77b4', '256': '#ff7f0e', '128': '#2ca02c'}
+
+    for res in [512, 256, 128]:
+        r = all_results[res]
+        iterations = range(1, len(r['ierrs_single']) + 1)
+
+        ax.semilogy(iterations, r['ierrs_single'],
+                    color=colors[str(res)], linestyle='-', linewidth=1.5,
+                    label=f'{res}x{res} Single')
+        ax.semilogy(iterations, r['ierrs_two'],
+                    color=colors[str(res)], linestyle='--', linewidth=1.5,
+                    label=f'{res}x{res} Two-Ch')
 
     ax.set_xlabel('Iteration', fontsize=10)
-    if idx == 0:
-        ax.set_ylabel('Image RMSE', fontsize=10)
-    ax.set_title(f'{res}x{res}', fontsize=11, fontweight='bold')
+    ax.set_ylabel('Image RMSE', fontsize=10)
+    ax.set_title('Convergence Comparison', fontsize=11, fontweight='bold')
     ax.grid(True, alpha=0.3, which='both')
-    ax.legend(fontsize=8, loc='upper right')
-
-    # Set consistent y-axis range
+    ax.legend(fontsize=8, loc='upper right', ncol=2)
     ax.set_ylim([0, 1])
 
-plt.tight_layout()
-plt.savefig(RESULTS_DIR + 'convergence_subplots.png', dpi=300, bbox_inches='tight')
-print(f"Saved: {RESULTS_DIR}convergence_subplots.png")
+    plt.tight_layout()
+    plt.savefig(RESULTS_DIR + 'convergence_combined.png', dpi=300, bbox_inches='tight')
 
 
-# ============================================================================
-# FIGURE 2: COMBINED SINGLE PLOT
-# ============================================================================
-
-print("Generating combined single-plot figure...")
-
-fig, ax = plt.subplots(figsize=(5, 4))
-
-colors = {'512': '#1f77b4', '256': '#ff7f0e', '128': '#2ca02c'}
-linestyles_single = {'512': '-', '256': '-', '128': '-'}
-linestyles_two = {'512': '--', '256': '--', '128': '--'}
-
-for res in [512, 256, 128]:
-    r = all_results[res]
-    iterations = range(1, len(r['ierrs_single']) + 1)
-
-    ax.semilogy(iterations, r['ierrs_single'],
-                color=colors[str(res)], linestyle='-', linewidth=1.5,
-                label=f'{res}x{res} Single')
-    ax.semilogy(iterations, r['ierrs_two'],
-                color=colors[str(res)], linestyle='--', linewidth=1.5,
-                label=f'{res}x{res} Two-Ch')
-
-ax.set_xlabel('Iteration', fontsize=10)
-ax.set_ylabel('Image RMSE', fontsize=10)
-ax.set_title('Convergence Comparison', fontsize=11, fontweight='bold')
-ax.grid(True, alpha=0.3, which='both')
-ax.legend(fontsize=8, loc='upper right', ncol=2)
-ax.set_ylim([0, 1])
-
-plt.tight_layout()
-plt.savefig(RESULTS_DIR + 'convergence_combined.png', dpi=300, bbox_inches='tight')
+if __name__ == "__main__":
+    main()

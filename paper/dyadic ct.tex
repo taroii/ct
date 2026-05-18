@@ -1,0 +1,501 @@
+\documentclass{article}
+\usepackage{arxiv}
+%\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{mathtools}
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{doi}
+\usepackage{amsmath}
+\usepackage{physics}
+\usepackage{wrapfig}
+\usepackage{bm}
+\usepackage{algorithm,algpseudocode}
+\usepackage{xcolor}
+\usepackage{forest}
+\usepackage{tcolorbox}
+\usepackage{tikz-cd}
+\usepackage{enumitem}
+
+\newenvironment{proof}{\paragraph{Proof:}}{\hfill$\square$}
+\newenvironment{solution}{\paragraph{Solution:}}{\hfill$\square$}
+
+%—– Blackboard‐bold sets —–
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+%—– Probability & expectation —–
+\newcommand{\Prb}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+
+%—– Common math operators —–
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\argmax}{\operatorname*{arg\,max}}
+\newcommand{\argmin}{\operatorname*{arg\,min}}
+\newcommand{\ind}{\mathbf{1}}
+
+%—– Norms, inner products —–
+\newcommand{\inner}[2]{\left\langle #1, #2 \right\rangle}
+
+%—– Calligraphic sets —–
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cT}{\mathcal{T}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cE}{\mathcal{E}}
+
+%—– Miscellaneous —–
+\newcommand{\eps}{\varepsilon}
+\newcommand{\dt}{\mathrm{d}t}
+\newcommand{\given}{\,\bigl\vert\,}
+
+\newcommand{\half}{\tfrac12}
+\newcommand{\thalf}{\tfrac32}
+
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+\newcommand{\note}[1]{\begin{tcolorbox}
+\textbf{Note:} #1\end{tcolorbox}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{conjecture}[theorem]{Conjecture}
+
+\title{Dyadic Multi-Channel Primal--Dual Reconstruction for Limited-Angle CT}
+\date{}
+
+\author{ \href{https://orcid.org/0000-0003-1700-756X}{William Chang} \\
+    Department of Applied Mathematics\\
+    University of California, Los Angeles\\
+    Los Angeles, CA \\
+    \url{https://williamc.me/} \\
+    \And
+}
+
+\renewcommand{\headeright}{}
+\renewcommand{\undertitle}{}
+
+\hypersetup{
+pdftitle={Dyadic Multi-Channel Primal-Dual CT Reconstruction},
+pdfsubject={Limited-angle tomography},
+pdfauthor={William Chang},
+pdfkeywords={Chambolle-Pock, fan-beam CT, limited angle, multichannel preconditioning},
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We propose a dyadic multi-channel extension of the Chambolle--Pock (CP)
+primal--dual algorithm for limited-angle fan-beam CT reconstruction with
+directional total variation (DTV) regularization. The ramp-filtered data
+fidelity is split into a partition-of-unity bank of $k$ band-pass
+channels whose supports halve in bandwidth toward DC, mirroring the
+location of the limited-angle null space in Fourier space. Each band
+carries an independent dual variable with its own step size $\sigma_i$
+and data tolerance $\eps_i$, enabling preferential refinement of the
+low-frequency content that is poorly determined by sparse-view data.
+We derive the analogue of the standard CP convergence condition for the
+$k$-channel product-space saddle point, give an analytic criterion for
+choosing the dyadic depth $k$ from the detector geometry, and specify a
+geometric $\sigma_i = 2^i \sigma_0$ scaling that compensates the
+ramp's spectral bias so the operator norm grows only linearly in $k$
+rather than exponentially.
+\end{abstract}
+
+%=====================================================================
+\section{Introduction}
+%=====================================================================
+
+In sparse-view or limited-angle CT, the discrete X-ray transform $X$
+has a sizable null space concentrated at low spatial frequencies, where
+missing projection angles fail to constrain slowly-varying image
+content \citep{sidky2012}. Single-channel iterative methods such as
+Chambolle--Pock with TV regularization \citep{chambolle2011,sidky2012}
+treat the data residual as a single object in the dual space and apply
+one step size $\sigma$ to its entire spectral content. This is
+suboptimal: the high-frequency portion of the residual converges
+rapidly because it is well determined by the data, while the
+low-frequency portion converges slowly precisely because it is the part
+the prior must regularize. A single $\sigma$ cannot accommodate both
+regimes.
+
+The classical remedy is a two-channel split that separates the
+data fidelity into low-frequency (LF) and high-frequency (HF) bands
+\citep{sidky2014}. Each band gets its own dual variable and its own
+step size, and the convergence condition becomes a product-space CP
+inequality with diagonal dual preconditioning. In practice the two-channel
+split provides only a modest improvement over single-channel CP, in
+part because a binary split is too coarse: the LF tail that drives the
+null-space ambiguity is concentrated in just the bottom few percent of
+the spectrum, and a two-channel split that puts everything below some
+cutoff $f_c$ into one LF channel still imposes a uniform $\sigma_\text{lo}$
+across an unbalanced range.
+
+We extend the two-channel idea to a \emph{dyadic} bank of $k$ channels,
+where channel $0$ covers the top half of the spectrum, channel $i$
+covers the dyadic shell $[f_\text{max}/2^{i+1},\, f_\text{max}/2^i]$,
+and channel $k-1$ is the closed LF tail. The construction has three
+desirable properties:
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Partition of unity.} By construction the squared
+    filter magnitudes telescope to the single-channel ramp,
+    $\sum_i |f_i(u)|^2 = |u| = |f_\text{single}(u)|^2$. Splitting does
+    not inflate the operator norm relative to a partition-of-unity
+    decomposition with matched $\sigma_i$.
+  \item \textbf{Analytic depth selection.} The dyadic depth $k$ is
+    determined by the detector geometry: the smallest band must
+    contain at least $\sim 8$ Fourier bins for the Hanning shape to
+    be discretely faithful, giving $k_\text{max} = \lfloor \log_2(\text{nbins}/8) \rfloor$.
+  \item \textbf{LF-emphasized dual step schedule.} The choice
+    $\sigma_i = 2^i \sigma_0$ scales the dual step inversely to the
+    band's ramp energy, so $\sigma_i \|R_i X\|^2 \approx \sigma_0 \|R_0 X\|^2$
+    is approximately constant across $i$. The resulting weighted
+    operator norm grows linearly in $k$, $\|\Sigma^{1/2} K\|^2 \approx k \cdot \|R_0 X\|^2$,
+    rather than exponentially.
+\end{enumerate}
+
+Each band's data residual is constrained to a closed $\ell_2$ ball of
+radius $\eps_i \sqrt{\text{nrays}}$, giving $k$ independent feasibility
+tolerances that can encode prior knowledge about per-band noise levels
+or trust. The remainder of the variational problem---directional
+TV in $x$ and $y$ via DTV duals, positivity, and an $\ell_1$ image
+prior---is handled exactly as in the single-channel case
+\citep{rigie2015,kim2017}.
+
+%=====================================================================
+\section{Preliminaries}
+%=====================================================================
+
+\subsection{Geometry and operators}
+
+Let $f \in \R^{N}$ denote a discretized image on an $n_x \times n_y$
+grid ($N = n_x n_y$). Let $X : \R^N \to \R^M$ be the fan-beam X-ray
+transform discretized over $n_\text{views}$ source positions and
+$n_\text{bins}$ detector bins ($M = n_\text{views} \cdot n_\text{bins}$).
+The detector coordinate is $u \in [-L/2,\, L/2]$ with $L = \text{detectorlength}$
+and $b_{00} = -L/2$. Let $\nabla_x, \nabla_y : \R^N \to \R^N$ be the
+forward finite-difference gradient operators, with adjoints $\nabla_x^*$,
+$\nabla_y^*$.
+
+We work in the convention of \citet{sidky2014} in which a ramp-filter
+$R = X \cdot F$ is incorporated into the data fidelity, where
+$F : \R^M \to \R^M$ is the Fourier multiplier with profile
+$\hat F(u) = \sqrt{|u|}$. The full filtered projector is $R X$, and we
+write $R^* R X = X^* F^* F X$ as the filtered backprojection composed
+with projection.
+
+\subsection{Single-channel CP reconstruction}
+
+The single-channel Chambolle--Pock saddle-point problem is
+\begin{equation}\label{eq:cp-single}
+  \min_{f \ge 0}\ \alpha\, \mathrm{TV}_\text{D}(f)
+    + \beta\, \|f\|_1
+    \quad \text{s.t.}\quad
+    \|R(X f - g)\|_2 \le \eps \sqrt{M},
+\end{equation}
+where $g \in \R^M$ is the measured sinogram, $\mathrm{TV}_\text{D}$ is
+the directional total variation \citep{rigie2015}, and the data
+constraint is a closed $\ell_2$ ball of radius $\eps \sqrt{M}$ around
+the data. The dual variables are $y \in \R^M$ for the data constraint,
+$p_x, p_y \in \R^N$ for the gradient channels, and $q \in \R^N$ for
+$\|f\|_1$. The standard CP iteration with relaxation $\rho$ produces
+the primal--dual update with convergence condition
+\begin{equation}\label{eq:cp-single-cond}
+  \tau\, \sigma\, \|K\|_2^2 < 1,\qquad
+  K = \begin{bmatrix} R X \\ \nabla_x \\ \nabla_y \\ I \end{bmatrix},
+\end{equation}
+where $\sigma$ is the dual step and $\tau$ the primal step
+\citep{chambolle2011}. In practice $\tau\,\sigma\,\|K\|^2 = (1+\delta)^{-1}$
+for a small slack $\delta > 0$.
+
+\subsection{Two-channel split}
+
+Let $H_c(u) = \tfrac12 (1 + \cos(\pi u/u_c))\, \ind_{|u|<u_c}$ be a
+Hanning window with half-width $u_c = |b_{00}|/c$. The two-channel
+split of \citet{sidky2014} writes the ramp filter as
+\begin{equation}\label{eq:two-channel-filters}
+  f_\text{hi}(u) = \sqrt{|u|}\,\sqrt{1 - H_{c_\text{hi}}(u)},
+  \qquad
+  f_\text{lo}(u) = \sqrt{|u|}\,\sqrt{H_{c_\text{lo}}(u)},
+\end{equation}
+and produces a saddle-point problem with independent duals
+$y_\text{hi}, y_\text{lo}$. When $c_\text{hi} = c_\text{lo}$ this is a
+partition of unity ($|f_\text{hi}|^2 + |f_\text{lo}|^2 = |u|$); when
+$c_\text{hi} \neq c_\text{lo}$ the bands either overlap or leave a
+coverage gap, both of which inflate $\|K\|$.
+
+The convergence condition becomes the product-space CP inequality with
+diagonal dual preconditioning $\Sigma = \diag(\sigma_\text{hi} I, \sigma_\text{lo} I)$:
+\begin{equation}\label{eq:two-cond}
+  \tau\, \left\|\Sigma^{1/2}
+    \begin{bmatrix} R_\text{hi} X \\ R_\text{lo} X \end{bmatrix}
+    \right\|_2^2 < 1,
+\end{equation}
+or equivalently $\tau\, \big(\sigma_\text{hi}\|R_\text{hi}X\|^2
++ \sigma_\text{lo}\|R_\text{lo}X\|^2\big) < 1$.
+
+%=====================================================================
+\section{Dyadic Multi-Channel Algorithm}
+%=====================================================================
+
+\subsection{Dyadic filter bank}\label{sec:dyadic-bank}
+
+Fix $k \ge 2$. Define the dyadic Hanning sequence
+$H_i(u) = H_{2^i}(u)$ for $i = 0, 1, \ldots, k-1$, with half-widths
+$|b_{00}|/2^i$. The $k$ band-pass filters are defined by telescoping
+differences:
+\begin{equation}\label{eq:dyadic-filters}
+  f_i(u) = \sqrt{|u|}\,\sqrt{w_i(u)},
+  \qquad
+  w_i(u) = \begin{cases}
+    1 - H_1(u) & i = 0 \\
+    H_i(u) - H_{i+1}(u) & 0 < i < k-1 \\
+    H_{k-1}(u) & i = k-1.
+  \end{cases}
+\end{equation}
+Channel $0$ is the top half of the spectrum, channel $i$
+($0 < i < k-1$) is the dyadic shell $[|b_{00}|/2^{i+1},\,|b_{00}|/2^i]$,
+and channel $k-1$ is the closed LF tail $[0,\,|b_{00}|/2^{k-1}]$. Each
+$R_i = X \cdot F_i$ is the projector composed with the Fourier
+multiplier of profile $f_i$. By construction $\sum_i w_i(u) = 1$ for
+all $u$, so the squared filter magnitudes form a partition of unity:
+\begin{equation}\label{eq:pou}
+  \sum_{i=0}^{k-1} |f_i(u)|^2 = |u| = |f_\text{single}(u)|^2.
+\end{equation}
+
+\subsection{Analytic depth selection}\label{sec:depth}
+
+The dyadic depth $k$ is bounded above by the detector's spectral
+resolution: the lowest band has half-width $|b_{00}|/2^{k-1}$, which
+corresponds to approximately $\text{nbins}/2^k$ Fourier bins on the
+discrete grid. To keep the Hanning shape numerically faithful we
+require at least $m \ge 8$ bins per band:
+\begin{equation}\label{eq:k-max}
+  k_\text{max} = \left\lfloor \log_2(\text{nbins}/m) \right\rfloor.
+\end{equation}
+For our $\text{nbins} = 1024$ detector with $m = 8$, this gives
+$k_\text{max} = 7$. Deeper splits put the LF tail inside the
+discretization noise floor and provide no further refinement of the
+low-frequency dual variable.
+
+\begin{remark}
+The image-grid criterion---the lowest band should represent at least
+one cycle across the image, $|b_{00}|/2^{k-1} \ge 1/x_\text{image}$---is
+looser than \eqref{eq:k-max} in oversampled-detector geometries
+typical of CT and is therefore not binding. The detector criterion is
+the operative one.
+\end{remark}
+
+\subsection{Dual step scaling}\label{sec:sigma}
+
+The ramp filter $\sqrt{|u|}$ places most of its energy at high
+frequencies. Direct integration of $|f_i|^2$ shows that the dyadic
+bands carry geometrically decreasing energy:
+\begin{equation}\label{eq:band-energy}
+  \int |f_i(u)|^2\,du \approx 2^{-i} \cdot \int |f_0(u)|^2\,du,
+\end{equation}
+so the LF tail contains a vanishingly small fraction of the total
+spectral energy. Naively applying a single $\sigma$ to all bands
+would mean the LF dual receives a comparatively tiny update per
+iteration.
+
+To compensate, we adopt a \emph{dyadic dual schedule}
+\begin{equation}\label{eq:sigma-schedule}
+  \sigma_i = 2^i \sigma_0,
+\end{equation}
+which exactly cancels the energy decay in \eqref{eq:band-energy}, so
+that the contribution of band $i$ to the squared weighted operator
+norm is approximately independent of $i$:
+\begin{equation}\label{eq:sigma-cancels}
+  \sigma_i \, \|R_i X\|^2 \approx 2^i \cdot 2^{-i} \cdot \sigma_0 \|R_0 X\|^2
+    = \sigma_0 \|R_0 X\|^2.
+\end{equation}
+Consequently the weighted operator norm grows linearly in $k$ rather
+than exponentially:
+\begin{equation}\label{eq:norm-linear}
+  \|\Sigma^{1/2} K_\text{data}\|^2
+    = \sum_{i=0}^{k-1} \sigma_i \|R_i X\|^2
+    \approx k \cdot \sigma_0 \|R_0 X\|^2.
+\end{equation}
+This is the key quantitative property of the dyadic split: it permits
+$k$ independent dual variables at a cost of only an $O(k)$ factor in
+the CP step constraint, which is much more favorable than the $O(2^k)$
+factor one would incur with $\sigma_i = \sigma_0$ for all $i$ (because
+of the unequal band energies).
+
+\subsection{Saddle-point problem and convergence condition}
+
+The $k$-channel saddle-point problem is
+\begin{equation}\label{eq:cp-multi}
+  \min_{f \ge 0}\ \alpha\, \mathrm{TV}_\text{D}(f) + \beta\, \|f\|_1
+    \quad \text{s.t.}\quad
+    \|R_i(X f - g)\|_2 \le \eps_i \sqrt{M},
+    \quad i = 0, \ldots, k-1.
+\end{equation}
+Stacking the data, gradient, and $\ell_1$ channels gives the full
+operator
+\begin{equation}\label{eq:K-full}
+  K = \begin{bmatrix}
+    R_0 X \\ R_1 X \\ \vdots \\ R_{k-1} X \\
+    \nabla_x \\ \nabla_y \\ I
+  \end{bmatrix},
+  \qquad
+  \Sigma = \diag\big(\sigma_0 I,\, \sigma_1 I,\, \ldots,\, \sigma_{k-1} I,
+    \sigma_\text{TV} I, \sigma_\text{TV} I, \sigma_{\ell_1} I\big),
+\end{equation}
+and the product-space CP convergence condition is
+\begin{equation}\label{eq:cp-multi-cond}
+  \boxed{\ \tau\, \|\Sigma^{1/2} K\|_2^2 < 1\ }
+\end{equation}
+which expands to
+\begin{equation}\label{eq:cp-multi-explicit}
+  \tau\, \left\|
+  \begin{bmatrix}
+    \sqrt{\sigma_0}\, R_0 X \\
+    \sqrt{\sigma_1}\, R_1 X \\
+    \vdots \\
+    \sqrt{\sigma_{k-1}}\, R_{k-1} X \\
+    \sqrt{\sigma_\text{TV}}\, \nabla_x \\
+    \sqrt{\sigma_\text{TV}}\, \nabla_y \\
+    \sqrt{\sigma_{\ell_1}}\, I
+  \end{bmatrix}
+  \right\|_2^2 < 1.
+\end{equation}
+This is the direct $k$-channel analogue of the two-channel condition
+\eqref{eq:two-cond}. In practice we estimate $\|\Sigma^{1/2} K\|$ by
+power iteration with $\sigma_0$ factored out, then choose
+$\sigma_0 = c_\text{bal}/\|\Sigma^{1/2} K / \sqrt{\sigma_0}\|$ for a
+target step-balance parameter $c_\text{bal}$ and derive $\tau$ from
+$\tau \sigma_0 \|\Sigma^{1/2} K / \sqrt{\sigma_0}\|^2 = (1+\delta)^{-1}$.
+
+\subsection{Algorithm}
+
+The $k$-channel CP iteration alternates a primal step on $f$ with $k$
+independent dual updates on the band variables $y_0, \ldots, y_{k-1}$,
+the DTV duals $p_x, p_y$, and the $\ell_1$ dual $q$. The dual updates
+on the band variables are projections onto closed $\ell_2$ balls of
+radii $\eps_i \sqrt{M}$. We use the over-relaxation form with
+extrapolation parameter $\rho \in [1, 2)$.
+
+\begin{algorithm}[h]
+\caption{Dyadic Multi-Channel CP for DTV-Regularized Limited-Angle CT}
+\label{alg:multichannel-cp}
+\begin{algorithmic}[1]
+\State \textbf{Input:} sinogram $g$, projector $X$, dyadic filters $\{R_i\}_{i=0}^{k-1}$, DTV weights $\alpha_x, \alpha_y$, $\ell_1$ weight $\beta$, tolerances $\{\eps_i\}$, iterations $N$, relaxation $\rho$
+\State \textbf{Compute step sizes:} estimate $\|\Sigma^{1/2} K\|$ by power iteration; set $\sigma_i = 2^i \sigma_0$ per \eqref{eq:sigma-schedule}, $\tau$ so that \eqref{eq:cp-multi-explicit} holds with slack $\delta$.
+\State \textbf{Initialize:} $f^{(0)} = 0$, $\bar f^{(0)} = 0$, $y_i^{(0)} = 0$ for $i = 0,\ldots,k-1$, $p_x^{(0)} = p_y^{(0)} = q^{(0)} = 0$.
+\For{$n = 0, \ldots, N-1$}
+    \State \emph{(Primal step)}
+    \State $f^{(n+1)} \gets \big[f^{(n)} - \tau\big(\sum_{i=0}^{k-1} R_i^* X^* y_i^{(n)}
+        + \nabla_x^* p_x^{(n)} + \nabla_y^* p_y^{(n)} + q^{(n)}\big)\big]_+$
+    \State $\bar f^{(n+1)} \gets 2 f^{(n+1)} - f^{(n)}$
+    \For{$i = 0, \ldots, k-1$}
+        \State \emph{(Per-band dual update: project onto $\ell_2$ ball of radius $\sigma_i \nu_\text{sino} \eps_i \sqrt{M}$)}
+        \State $r_i \gets R_i X \bar f^{(n+1)} - R_i g$
+        \State $\tilde y_i \gets y_i^{(n)} + \sigma_i r_i$
+        \State $y_i^{(n+1)} \gets \tilde y_i \cdot \min\!\big(1,\, \sigma_i \nu_\text{sino} \eps_i \sqrt{M}\,/\,\|\tilde y_i\|\big)$
+    \EndFor
+    \State \emph{(DTV duals)}
+    \State $\tilde p_x \gets p_x^{(n)} + \sigma_\text{TV} \nabla_x \bar f^{(n+1)};\quad p_x^{(n+1)} \gets \alpha_x \tilde p_x / \max(|\tilde p_x|, \alpha_x)$
+    \State $\tilde p_y \gets p_y^{(n)} + \sigma_\text{TV} \nabla_y \bar f^{(n+1)};\quad p_y^{(n+1)} \gets \alpha_y \tilde p_y / \max(|\tilde p_y|, \alpha_y)$
+    \State \emph{($\ell_1$ dual)}
+    \State $\tilde q \gets q^{(n)} + \sigma_{\ell_1}\, \beta\, \bar f^{(n+1)};\quad q^{(n+1)} \gets \beta \tilde q / \max(|\tilde q|, \beta)$
+    \State \emph{(Over-relaxation, $\rho \approx 1.75$)}
+    \State $f^{(n+1)} \gets f^{(n)} - \rho(f^{(n)} - f^{(n+1)});\ \text{(same for } y_i, p_x, p_y, q\text{)}$
+\EndFor
+\State \Return $\bar f^{(N)}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Practical notes}
+
+\paragraph{Per-band tolerances.}
+The vector $(\eps_0, \ldots, \eps_{k-1})$ encodes per-band data-fidelity
+trust. Setting all $\eps_i$ equal recovers a matched-tolerance
+multichannel solver. Setting $\eps_{k-1} < \eps_0$ tightens the LF
+data fit relative to HF, which moves the fixed point in the direction
+of better LF accuracy at the cost of HF data tolerance. This is the
+correct lever for ``boosting low frequencies''---changing the $\eps_i$
+modifies the solution, whereas changing the $\sigma_i$ alone only
+modifies the optimization trajectory and is constrained by
+\eqref{eq:cp-multi-cond}.
+
+\paragraph{Per-iteration cost.}
+Each iteration costs $k$ projections + $k$ backprojections for the
+data channels, plus the DTV and $\ell_1$ operators. Per-iteration cost
+is approximately $k\times$ the single-channel cost.
+
+\paragraph{Choice of $\rho$.}
+We use $\rho = 1.75$, consistent with \citet{sidky2012}. Lower values
+($\rho = 1$) recover the unrelaxed CP form and give smoother but
+slower convergence; higher values risk oscillation.
+
+%=====================================================================
+%\bibliography{references}
+%\bibliographystyle{abbrvnat}
+% Inline references until references.bib is populated:
+
+\begin{thebibliography}{9}
+
+\bibitem[Chambolle and Pock(2011)]{chambolle2011}
+A.~Chambolle and T.~Pock.
+\newblock A first-order primal-dual algorithm for convex problems with
+  applications to imaging.
+\newblock \emph{Journal of Mathematical Imaging and Vision}, 40(1):120--145,
+  2011.
+
+\bibitem[Pock and Chambolle(2011)]{pock2011}
+T.~Pock and A.~Chambolle.
+\newblock Diagonal preconditioning for first order primal-dual algorithms in
+  convex optimization.
+\newblock In \emph{2011 International Conference on Computer Vision},
+  1762--1769. IEEE, 2011.
+
+\bibitem[Sidky et al.(2012)]{sidky2012}
+E.~Y. Sidky, J.~H. J{\o}rgensen, and X.~Pan.
+\newblock Convex optimization problem prototyping for image reconstruction in
+  computed tomography with the Chambolle-Pock algorithm.
+\newblock \emph{Physics in Medicine and Biology}, 57(10):3065--3091, 2012.
+
+\bibitem[Sidky et al.(2014)]{sidky2014}
+E.~Y. Sidky, P.~Kao, and X.~Pan.
+\newblock Two-channel reconstruction for sparse-view tomography.
+\newblock \emph{Proceedings of the Third International Conference on Image
+  Formation in X-ray Computed Tomography}, 2014.
+
+\bibitem[Rigie and La Riviere(2015)]{rigie2015}
+D.~S. Rigie and P.~J. La~Riviere.
+\newblock Joint reconstruction of multi-channel, spectral CT data via
+  constrained total nuclear variation minimization.
+\newblock \emph{Physics in Medicine and Biology}, 60(5):1741--1762, 2015.
+
+\bibitem[Kim et al.(2017)]{kim2017}
+K.~Kim, T.~Possemier, and X.~Pan.
+\newblock Directional total-variation regularization for limited-angle
+  tomographic reconstruction.
+\newblock In \emph{Proc. SPIE Medical Imaging}, 2017.
+
+\end{thebibliography}
+
+\end{document}

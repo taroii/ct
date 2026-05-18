@@ -1,0 +1,185 @@
+
+######################################################################
+# PoU matched cutoff c = 2.0  (han_hi = 1 - H_2.0, han_lo = H_2.0)
+######################################################################
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=2000
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4939, sig: 66.940020, tau: 0.006694
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489495, img_err=0.532447, TV=648.04
+  Iter 5: data_err=0.247480, img_err=0.342717, TV=2506.94
+  Iter 10: data_err=0.439370, img_err=0.483102, TV=3934.50
+  Iter 20: data_err=0.385295, img_err=0.427180, TV=3589.06
+  Iter 50: data_err=0.109366, img_err=0.183450, TV=4308.03
+  Iter 100: data_err=0.114296, img_err=0.220244, TV=3653.61
+  Iter 200: data_err=0.040449, img_err=0.182874, TV=3272.66
+  Iter 300: data_err=0.013050, img_err=0.148161, TV=2973.30
+  Iter 400: data_err=0.004669, img_err=0.116670, TV=2959.78
+  Iter 500: data_err=0.002350, img_err=0.098402, TV=2775.27
+Running two-channel...
+  ||Sigma^(1/2) K||=2.4830  sig_hi=40.274433  sig_lo=161.097731  tau=0.004023  tau*sig_hi*||.||^2=0.999001  (< 1 required)
+  Iter 1: data_err=0.574460, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.452323, img_err=0.502126, TV=792.37
+  Iter 5: data_err=0.136255, img_err=0.269834, TV=3171.07
+  Iter 10: data_err=0.344135, img_err=0.402850, TV=3031.14
+  Iter 20: data_err=0.127064, img_err=0.234906, TV=3555.01
+  Iter 50: data_err=0.099797, img_err=0.183380, TV=4275.36
+  Iter 100: data_err=0.043671, img_err=0.185835, TV=3697.44
+  Iter 200: data_err=0.012605, img_err=0.152717, TV=3094.27
+  Iter 300: data_err=0.006654, img_err=0.141141, TV=3002.38
+  Iter 400: data_err=0.003525, img_err=0.119141, TV=2682.84
+  Iter 500: data_err=0.002063, img_err=0.101660, TV=2595.52
+  Single-channel: 46.8s, final RMSE=0.019007
+  Two-channel: 70.6s, final RMSE=0.049714
+[done] c=2.0 elapsed=130.2s single_rmse=0.019007 two_rmse=0.049714
+
+######################################################################
+# PoU matched cutoff c = 4.0  (han_hi = 1 - H_4.0, han_lo = H_4.0)
+######################################################################
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=2000
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4939, sig: 66.939391, tau: 0.006694
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489493, img_err=0.532445, TV=648.06
+  Iter 5: data_err=0.247466, img_err=0.342708, TV=2507.00
+  Iter 10: data_err=0.439376, img_err=0.483107, TV=3934.52
+  Iter 20: data_err=0.385286, img_err=0.427173, TV=3589.01
+  Iter 50: data_err=0.109314, img_err=0.183420, TV=4307.97
+  Iter 100: data_err=0.114309, img_err=0.220250, TV=3653.65
+  Iter 200: data_err=0.040442, img_err=0.182871, TV=3272.67
+  Iter 300: data_err=0.013042, img_err=0.148159, TV=2973.32
+  Iter 400: data_err=0.004664, img_err=0.116668, TV=2959.78
+  Iter 500: data_err=0.002351, img_err=0.098401, TV=2775.28
+Running two-channel...
+  ||Sigma^(1/2) K||=2.4858  sig_hi=40.228952  sig_lo=160.915809  tau=0.004019  tau*sig_hi*||.||^2=0.999001  (< 1 required)
+  Iter 1: data_err=0.574457, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.453041, img_err=0.502585, TV=670.31
+  Iter 5: data_err=0.134684, img_err=0.269488, TV=3081.22
+  Iter 10: data_err=0.345594, img_err=0.404207, TV=2969.07
+  Iter 20: data_err=0.128414, img_err=0.234946, TV=3573.78
+  Iter 50: data_err=0.101995, img_err=0.182185, TV=4318.22
+  Iter 100: data_err=0.052772, img_err=0.187572, TV=3718.12
+  Iter 200: data_err=0.010997, img_err=0.152596, TV=3112.52
+  Iter 300: data_err=0.006963, img_err=0.141231, TV=3015.25
+  Iter 400: data_err=0.003621, img_err=0.119497, TV=2688.68
+  Iter 500: data_err=0.002088, img_err=0.101978, TV=2603.97
+  Single-channel: 47.7s, final RMSE=0.019007
+  Two-channel: 71.2s, final RMSE=0.049645
+[done] c=4.0 elapsed=131.8s single_rmse=0.019007 two_rmse=0.049645
+
+######################################################################
+# PoU matched cutoff c = 8.0  (han_hi = 1 - H_8.0, han_lo = H_8.0)
+######################################################################
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=2000
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4942, sig: 66.924774, tau: 0.006692
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489446, img_err=0.532406, TV=648.42
+  Iter 5: data_err=0.247185, img_err=0.342510, TV=2508.21
+  Iter 10: data_err=0.439493, img_err=0.483208, TV=3934.64
+  Iter 20: data_err=0.385122, img_err=0.427037, TV=3587.93
+  Iter 50: data_err=0.108280, img_err=0.182831, TV=4306.40
+  Iter 100: data_err=0.114558, img_err=0.220378, TV=3654.27
+  Iter 200: data_err=0.040311, img_err=0.182818, TV=3272.59
+  Iter 300: data_err=0.012888, img_err=0.148107, TV=2973.31
+  Iter 400: data_err=0.004566, img_err=0.116616, TV=2959.44
+  Iter 500: data_err=0.002356, img_err=0.098366, TV=2775.20
+Running two-channel...
+  ||Sigma^(1/2) K||=2.4915  sig_hi=40.137125  sig_lo=160.548499  tau=0.004010  tau*sig_hi*||.||^2=0.999001  (< 1 required)
+  Iter 1: data_err=0.574445, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.454723, img_err=0.503612, TV=512.02
+  Iter 5: data_err=0.129096, img_err=0.268502, TV=2720.88
+  Iter 10: data_err=0.349159, img_err=0.407376, TV=3400.10
+  Iter 20: data_err=0.134107, img_err=0.236624, TV=3554.32
+  Iter 50: data_err=0.108253, img_err=0.180820, TV=4237.66
+  Iter 100: data_err=0.068049, img_err=0.190551, TV=3874.84
+  Iter 200: data_err=0.011380, img_err=0.152441, TV=3142.70
+  Iter 300: data_err=0.007205, img_err=0.141077, TV=3032.26
+  Iter 400: data_err=0.003825, img_err=0.120181, TV=2700.08
+  Iter 500: data_err=0.002089, img_err=0.102480, TV=2623.79
+  Single-channel: 47.9s, final RMSE=0.019005
+  Two-channel: 71.4s, final RMSE=0.049427
+[done] c=8.0 elapsed=132.2s single_rmse=0.019005 two_rmse=0.049427
+
+######################################################################
+# PoU matched cutoff c = 16.0  (han_hi = 1 - H_16.0, han_lo = H_16.0)
+######################################################################
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=2000
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4938, sig: 66.941340, tau: 0.006694
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489495, img_err=0.532446, TV=648.04
+  Iter 5: data_err=0.247485, img_err=0.342721, TV=2506.97
+  Iter 10: data_err=0.439371, img_err=0.483102, TV=3934.55
+  Iter 20: data_err=0.385296, img_err=0.427181, TV=3589.12
+  Iter 50: data_err=0.109368, img_err=0.183451, TV=4308.09
+  Iter 100: data_err=0.114296, img_err=0.220245, TV=3653.63
+  Iter 200: data_err=0.040449, img_err=0.182875, TV=3272.65
+  Iter 300: data_err=0.013050, img_err=0.148162, TV=2973.29
+  Iter 400: data_err=0.004669, img_err=0.116672, TV=2959.76
+  Iter 500: data_err=0.002350, img_err=0.098404, TV=2775.25
+Running two-channel...
+  ||Sigma^(1/2) K||=2.4974  sig_hi=40.041602  sig_lo=160.166407  tau=0.004000  tau*sig_hi*||.||^2=0.999001  (< 1 required)
+  Iter 1: data_err=0.574398, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.457644, img_err=0.505483, TV=392.75
+  Iter 5: data_err=0.123186, img_err=0.267641, TV=2230.10
+  Iter 10: data_err=0.356459, img_err=0.413314, TV=3720.21
+  Iter 20: data_err=0.151219, img_err=0.242115, TV=3186.60
+  Iter 50: data_err=0.129318, img_err=0.183905, TV=4028.71
+  Iter 100: data_err=0.081143, img_err=0.190408, TV=3748.13
+  Iter 200: data_err=0.017659, img_err=0.150104, TV=3149.78
+  Iter 300: data_err=0.007504, img_err=0.138697, TV=3049.39
+  Iter 400: data_err=0.004400, img_err=0.120408, TV=2711.52
+  Iter 500: data_err=0.002095, img_err=0.102855, TV=2656.72
+  Single-channel: 48.1s, final RMSE=0.019009
+  Two-channel: 71.6s, final RMSE=0.048906
+[done] c=16.0 elapsed=132.7s single_rmse=0.019009 two_rmse=0.048906
+
+Matched-cutoff PoU sweep, 256x256, itermax=2000, eps_lo/eps_hi=1.25
+======================================================================
+
+| cutoff c | LF half-width fraction | Single RMSE | Two RMSE   | Improvement |
+|----------|------------------------|-------------|------------|-------------|
+| 2.00     | 0.5000                 | 0.019007    | 0.049714   | -161.56%      |
+| 4.00     | 0.2500                 | 0.019007    | 0.049645   | -161.19%      |
+| 8.00     | 0.1250                 | 0.019005    | 0.049427   | -160.08%      |
+| 16.00    | 0.0625                 | 0.019009    | 0.048906   | -157.28%      |
+
+Table saved to final_figures/pou_cutoff_sweep_256.txt
+Plot saved to final_figures/pou_cutoff_sweep_256.png
