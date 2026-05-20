@@ -1,0 +1,668 @@
+% CT-Meeting 2026 oral presentation.
+% Two-channel fidelity for accelerating low-frequency convergence in
+% limited-angle DBT PDHG reconstruction.
+%
+% Build:  latexmk -pdf main.tex   (or pdflatex main.tex 2x for refs)
+
+\documentclass[aspectratio=169,xcolor=dvipsnames]{beamer}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath, amssymb}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, fit}
+\usepackage{xcolor}
+
+\graphicspath{{figs/}{../final_figures/}{../final_figures/victre/}}
+
+% --- Theme ---------------------------------------------------------------
+\usetheme{metropolis}
+\setbeamertemplate{frame numbering}[fraction]
+\definecolor{MainAccent}{HTML}{1F4E79}
+\definecolor{SubAccent}{HTML}{C00000}
+\setbeamercolor{frametitle}{bg=MainAccent, fg=white}
+\setbeamercolor{progress bar}{fg=MainAccent}
+\setbeamercolor{title separator}{fg=MainAccent}
+
+% --- Title ---------------------------------------------------------------
+\title{Accelerating Low-Frequency Convergence for Limited-Angle DBT}
+\subtitle{Two-Channel Fidelity in PDHG}
+\author[Iyadomi]{%
+  Taro Iyadomi\inst{1} \and
+  Ricardo Parada\inst{2} \and
+  Anna Kim\inst{3} \and
+  Lily Jiang\inst{4} \and
+  Emil Sidky\inst{5} \and
+  William Chang\inst{4}}
+\institute[]{%
+  \inst{1}Northwestern University \quad
+  \inst{2}UC Riverside \quad
+  \inst{3}UC San Diego \and
+  \inst{4}UC Los Angeles \quad
+  \inst{5}University of Chicago}
+\date{CT Meeting 2026}
+
+% --- Macros --------------------------------------------------------------
+\newcommand{\Rhi}{R_{\mathrm{hi}}}
+\newcommand{\Rlo}{R_{\mathrm{lo}}}
+\newcommand{\Hann}{\mathrm{Hann}^{1/2}}
+
+% Figure helpers: width-limited but height-capped so a caption / bullets
+% always fit on the slide. Optional first arg = height cap (frac of text).
+\newcommand{\deckfig}[2][0.70]{%
+  \includegraphics[width=\linewidth,height=#1\textheight,keepaspectratio]{#2}}
+\newcommand{\phantomfig}[2][0.70]{%
+  \IfFileExists{figs/#2}%
+    {\includegraphics[width=\linewidth,height=#1\textheight,keepaspectratio]{#2}}%
+    {\fbox{\parbox{0.7\linewidth}{\centering\small\vspace{2em}%
+       \textit{[\detokenize{#2} -- not generated]}\vspace{2em}}}}}
+
+\begin{document}
+
+% =========================================================================
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+% =========================================================================
+\section{Motivation}
+% =========================================================================
+
+\begin{frame}{What is limited-angle reconstruction?}
+  \begin{itemize}
+    \item Tomography recovers a cross-section from X-ray projections taken
+          at many source angles around the object.
+    \item \textbf{Sufficient sampling.} For a fan-beam scan, a source arc
+          of $180^{\circ}$ plus the fan angle already measures every line
+          integral --- a full $360^{\circ}$ rotation only re-measures each
+          ray from the opposite side.
+    \item \textbf{Limited-angle reconstruction (LAR)} uses a source arc
+          \emph{below} that threshold. The measurements no longer
+          determine the image: a wedge of spatial frequencies is never
+          observed.
+    \item Digital breast tomosynthesis (DBT) operates deep in this regime
+          --- a source arc of only ${\sim}50^{\circ}$ --- so its
+          reconstruction is severely ill-posed.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why limited-angle?}
+  \begin{columns}[T,onlytextwidth]
+    \column{.55\textwidth}
+    \begin{itemize}
+      \item \textbf{Dose} --- fewer views means less ionizing radiation
+            per scan.
+      \item \textbf{Geometry} --- in DBT the detector stays under the
+            compressed breast while the X-ray tube sweeps a short arc; a
+            full gantry rotation is mechanically impossible.
+      \item \textbf{Acquisition time} --- a short sweep is fast, limiting
+            motion blur and patient discomfort.
+      \item \textbf{Use cases} --- DBT for early breast-cancer detection;
+            also lung-nodule and kidney-stone imaging.
+    \end{itemize}
+    \column{.45\textwidth}
+    \centering
+    % Placeholder schematic --- TODO: replace with a labelled DBT geometry
+    % sketch (source arc + detector + breast outline, 50 deg highlighted).
+    \fbox{\parbox{0.95\linewidth}{\centering\small
+      \vspace{2em}
+      \textit{[DBT geometry schematic\\50$^{\circ}$ source arc,\\detector,
+      breast cross-section]}
+      \vspace{2em}}}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Two reconstruction settings: 2D and 3D}
+  The two-channel method is evaluated in both geometries:
+  \begin{itemize}
+    \item \textbf{2D fan-beam} --- a single slice; cheap enough to sweep
+          image resolution and noise level.
+    \item \textbf{3D cone-beam} --- the actual DBT geometry; full-volume
+          reconstruction on anatomical phantoms.
+  \end{itemize}
+  Both are severely under-determined: the number of unknowns far exceeds
+  the number of measurements, increasingly so at finer resolution.
+  \begin{center}
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      Slice resolution & Unknowns (pixels) & Measurements (rays) \\
+      \midrule
+      $512^2$ & $262{,}144$ & $25{,}600$ \\
+      $256^2$ & $65{,}536$  & $25{,}600$ \\
+      $128^2$ & $16{,}384$  & $25{,}600$ \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \footnotesize
+  Measurements $=$ $25$ views $\times$ $1024$ detector bins.
+\end{frame}
+
+% =========================================================================
+\section{The reconstruction setup}
+% =========================================================================
+
+\begin{frame}{Reconstruction with PDHG (Chambolle--Pock)}
+  \small
+  The image is found by minimizing directional-TV and $\ell_1$ sparsity,
+  subject to the projections matching the data within a tolerance, with
+  $f \ge 0$.
+  \begin{itemize}
+    \item \textbf{Why not gradient descent?} The objective is
+          non-differentiable ($\ell_1$, TV) and hard-constrained ---
+          gradient descent needs a smooth, unconstrained objective.
+    \item \textbf{PDHG} handles this class with cheap projections and
+          proximal maps, no derivatives. It keeps a primal variable (the
+          image) and a dual variable (the data residual), and alternates:
+      \begin{itemize}
+        \item a \textbf{dual step} --- pull the data residual toward the
+              tolerance ball (step $\sigma$);
+        \item a \textbf{primal step} --- pull the image toward sparsity
+              and $f \ge 0$ (step $\tau$).
+      \end{itemize}
+    \item $\tau$ and $\sigma$ are coupled through the operator norm
+          $\|K\|$; we set them by an empirical balance heuristic
+          (appendix).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Single-channel data fidelity}
+  Prior work\footnote{E.\,Y.\,Sidky et al., \emph{J.\ Med.\ Imaging}
+  12(S1):S13013, 2025.} solves a constrained DTV\,/\,$\ell_1$ problem with
+  a square-root Hanning filter on the sinogram residual:
+  \[
+    \min_{f \geq 0}\; \alpha_x \|\partial_x f\|_1 + \alpha_y \|\partial_y f\|_1
+                    + \alpha_z \|\partial_z f\|_1 + \beta \|f\|_1
+  \]
+  \[
+    \text{s.t.}\quad \|R_{[c]}(g - X f)\|_2 \leq \varepsilon\sqrt{|g|}.
+  \]
+  \begin{itemize}
+    \item $R_{[c]} = \Hann(c)$ attenuates low spatial frequencies in the
+          residual --- noise suppression by design.
+    \item Solved with PDHG and He--Yuan over-relaxation
+          ($\rho \approx 1.75$).
+  \end{itemize}
+\end{frame}
+
+% =========================================================================
+\section{The problem}
+% =========================================================================
+
+\begin{frame}{What happens during a single-channel run}
+  \centering
+  \deckfig[0.60]{single_only_ladder_256_paper.png}
+  \vspace{0.3em}
+  \begin{itemize}\setlength\itemsep{0pt}\small
+    \item Fine structure (calcifications, glandular speckling) settles fast.
+    \item Large soft-tissue regions stay blurred, with a slowly-varying
+          intensity error, through iter ${\sim}100\text{--}300$.
+    \item This is the low-frequency convergence bottleneck.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why does this happen?}
+  In the detector-frequency domain, the data-fidelity weight is
+  \[
+    W(g - Xf), \qquad W = R_{[c]} = \Hann(c).
+  \]
+  \begin{itemize}
+    \item PDHG corrects mode $k$ at a rate $\propto s_k^2$
+          (squared singular values of $WX$).
+    \item In LAR DBT, $s_k$ is already tiny for low $k$ (ill-conditioning).
+    \item $\Hann$ shrinks low-$k$ further \emph{by design}.
+    \item Stability bound is dictated by the \emph{largest} $s_k$
+          (high frequencies).
+  \end{itemize}
+  \begin{alertblock}{Consequence}
+    The optimizer is forced to use step sizes that under-drive the very
+    modes that are hardest to recover.
+  \end{alertblock}
+\end{frame}
+
+% =========================================================================
+\section{The idea: two-channel fidelity}
+% =========================================================================
+
+\begin{frame}{Split the sinogram into two bands}
+  \[
+    \min_{f \geq 0}\; \alpha_\bullet \|\partial_\bullet f\|_1 + \beta \|f\|_1
+  \]
+  \[
+    \text{s.t.}\quad
+    \begin{cases}
+      \|\Rhi (g - Xf)\|_2 \le \varepsilon_{\mathrm{hi}} \sqrt{|g|}, \\[2pt]
+      \|\Rlo (g - Xf)\|_2 \le \varepsilon_{\mathrm{lo}} \sqrt{|g|}.
+    \end{cases}
+  \]
+  \begin{itemize}\small
+    \item $\Rhi = \Hann(c)$ -- preserves the high-frequency channel from
+          prior work.
+    \item $\Rlo = \Hann(c_{\mathrm{lo}})$ with $c_{\mathrm{lo}} \gg c$ --
+          a narrow-band low-pass channel that targets the slow modes.
+    \item Independent dual variables $y_{\mathrm{hi}}, y_{\mathrm{lo}}$
+          with independent step sizes
+          $\sigma_{\mathrm{hi}}, \sigma_{\mathrm{lo}}$.
+  \end{itemize}
+  Step sizes follow the same balance heuristic as the single-channel
+  paper: $\tau\,\sigma_{\mathrm{hi}}\,\|K\|^{2} \approx 1$, with
+  $\sigma_{\mathrm{lo}} = 4 \sigma_{\mathrm{hi}}$ to drive the slow modes
+  harder.
+\end{frame}
+
+\begin{frame}{The two-channel iteration}
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[
+    every node/.style={font=\footnotesize},
+    box/.style={draw, rounded corners, align=center, fill=MainAccent!12,
+                minimum height=1.0cm},
+    hi/.style={draw, rounded corners, align=center, fill=MainAccent!22,
+               minimum height=1.15cm, minimum width=4.1cm},
+    lo/.style={draw, rounded corners, align=center, fill=SubAccent!22,
+               minimum height=1.15cm, minimum width=4.1cm},
+    arr/.style={-Latex, semithick},
+  ]
+    \node[box, minimum width=1.9cm] (img)  at (0,0)     {image\\$f$};
+    \node[box, minimum width=2.8cm] (res)  at (3.2,0)   {residual\\$g - X f$};
+    \node[hi]                       (hi)   at (8.0,1.35)
+      {high band: $\Rhi$\\dual $y_{\mathrm{hi}}$,\;\; step $\sigma_{\mathrm{hi}}$};
+    \node[lo]                       (lo)   at (8.0,-1.35)
+      {low band: $\Rlo$\\dual $y_{\mathrm{lo}}$,\;\; step $\sigma_{\mathrm{lo}} = 4\,\sigma_{\mathrm{hi}}$};
+    \node[box, minimum width=3.0cm] (prim) at (12.9,0)
+      {primal update\\DTV $+\,\ell_1+ (f\!\ge\!0)$};
+
+    \draw[arr] (img) -- (res);
+    \draw[arr] (res.east) -- ++(0.45,0) |- (hi.west);
+    \draw[arr] (res.east) -- ++(0.45,0) |- (lo.west);
+    \draw[arr] (hi.east) -| (prim.north);
+    \draw[arr] (lo.east) -| (prim.south);
+    \draw[arr] (prim.south) -- ++(0,-1.7) -| (img.south)
+      node[pos=0.5, fill=white, inner sep=2pt, font=\scriptsize]
+        {repeat each iteration};
+  \end{tikzpicture}}
+  \vspace{0.3em}
+  \begin{itemize}\setlength\itemsep{2pt}\small
+    \item The data residual is split into a high- and a low-frequency band.
+    \item Each band carries its own dual variable and its own step size.
+    \item The low band is driven $4\times$ harder
+          ($\sigma_{\mathrm{lo}} = 4\,\sigma_{\mathrm{hi}}$) --- the slow
+          modes receive the larger correction.
+    \item The primal update and the image itself are unchanged from
+          single-channel.
+  \end{itemize}
+\end{frame}
+
+% =========================================================================
+\section{Results}
+% =========================================================================
+
+\begin{frame}{Iteration ladder --- single vs.\ two-channel}
+  \centering
+  \deckfig[0.62]{iter_ladder_recon_256_paper.png}
+  \vspace{0.2em}
+  \begin{itemize}\setlength\itemsep{0pt}\small
+    \item $256\times256$, $25$ views over $50^{\circ}$.
+    \item Two-channel resolves recognizable soft-tissue structure several
+          iterations earlier.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Soft-tissue ROI: low-frequency error}
+  \centering
+  \deckfig[0.70]{iter_ladder_zoom_recon_256_paper.png}\\[0.3em]
+  \footnotesize
+  Iteration ladder cropped to a soft-tissue ROI. Single-channel carries a
+  slowly-varying intensity error through iterations $50\text{--}200$;
+  two-channel reaches a uniform soft-tissue level several iterations
+  earlier.
+\end{frame}
+
+\begin{frame}{Where is the error?}
+  \centering
+  \deckfig[0.66]{error_pair_256_paper.png}\\[0.3em]
+  \footnotesize
+  Difference image, reconstruction $-$ ground truth (scale bar below).
+  Single-channel at iter $100\text{--}200$ carries a broad bright
+  low-frequency bias; two-channel stays near uniform gray.
+\end{frame}
+
+\begin{frame}{Convergence behaviour}
+  \centering
+  \deckfig[0.62]{iter_ladder_convergence_256_paper.png}
+  \begin{itemize}\setlength\itemsep{0pt}\small
+    \item Single-channel oscillates strongly through iter ${\sim}200$ ---
+          the cross-band interference predicted by the spectral analysis.
+    \item Two-channel converges smoothly from the start.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Persistence across image sizes}
+  \centering
+  \deckfig[0.60]{persistence_500iter.png}
+  \begin{itemize}\setlength\itemsep{0pt}\small
+    \item Two-channel sits below single-channel across all three grids.
+    \item Iter-500 RMSE reduction: $19\%$ at $512^{2}$, $22\%$ at
+          $256^{2}$, $62\%$ at $128^{2}$.
+    \item Consistent across the resolution sweep.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{3D: Analytic breast phantom}
+  \centering
+  \phantomfig[0.66]{ct2_breast_phantom_intro.png}\\[0.3em]
+  \footnotesize
+  Analytic breast phantom: fatty soft-tissue background with discrete
+  fatty-mass inserts and a chest-wall region. $144 \times 144 \times 32$
+  grid at $1.5$~mm isotropic voxels.
+\end{frame}
+
+\begin{frame}{Analytic breast --- mid-axial iteration ladder}
+  \centering
+  \phantomfig[0.68]{ct2_breast_iter_ladder_xy.png}\\[0.3em]
+  \footnotesize
+  Cone-beam LAR ($25$ views / $50^{\circ}$), mid-axial slice. Two-channel
+  image RMSE is $8\%$ lower at iter $20$, rising to a $35\%$ reduction at
+  iter $200$; it resolves the discrete masses earlier.
+\end{frame}
+
+\begin{frame}{Analytic breast --- soft-tissue ROI}
+  \centering
+  \phantomfig[0.66]{ct2_breast_iter_ladder_roi.png}\\[0.3em]
+  \footnotesize
+  Lateral soft-tissue ROI with several fatty-mass inserts. Image RMSE at
+  iter $100$: single $0.077$ vs.\ two-channel $0.051$ --- a $34\%$
+  reduction. Two-channel shows discrete mass contours while single-channel
+  retains a diffuse intensity bias.
+\end{frame}
+
+\begin{frame}{Analytic breast --- convergence}
+  \centering
+  \phantomfig[0.72]{ct2_breast_convergence.png}\\[0.3em]
+  \footnotesize
+  Image RMSE vs.\ iteration. Two-channel leads throughout: a $34\%$
+  reduction at iter $100$, peaking near $35\%$ at iter $200$ and holding
+  $16\%$ at iter $500$.
+\end{frame}
+
+\begin{frame}{3D: Analytic head phantom}
+  \centering
+  \phantomfig[0.66]{ct2_head_phantom_intro.png}\\[0.3em]
+  \footnotesize
+  Analytic head phantom: skull shell with sinuses, brain with ventricle
+  and FORBILD low-contrast spots, subdural hematoma. $26$~cm FOV, thin
+  axial slab.
+\end{frame}
+
+\begin{frame}{Analytic head --- central brain ROI}
+  \centering
+  \phantomfig[0.68]{ct2_head_iter_ladder_roi.png}\\[0.3em]
+  \footnotesize
+  Central brain region (low-contrast FORBILD spots, ventricle). Both
+  methods drift upward under the under-determined geometry; the
+  convergence plot makes the comparison quantitative.
+\end{frame}
+
+\begin{frame}{Analytic head --- convergence}
+  \centering
+  \phantomfig[0.72]{ct2_head_convergence.png}\\[0.3em]
+  \footnotesize
+  Image RMSE vs.\ iteration. Two-channel stays below single-channel from
+  early iterations onward; the gap widens from $12\%$ at iter $100$ to
+  $19\%$ at iter $500$.
+\end{frame}
+
+\begin{frame}{3D: Analytic jaw phantom}
+  \centering
+  \phantomfig[0.66]{ct2_jaw_phantom_intro.png}\\[0.3em]
+  \footnotesize
+  Analytic jaw phantom: mandible/maxilla with $28$ teeth, three gold
+  crowns (high-$\mu$ scatterers), low-contrast tongue tumour. $12$~cm tall
+  volume.
+\end{frame}
+
+\begin{frame}{Analytic jaw --- mouth/teeth ROI}
+  \centering
+  \phantomfig[0.68]{ct2_jaw_iter_ladder_roi.png}\\[0.3em]
+  \footnotesize
+  Mouth/teeth region. The gold crowns ($\mu = 19.3$) dominate the
+  projection energy, leaving less low-frequency structure for the band
+  split to act on; the convergence plot quantifies the gap.
+\end{frame}
+
+\begin{frame}{Analytic jaw --- convergence}
+  \centering
+  \phantomfig[0.72]{ct2_jaw_convergence.png}\\[0.3em]
+  \footnotesize
+  Image RMSE vs.\ iteration. Two-channel converges to a lower RMSE; the
+  gap grows from $5\%$ at iter $100$ to $17\%$ at iter $500$.
+\end{frame}
+
+% =========================================================================
+\section{Conclusion}
+% =========================================================================
+
+\begin{frame}{Summary}
+  \begin{itemize}
+    \item LAR DBT reconstruction has a \emph{mode-dependent} convergence
+          bottleneck: low spatial frequencies are starved of corrective
+          drive because the PDHG step size is bound by high-frequency
+          stability.
+    \item Splitting the data fidelity into a low-pass and a high-pass
+          channel, each with its own dual variable and step size,
+          accelerates low-frequency settling without breaking stability.
+    \item Consistent improvement at clinical iteration counts: 2D
+          fan-beam across image sizes, and 3D cone-beam on the analytic
+          breast, head, and jaw phantoms.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Future work}
+  \begin{itemize}
+    \item \textbf{Multi-band fidelity.} Generalize from two channels to a
+          geometric sequence of band-pass filters with matched per-shell
+          step sizes. Manuscript in preparation.
+    \item \textbf{Theorem-compliant step sizes.} Derive step sizes from a
+          weighted power iteration so the empirical balance heuristic
+          connects to the product-space PDHG convergence guarantee.
+    \item \textbf{Realistic voxelized anatomy.} On the VICTRE breast
+          phantom the two-channel gain at a clinical $50^{\circ}$ arc is
+          front-loaded --- present early, then overtaken; sustaining it is
+          ongoing work.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[standout]
+  Questions?
+\end{frame}
+
+% =========================================================================
+\appendix
+% =========================================================================
+
+\begin{frame}{Backup: 3D phantoms at a clinical $50^{\circ}$ arc}
+  \footnotesize
+  Two-channel vs.\ single-channel image-RMSE reduction (\%) on the two
+  realistic 3D phantoms, $25$ views over $50^{\circ}$. Positive favours
+  two-channel.
+  \begin{center}
+    \begin{tabular}{llcccc}
+      \toprule
+      Phantom & Step-size config & iter 100 & iter 200 & iter 300 & iter 400 \\
+      \midrule
+      Shepp-Logan   & paper config & $+0.3$ & $-5.2$  & $-6.5$  & $-1.0$ \\
+                    & tuned (best) & $-1.5$ & $-3.2$  & $+0.1$  & $-1.6$ \\
+      \addlinespace
+      VICTRE breast & paper config & $-5.6$ & $-11.2$ & $-17.8$ & $-22.4$ \\
+                    & tuned (best) & $+3.3$ & $+1.1$  & $-6.0$  & $-12.5$ \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \begin{itemize}\setlength\itemsep{0pt}
+    \item At a realistic $50^{\circ}$ arc neither 3D phantom shows the
+          persistent gain seen on the analytic phantoms.
+    \item VICTRE: tuning the CP step sizes yields a front-loaded gain ---
+          faster early, overtaken after iter ${\sim}200$. Shepp-Logan is a
+          tie: a well-conditioned negative control.
+    \item ``Tuned'' reduces the 3D step-size handicap
+          ($\sigma$-inflation $2.0 \to 1.5$); the gain grows as the arc
+          narrows below $50^{\circ}$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Backup: 3D Shepp-Logan phantom}
+  \centering
+  \phantomfig[0.68]{shepp_logan_phantom_intro.png}\\[0.3em]
+  \footnotesize
+  Classical 3D Shepp-Logan: $10$ ellipsoids, skull at $\mu = 2.0$, brain
+  at $\mu = 1.0$, three small low-contrast inserts at $\mu = 1.0 \pm 0.02$.
+\end{frame}
+
+\begin{frame}{Backup: Shepp-Logan at a clinical $50^{\circ}$ arc}
+  \centering
+  \phantomfig[0.66]{shepp_logan_convergence.png}\\[0.3em]
+  \footnotesize
+  Image RMSE vs.\ iteration. Single- and two-channel are essentially
+  superimposed (single is ${\sim}7\%$ lower at iter $500$). With little
+  intermediate spatial structure there is no low-frequency deficit for the
+  spectral split to address --- a well-conditioned negative control.
+\end{frame}
+
+\begin{frame}{Backup: 3D VICTRE breast phantom}
+  \centering
+  \phantomfig[0.68]{victre_phantom_intro.png}\\[0.3em]
+  \footnotesize
+  Voxelized VICTRE breast phantom (Reiser--Nishikawa anatomic model,
+  ${\sim}10^{6}$ voxels at $0.4$~mm after $4\times$ downsampling).
+  Anatomically distributed glandular structure rather than discrete
+  analytic inserts.
+\end{frame}
+
+\begin{frame}{Backup: VICTRE at a clinical $50^{\circ}$ arc}
+  \centering
+  \phantomfig[0.66]{victre_iter_ladder_roi.png}\\[0.3em]
+  \footnotesize
+  Iteration ladder restricted to a glandular ROI; severe LAR streaking
+  dominates both methods. Under the paper step sizes single-channel has
+  the lower RMSE; tuning the CP step sizes produces an early two-channel
+  lead that fades after iter ${\sim}200$ (see summary table).
+\end{frame}
+
+\begin{frame}{Backup: full constrained objective}
+  \[
+    \min_{f \ge 0}\; \alpha_x \|\partial_x f\|_1 + \alpha_y \|\partial_y f\|_1
+                    + \alpha_z \|\partial_z f\|_1 + \beta \|f\|_1
+  \]
+  \[
+    \text{s.t.}\quad
+    \begin{cases}
+      \|\Rhi (g - Xf)\|_2 \le \varepsilon_{\mathrm{hi}} \sqrt{|g|}, \\
+      \|\Rlo (g - Xf)\|_2 \le \varepsilon_{\mathrm{lo}} \sqrt{|g|}.
+    \end{cases}
+  \]
+  Parameter choices used for the figures in this talk:
+  \vspace{-0.5em}
+  \begin{center}
+    \footnotesize
+    \begin{tabular}{lll}
+      \toprule
+      & $128^2$ & $256^2$, $512^2$ \\
+      \midrule
+      $\alpha$ (DTV) & $1.95$ & $1.9, 1.7$ \\
+      $\beta$ ($\ell_1$) & $10$ & $10, 5$ \\
+      $c_{\mathrm{hi}}$ & $4$ & $4$ \\
+      $c_{\mathrm{lo}}$ & $8$ & $8$ \\
+      $\sigma_{\mathrm{lo}}/\sigma_{\mathrm{hi}}$ & $4$ & $4$ \\
+      $\varepsilon_{\mathrm{lo}}/\varepsilon_{\mathrm{hi}}$ & $1.25$ & $1.25$ \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Backup: Algorithm 1 (PDHG with split fidelity)}
+  \small
+  Inputs: $g, X, \Rhi, \Rlo, \alpha_{x,y,z}, \beta, \varepsilon_{\mathrm{hi,lo}}, \sigma_{\mathrm{hi,lo}}, \tau, \rho$.\\
+  Initialize $f^0, \bar f^0 = f^0, y^0_{\mathrm{hi}} = y^0_{\mathrm{lo}} = 0$. \\
+  \textbf{for} $k = 0, 1, 2, \dots$ \textbf{do}
+  \begin{align*}
+    y^{k+1}_{\mathrm{hi}} &\leftarrow \mathrm{Proj}_{B_{\mathrm{hi}}}\!\big(y^k_{\mathrm{hi}} + \sigma_{\mathrm{hi}} \Rhi(g - X \bar f^k)\big), \\
+    y^{k+1}_{\mathrm{lo}} &\leftarrow \mathrm{Proj}_{B_{\mathrm{lo}}}\!\big(y^k_{\mathrm{lo}} + \sigma_{\mathrm{lo}} \Rlo(g - X \bar f^k)\big), \\
+    f^{k+1} &\leftarrow \mathrm{prox}_{\tau\Phi}\!\big(f^k - \tau X^{\top}(\Rhi^{\top} y^{k+1}_{\mathrm{hi}} + \Rlo^{\top} y^{k+1}_{\mathrm{lo}})\big), \\
+    \bar f^{k+1} &\leftarrow f^{k+1} + \rho(f^{k+1} - f^k).
+  \end{align*}
+  Here $\Phi$ collects the DTV $+ \ell_1 +$ non-negativity terms.
+\end{frame}
+
+\begin{frame}{Backup: Step-size heuristic (and future work)}
+  These results use the paper's empirical balance heuristic:
+  \[
+    \sigma_{\mathrm{hi}} = c_{\mathrm{bal}} / \|K\|, \quad
+    \tau = 1 / (c_{\mathrm{bal}}\|K\|), \quad
+    \sigma_{\mathrm{lo}} = 4\sigma_{\mathrm{hi}},
+  \]
+  with $\|K\|$ from an \emph{unweighted} joint power iteration over
+  $[\Rhi X;\Rlo X;\partial_x;\partial_y;\partial_z;\ell_1 I]$. The
+  product-space CP theorem demands
+  $\tau \cdot \|\Sigma^{1/2} K\|^2 < 1$, which the heuristic does not
+  strictly satisfy when $\sigma_{\mathrm{lo}} > \sigma_{\mathrm{hi}}$.
+  \begin{itemize}\setlength\itemsep{0pt}
+    \item Empirically stable for 2D at 500 iters; in 3D we scale
+          $\|K\|$ up by $\sqrt{\sigma_{\mathrm{lo}}/\sigma_{\mathrm{hi}}}$
+          for stability without changing the LF/HF ratio.
+    \item He--Yuan over-relaxation $\rho \approx 1.75$ on all duals.
+    \item Deriving theorem-compliant step sizes from a weighted power
+          iteration is a clean direction for the journal extension.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Backup: full-resolution RMSE comparison}
+  \scriptsize
+  Image RMSE under the paper's empirical step-size setup (paper-config
+  $c_{\mathrm{hi}}=4$, $c_{\mathrm{lo}}=8$, $\sigma_{\mathrm{lo}}=4\sigma_{\mathrm{hi}}$):
+  \begin{center}
+    \begin{tabular}{lcccccc}
+      \toprule
+      & \multicolumn{3}{c}{iter 200} & \multicolumn{3}{c}{iter 500} \\
+      \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+      Resolution & Single & Two & $\Delta$ & Single & Two & $\Delta$ \\
+      \midrule
+      $512 \times 512$ & $0.1953$ & $0.1628$ & $-16.7\%$ & $0.1625$ & $0.1317$ & $-19.0\%$ \\
+      $256 \times 256$ & $0.1829$ & $0.1192$ & $-34.8\%$ & $0.0984$ & $0.0768$ & $-22.0\%$ \\
+      $128 \times 128$ & $0.0827$ & $0.0515$ & $-37.8\%$ & $0.0332$ & $0.0128$ & $-61.5\%$ \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \begin{itemize}\setlength\itemsep{0pt}
+    \item Iter-500 RMSE reduction of $19$/$22$/$61\%$ at $512^2$/$256^2$/$128^2$.
+    \item Improvement is largest at $128^{2}$; the iter-200 column shows
+          the gap is broad across image sizes during the
+          ``clinical-iteration'' window.
+    \item Caveat: image RMSE is still a weak summary at this angular range
+          -- the visual ladder is the right primary reading.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{References}
+  \footnotesize
+  \begin{itemize}
+    \item E.\,Y.\,Sidky et al., \emph{Accurate volume image reconstruction for
+          DBT with directional-gradient and pixel sparsity regularization},
+          J. Med. Imaging 12(S1):S13013, 2025.
+    \item A.\,Chambolle, T.\,Pock, \emph{A first-order primal-dual algorithm
+          for convex problems with applications to imaging},
+          J. Math. Imag. Vision 40(1):120--145, 2011.
+    \item B.\,He, X.\,Yuan, \emph{Convergence analysis of primal-dual
+          algorithms for a saddle-point problem: from contraction perspective},
+          SIAM J. Imag. Sci. 5(1):119--149, 2012.
+    \item Z.\,Zhang, B.\,Chen, D.\,Xia, E.\,Y.\,Sidky, X.\,Pan,
+          \emph{Directional-TV algorithm for image reconstruction from
+          limited-angular-range data}, Med. Image Anal. 70:102030, 2021.
+    \item I.\,Reiser, R.\,M.\,Nishikawa, \emph{Task-based assessment of breast
+          tomosynthesis}, Med. Phys. 37(4):1591--1600, 2010.
+  \end{itemize}
+\end{frame}
+
+\end{document}

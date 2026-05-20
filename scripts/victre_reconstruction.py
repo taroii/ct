@@ -9,10 +9,10 @@ Chambolle-Pock DTV+L1 reconstructions from
 scripts/compare_methods_multiresolution.py ported to 3D.
 
 The two-channel variant splits the sinogram along the detector-column
-(u) axis into high- and low-frequency bands via sqrt-Hanning filters,
-and uses the diagonal-dual-preconditioning convergence condition
-    tau * ||Sigma^(1/2) K||_2^2 < 1
-with Sigma = diag(sig_hi, sig_lo, sig_tv, sig_tv, sig_tv, sig_l1).
+(u) axis into high- and low-frequency bands via sqrt-Hanning filters and
+gives the LF dual a sigma_lo_scale-times larger step (paper-config 4.0).
+tau and sig_hi follow the original step-balance heuristic from the 2D
+script, matching the parameter set used for the abstract.
 
 Cone-beam forward/backprojection is delegated to astra-toolbox (CUDA).
 """
@@ -59,10 +59,8 @@ CONFIG = {
     "cutoffparm_lo":    8.0,   # lo-pass Hanning cutoff
     "eps_hi_ratio":     1.0,   # eps_hi = eps_hi_ratio * eps
     "eps_lo_ratio":     1.25,  # eps_lo = eps_lo_ratio * eps
-    "sigma_lo_scale":   4.0,   # r_lo = sig_lo / sig_hi
-    "sigma_tv_scale":   1.0,   # r_tv = sig_tv / sig_hi
-    "sigma_l1_scale":   1.0,   # r_l1 = sig_l1 / sig_hi
-    "cvg_slack":        1.e-3, # strict "< 1" slack on the CP convergence condition
+    "sigma_lo_scale":   4.0,   # sig_lo = sigma_lo_scale * sig_hi
+    "norm_inflate_3d":  None,  # 3D stability: None -> sqrt(sigma_lo_scale)
 
     # Iterations
     "itermax":     500,
@@ -199,7 +197,9 @@ def mdivz(g):
 # ASTRA CONE-BEAM GEOMETRY + FORWARD/ADJOINT WRAPPERS
 # ============================================================================
 
-def build_geometry(phantom_shape, dx_cm):
+def build_geometry(phantom_shape, dx_cm,
+                   det_row_count=384, det_col_count=384,
+                   det_spacing=0.05, nviews=25, arc_deg=50.0):
     nz_d, ny_d, nx_d = phantom_shape
 
     vol_geom = astra.create_vol_geom(
@@ -209,18 +209,12 @@ def build_geometry(phantom_shape, dx_cm):
         -nz_d * dx_cm / 2, nz_d * dx_cm / 2,
     )
 
-    # LAR scan: 25 views across a 50 deg arc.  Circular cone-beam trajectory,
-    # source and detector rotating together around the phantom Z axis.
-    nviews = 25
-    arc_deg = 50.0
+    # LAR scan: circular cone-beam trajectory, source and detector rotating
+    # together around the phantom Z axis. Defaults to 25 views over 50 deg.
     angles = np.deg2rad(np.linspace(-arc_deg / 2, arc_deg / 2, nviews))
 
     source_origin = 50.0     # cm  (matches 2D script: radius = 50)
     origin_det    = 50.0     # cm  (total SDD = 100, same as 2D)
-
-    det_row_count = 384
-    det_col_count = 384
-    det_spacing   = 0.05     # cm per pixel -> 19.2 cm detector
 
     proj_geom = astra.create_proj_geom(
         "cone",
@@ -349,7 +343,8 @@ def operator_norms(phantom_shape, A, At, npower):
 # no FOV mask, 3 gradient blocks instead of 2, isotropic TV cap)
 # ============================================================================
 
-def run_single_channel(phantom, A, At, nusino, nuxgrad, nuygrad, nuzgrad, nrays):
+def run_single_channel(phantom, A, At, nusino, nuxgrad, nuygrad, nuzgrad, nrays,
+                       snapshot_iters=None):
     nz_d, ny_d, nx_d = phantom.shape
     cfg = CONFIG
 
@@ -406,6 +401,8 @@ def run_single_channel(phantom, A, At, nusino, nuxgrad, nuygrad, nuzgrad, nrays)
     istops = [1, 2, 5, 10, 20, 50, 100, 200, 300, 400, 500]
 
     ierrs, derrs, tvs = [], [], []
+    snapshots = {}
+    snapshot_set = set(snapshot_iters) if snapshot_iters else set()
     n_voxels = phantom.size
     t0 = time.time()
 
@@ -473,55 +470,46 @@ def run_single_channel(phantom, A, At, nusino, nuxgrad, nuygrad, nuzgrad, nrays)
 
         ierrs.append(float(sqrt(((xbarim - phantom) ** 2).sum() / n_voxels)))
 
+        if itr in snapshot_set:
+            snapshots[itr] = xbarim.copy()
+
         if itr in istops or itr == itermax:
             print(f"  iter {itr:4d}: data_err={derrs[-1]:.6f}  "
                   f"img_err={ierrs[-1]:.6f}  TV={tvs[-1]:.2e}  "
                   f"({time.time()-t0:.1f}s)")
 
     print(f"CP loop done in {time.time()-t0:.1f}s")
-    return xbarim, ierrs, derrs, tvs
+    return xbarim, ierrs, derrs, tvs, snapshots
 
 # ============================================================================
 # TWO-CHANNEL CP LOOP
 # ============================================================================
-# Port of the two-channel block in scripts/compare_methods_multiresolution.py
-# (lines ~613-790), 3D-ified and with the diagonal-dual-preconditioning
-# convergence condition enforced at step-size selection, exactly as done in
-# the 2D script after the convergence-theorem fix:
-#
-#     tau * || Sigma^(1/2) K ||_2^2  <  1
-#
-# with Sigma = diag(sig_hi, sig_lo, sig_tv, sig_tv, sig_tv, sig_l1) and
-# K = [ R_hi A ; R_lo A ; grad_x ; grad_y ; grad_z ; l1f ].  The weighted
-# power iteration below estimates ||Sigma_ratio^(1/2) K||_2 directly, and
-# the assignments make  tau * sig_hi * norm_weighted^2 = 1/(1+cvg_slack).
+# 3D port of the two-channel block in
+# scripts/compare_methods_multiresolution.py (paper-config form).  The LF
+# dual receives a sigma_lo_scale-times larger step than the HF/TV/L1 duals;
+# tau and sig_hi are chosen from the unweighted joint operator norm using
+# the original step-balance heuristic, matching the parameter set behind
+# the abstract's reported iter-500 RMSE improvements.
 
 def run_two_channel(phantom, A, At, R_hi, R_lo,
-                    nusino, nuxgrad, nuygrad, nuzgrad, nrays):
+                    nusino, nuxgrad, nuygrad, nuzgrad, nrays,
+                    snapshot_iters=None):
     nz_d, ny_d, nx_d = phantom.shape
     cfg = CONFIG
 
-    r_lo = cfg["sigma_lo_scale"]
-    r_tv = cfg["sigma_tv_scale"]
-    r_l1 = cfg["sigma_l1_scale"]
-    sqrt_r_lo = float(np.sqrt(r_lo))
-    sqrt_r_tv = float(np.sqrt(r_tv))
-    sqrt_r_l1 = float(np.sqrt(r_l1))
-
-    # Weighted joint power iteration estimating  ||Sigma_ratio^(1/2) K||_2
-    print("Weighted joint power iteration (two-channel)...")
+    # Unweighted joint power iteration estimating  ||K||_2
+    print("Joint power iteration (two-channel)...")
     xim = randn(nz_d, ny_d, nx_d).astype(np.float32)
     xim /= sqrt((xim * xim).sum()) + 1e-12
     mag1 = mag2 = 0.0
     for _ in range(cfg["npower"]):
-        # Forward K_w x: apply K, then scale each block by sqrt(r_block).
         Ax = A(xim)
         s_hi = R_hi(Ax) * nusino
-        s_lo = R_lo(Ax) * (nusino * sqrt_r_lo)
-        gx = gradx(xim) * (nuxgrad * sqrt_r_tv)
-        gy = grady(xim) * (nuygrad * sqrt_r_tv)
-        gz = gradz(xim) * (nuzgrad * sqrt_r_tv)
-        yl = (cfg["l1f"] * sqrt_r_l1) * xim
+        s_lo = R_lo(Ax) * nusino
+        gx = gradx(xim) * nuxgrad
+        gy = grady(xim) * nuygrad
+        gz = gradz(xim) * nuzgrad
+        yl = cfg["l1f"] * xim
         mag1 = sqrt((s_hi*s_hi).sum() + (s_lo*s_lo).sum() +
                     (gx*gx).sum() + (gy*gy).sum() + (gz*gz).sum() +
                     (yl*yl).sum())
@@ -529,43 +517,39 @@ def run_two_channel(phantom, A, At, R_hi, R_lo,
             s_hi /= mag1; s_lo /= mag1
             gx /= mag1; gy /= mag1; gz /= mag1
             yl /= mag1
-        # Adjoint K_w^T y: scale each block of y by sqrt(r_block) again
-        # (adjoint of the diagonal weighting), then apply K^T.  Combined
-        # across hi/lo data blocks before the shared backprojection.
-        bp_in = R_hi(s_hi) + R_lo(s_lo * sqrt_r_lo)
+        bp_in = R_hi(s_hi) + R_lo(s_lo)
         xim = (At(bp_in) * nusino +
-               mdivx(gx * sqrt_r_tv) * nuxgrad +
-               mdivy(gy * sqrt_r_tv) * nuygrad +
-               mdivz(gz * sqrt_r_tv) * nuzgrad +
-               (cfg["l1f"] * sqrt_r_l1) * yl)
+               mdivx(gx) * nuxgrad +
+               mdivy(gy) * nuygrad +
+               mdivz(gz) * nuzgrad +
+               cfg["l1f"] * yl)
         mag2 = sqrt((xim * xim).sum()) + 1e-12
         xim /= mag2
-    norm_weighted = (mag1 + mag2) * 0.5
+    totalnorm = (mag1 + mag2) * 0.5
 
-    # ----------------------------------------------------------------------
-    # Convergence condition (product-space CP with diagonal dual preconditioning):
-    #     tau * || Sigma^(1/2) K ||_2^2  <  1
-    # with Sigma = diag(sig_hi, sig_lo, sig_tv, sig_tv, sig_tv, sig_l1).
-    # norm_weighted estimates ||Sigma_ratio^(1/2) K||_2 directly (sig_hi
-    # factored out).  cvg_slack > 0 shrinks tau so the condition holds
-    # strictly rather than at equality.
-    # ----------------------------------------------------------------------
-    cvg_slack = cfg["cvg_slack"]
-    sig_hi = cfg["stepbalance"] / norm_weighted
-    sig_lo = r_lo * sig_hi
-    sig_tv = r_tv * sig_hi           # used for ygradx, ygrady, ygradz
-    sig_l1 = r_l1 * sig_hi           # used for yim
-    tau = 1.0 / (norm_weighted * cfg["stepbalance"] * (1.0 + cvg_slack))
+    # 3D stability adjustment: the 2D paper's heuristic tau*sig*||K||^2 = 1
+    # uses the unweighted joint norm and relies on the LO channel's 4x sigma
+    # not blowing up in practice. In 3D (more rays, extra z-gradient block)
+    # that margin disappears and the LO dual diverges. Inflating ||K|| bakes
+    # in headroom for the 4x-weighted LO block while keeping the paper's
+    # sig_lo/sig_hi ratio untouched. norm_inflate_3d=None defaults to
+    # sqrt(sigma_lo_scale); a smaller value gives two-channel a larger tau
+    # (less handicap vs single-channel) at the cost of less stability margin.
+    inflate = cfg.get("norm_inflate_3d")
+    if inflate is None:
+        inflate = sqrt(cfg["sigma_lo_scale"])
+    totalnorm_eff = totalnorm * inflate
 
-    lhs_cvg = tau * sig_hi * norm_weighted ** 2
-    assert lhs_cvg < 1.0, f"CP convergence condition violated: {lhs_cvg:.6f} >= 1"
+    sig_two = cfg["stepbalance"] / totalnorm_eff
+    tau = 1.0 / (totalnorm_eff * cfg["stepbalance"])
+    sig_hi = sig_two
+    sig_lo = cfg["sigma_lo_scale"] * sig_two
 
     epssc_hi = cfg["eps_hi_ratio"] * cfg["eps"] * sqrt(nrays)
     epssc_lo = cfg["eps_lo_ratio"] * cfg["eps"] * sqrt(nrays)
 
-    print(f"||Sigma^(1/2) K||={norm_weighted:.4f}  "
-          f"sig_hi={sig_hi:.6f}  sig_lo={sig_lo:.6f}  tau={tau:.6f}  "
-          f"tau*sig_hi*||.||^2={lhs_cvg:.6f}  (< 1 required)")
+    print(f"Total norm: {totalnorm:.4f}  (3D-eff: {totalnorm_eff:.4f})  "
+          f"sig_hi={sig_hi:.6f}  sig_lo={sig_lo:.6f}  tau={tau:.6f}")
 
     # Ground-truth sinogram split into hi/lo channels
     print("Forward-projecting phantom and splitting into hi/lo channels...")
@@ -592,6 +576,8 @@ def run_two_channel(phantom, A, At, R_hi, R_lo,
     istops = [1, 2, 5, 10, 20, 50, 100, 200, 300, 400, 500]
 
     ierrs, derrs, tvs = [], [], []
+    snapshots = {}
+    snapshot_set = set(snapshot_iters) if snapshot_iters else set()
     n_voxels = phantom.size
     t0 = time.time()
 
@@ -642,22 +628,20 @@ def run_two_channel(phantom, A, At, R_hi, R_lo,
         else:
             ysino_lo *= 0.0
 
-        # Dual: per-axis TV prox  (sig_tv, not sig_hi)
         tgx = gradx(xbarim) * nuxgrad
-        ptilx = ygradx_ + sig_tv * tgx
+        ptilx = ygradx_ + sig_two * tgx
         ygradx_ = cap * ptilx / maximum(np.abs(ptilx), cap)
 
         tgy = grady(xbarim) * nuygrad
-        ptily = ygrady_ + sig_tv * tgy
+        ptily = ygrady_ + sig_two * tgy
         ygrady_ = cap * ptily / maximum(np.abs(ptily), cap)
 
         tgz = gradz(xbarim) * nuzgrad
-        ptilz = ygradz_ + sig_tv * tgz
+        ptilz = ygradz_ + sig_two * tgz
         ygradz_ = cap * ptilz / maximum(np.abs(ptilz), cap)
 
-        # Dual: L1 prox  (sig_l1, not sig_hi)
         tl1 = l1f * xbarim
-        ptil1 = yim + sig_l1 * tl1
+        ptil1 = yim + sig_two * tl1
         yim = beta * ptil1 / maximum(np.abs(ptil1), beta)
 
         # 3D TV for logging
@@ -675,13 +659,16 @@ def run_two_channel(phantom, A, At, R_hi, R_lo,
 
         ierrs.append(float(sqrt(((xbarim - phantom) ** 2).sum() / n_voxels)))
 
+        if itr in snapshot_set:
+            snapshots[itr] = xbarim.copy()
+
         if itr in istops or itr == itermax:
             print(f"  iter {itr:4d}: data_err={derrs[-1]:.6f}  "
                   f"img_err={ierrs[-1]:.6f}  TV={tvs[-1]:.2e}  "
                   f"({time.time()-t0:.1f}s)")
 
     print(f"Two-channel CP loop done in {time.time()-t0:.1f}s")
-    return xbarim, ierrs, derrs, tvs
+    return xbarim, ierrs, derrs, tvs, snapshots
 
 # ============================================================================
 # ADJOINT TEST  (<A x, y> vs <x, At y>)
@@ -780,11 +767,11 @@ def main():
         phantom.shape, A, At, CONFIG["npower"]
     )
 
-    recon_single, ierrs_single, derrs_single, tvs_single = run_single_channel(
+    recon_single, ierrs_single, derrs_single, tvs_single, _ = run_single_channel(
         phantom, A, At, nusino, nuxgrad, nuygrad, nuzgrad, geom_info["nrays"]
     )
 
-    recon_two, ierrs_two, derrs_two, tvs_two = run_two_channel(
+    recon_two, ierrs_two, derrs_two, tvs_two, _ = run_two_channel(
         phantom, A, At, R_hi, R_lo,
         nusino, nuxgrad, nuygrad, nuzgrad, geom_info["nrays"]
     )

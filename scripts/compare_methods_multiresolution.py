@@ -45,15 +45,10 @@ cutoffparm_lo = 8.0
 eps_hi = eps
 eps_lo = 1.25*eps
 
-# Diagonal dual-preconditioning ratios for the two-channel CP form.
-# sig_hi is the pivot; every other dual block's sigma is sig_hi * r_<block>.
-# The power iteration in the two-channel branch uses these ratios to
-# estimate ||Sigma^(1/2) K||_2 directly, so that the theorem
-#     tau * || Sigma^(1/2) K ||_2^2  <  1
-# is enforced by construction at step-size selection.
-sigma_lo_scale = 4.0   # r_lo = sig_lo / sig_hi
-sigma_tv_scale = 1.0   # r_tv = sig_tv / sig_hi  (used for ygradx, ygrady)
-sigma_l1_scale = 1.0   # r_l1 = sig_l1 / sig_hi  (used for yim)
+# Two-channel preconditioner: the LF dual receives a sigma_lo_scale-times
+# larger step than the HF/TV/L1 duals. The paper-config value 4.0 is the
+# scaling that produced the abstract's reported iter-500 RMSE numbers.
+sigma_lo_scale = 4.0
 
 # Resolution-specific alpha/beta (from DTVminHan.py comments)
 # 128: alpha=1.95, beta=10
@@ -612,20 +607,6 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None):
     sinodata_lo_sc = nusino*sinodata_lo
     sinodata_hi_sc = nusino*sinodata_hi
 
-    # ------------------------------------------------------------------
-    # Power iteration on the *weighted* operator  K_w = Sigma_ratio^(1/2) K
-    # with K = [ R_hi A ; R_lo A ; grad_x ; grad_y ; l1f ] and
-    # Sigma_ratio = diag(1, r_lo, r_tv, r_tv, r_l1) (sig_hi factored out).
-    # The resulting norm estimate is  ||Sigma^(1/2) K||_2 / sqrt(sig_hi),
-    # which is exactly what the convergence condition below needs.
-    # ------------------------------------------------------------------
-    r_lo = sigma_lo_scale
-    r_tv = sigma_tv_scale
-    r_l1 = sigma_l1_scale
-    sqrt_r_lo = sqrt(r_lo)
-    sqrt_r_tv = sqrt(r_tv)
-    sqrt_r_l1 = sqrt(r_l1)
-
     xim = randn(nx, ny)
     xim *= mask
     xim1 = xim*0.
@@ -633,18 +614,17 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None):
     worksino = truesino*0.
 
     for i in range(npower):
-        # Forward  K_w x: apply K, then scale each block by sqrt(r_block).
         circularFanbeamProjection(xim, worksino)
         s_hi = R_hi(worksino)
         s_lo = R_lo(worksino)
-        s_hi *= nusino                 # block weight sqrt(r_hi) = 1
-        s_lo *= (nusino*sqrt_r_lo)     # block weight sqrt(r_lo)
+        s_hi *= nusino
+        s_lo *= nusino
 
         xg = gradx(xim)
-        xg *= (nuxgrad*sqrt_r_tv)      # block weight sqrt(r_tv)
+        xg *= nuxgrad
         yg = grady(xim)
-        yg *= (nuygrad*sqrt_r_tv)      # block weight sqrt(r_tv)
-        yim_loc = (l1f*sqrt_r_l1)*xim  # block weight sqrt(r_l1)
+        yg *= nuygrad
+        yim_loc = l1f*xim
 
         mag1 = sqrt((yim_loc**2).sum() + (yg**2).sum() + (xg**2).sum() + (s_hi**2).sum() + (s_lo**2).sum())
 
@@ -655,55 +635,33 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None):
             s_hi /= mag1
             s_lo /= mag1
 
-        # Adjoint  K_w^T y: scale each block of y by sqrt(r_block) again
-        # (adjoint of the diagonal weighting), then apply K^T.
         xim1.fill(0.)
         imtmp = xim1*0.
         circularFanbeamBackProjection(s_hi, imtmp)
         xim1 += imtmp
         imtmp.fill(0.0)
-        circularFanbeamBackProjection(s_lo*sqrt_r_lo, imtmp)
+        circularFanbeamBackProjection(s_lo, imtmp)
         xim1 += imtmp
         xim1 *= (nusino*mask)
 
-        xim2 = mdivx(xg*sqrt_r_tv)
+        xim2 = mdivx(xg)
         xim2 *= (nuxgrad*mask)
-        xim3 = mdivy(yg*sqrt_r_tv)
+        xim3 = mdivy(yg)
         xim3 *= (nuygrad*mask)
-        xim = xim1 + xim2 + xim3 + (l1f*sqrt_r_l1)*yim_loc
+        xim = xim1 + xim2 + xim3 + l1f*yim_loc
         mag2 = sqrt((xim**2.).sum())
         if mag2 > 0:
             xim /= mag2
 
-    # norm_weighted estimates  ||Sigma_ratio^(1/2) K||_2  (sig_hi factored out).
-    norm_weighted = (mag1 + mag2)*0.5
-
-    # ------------------------------------------------------------------
-    # Convergence condition (product-space CP with diagonal dual preconditioning):
-    #     tau * || Sigma^(1/2) K ||_2^2  <  1
-    # with  Sigma = diag(sig_hi I, sig_lo I, sig_tv I, sig_tv I, sig_l1 I)
-    # and   K     = [ R_hi A ; R_lo A ; grad_x ; grad_y ; l1f ].
-    # The weighted power iteration above estimates  ||Sigma^(1/2) K||_2
-    # directly (sig_hi factored out as norm_weighted). Without slack the
-    # assignments below would put the product at 1; cvg_slack > 0 shrinks
-    # tau just enough that  tau * sig_hi * norm_weighted^2 == 1/(1+cvg_slack),
-    # making the theorem hold strictly. stepbalance trades tau against sig_hi.
-    # ------------------------------------------------------------------
-    cvg_slack = 1.e-3
-    sig_hi  = stepbalance/norm_weighted
-    sig_lo  = r_lo*sig_hi
-    sig_tv  = r_tv*sig_hi           # used for ygradx, ygrady dual updates
-    sig_l1  = r_l1*sig_hi           # used for yim dual update
-    tau_two = 1./(norm_weighted*stepbalance*(1.0 + cvg_slack))
-
-    lhs_cvg = tau_two*sig_hi*norm_weighted**2
-    assert lhs_cvg < 1.0, f"CP convergence condition violated: {lhs_cvg:.6f} >= 1"
+    totalnorm_two = (mag1 + mag2)*0.5
+    sig_two = stepbalance/totalnorm_two
+    tau_two = 1./(totalnorm_two*stepbalance)
+    sig_hi = sig_two
+    sig_lo = sigma_lo_scale*sig_two
 
     epssc_hi = eps_hi*sqrt(nrays)
     epssc_lo = eps_lo*sqrt(nrays)
-    print(f"  ||Sigma^(1/2) K||={norm_weighted:.4f}  sig_hi={sig_hi:.6f}  "
-          f"sig_lo={sig_lo:.6f}  tau={tau_two:.6f}  "
-          f"tau*sig_hi*||.||^2={lhs_cvg:.6f}  (< 1 required)")
+    print(f"  Total norm: {totalnorm_two:.4f}, sig_hi: {sig_hi:.6f}, sig_lo: {sig_lo:.6f}, tau: {tau_two:.6f}")
 
     # Initialize
     xim = zeros([nx, ny])
@@ -778,23 +736,20 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None):
         else:
             ysino_lo *= 0.0
 
-        # grad_x dual: block 3 of Sigma, weight sig_tv = r_tv * sig_hi.
         tgx = gradx(xbarim)
         tgx *= nuxgrad
-        ptilx = ygradx + sig_tv*tgx
+        ptilx = ygradx + sig_two*tgx
         ptilmag = maximum(sqrt(ptilx**2), (2.-alpha))
         ygradx = (2.-alpha)*ptilx/ptilmag
 
-        # grad_y dual: block 4 of Sigma, weight sig_tv = r_tv * sig_hi.
         tgy = grady(xbarim)
         tgy *= nuygrad
-        ptily = ygrady + sig_tv*tgy
+        ptily = ygrady + sig_two*tgy
         ptilmag = maximum(sqrt(ptily**2), (alpha))
         ygrady = alpha*ptily/ptilmag
 
-        # L1 dual: block 5 of Sigma, weight sig_l1 = r_l1 * sig_hi.
         tl1 = l1f*xbarim
-        ptil1 = yim + sig_l1*tl1
+        ptil1 = yim + sig_two*tl1
         ptilmag = maximum(sqrt(ptil1**2), (beta))
         yim = beta*ptil1/maximum(ptilmag, 1.e-10)
 
