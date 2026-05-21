@@ -80,6 +80,9 @@ PHANTOM_CONFIGS = {
         "center": (3.0, 0.0, 0.0),
         "det":    (384, 384, 0.05),     # 19.2 cm
         "roi":    (36, 110, 50, 124),
+        # Wide display window: recons overshoot well above the phantom
+        # max (~0.53), so a GT-fitted window saturated them to white.
+        "display": {"vmin": 0.0, "vmax": 0.6},
         "itermax": 500,
         "snapshot_iters": [10, 50, 100, 200, 300, 500],
         "ladder_iters":   [10, 50, 100, 200],
@@ -103,6 +106,9 @@ PHANTOM_CONFIGS = {
         "det":    (544, 544, 0.05),
         # ROI: central brain region around (0, 0) -> rows/cols ~ (60-130).
         "roi":    (60, 130, 60, 130),
+        # Wide display window: recons overshoot above the phantom max
+        # (1.8); a GT-fitted window saturated them to white.
+        "display": {"vmin": 0.0, "vmax": 2.6},
         "itermax": 500,
         "snapshot_iters": [10, 50, 100, 200, 300, 500],
         "ladder_iters":   [10, 50, 100, 200],
@@ -134,7 +140,7 @@ PHANTOM_CONFIGS = {
         # Gold crowns at att=19.3 dominate percentile-based vmax; clamp the
         # display window so soft tissue (att=1.0) and bone (att=2.0) are
         # the visible contrast band.
-        "display": {"vmin": 0.0, "vmax": 2.5},
+        "display": {"vmin": 0.0, "vmax": 3.0},
     },
 }
 
@@ -177,12 +183,13 @@ def build_phantom_volume(cfg):
     return vol
 
 
-def run_recon(cfg):
+def run_recon(cfg, arc_deg=50.0):
     phantom = build_phantom_volume(cfg)
     det_row, det_col, det_sp = cfg["det"]
     vol_geom, proj_geom, geom_info = vr.build_geometry(
         phantom.shape, cfg["dx_cm"],
         det_row_count=det_row, det_col_count=det_col, det_spacing=det_sp,
+        arc_deg=arc_deg,
     )
     A, At = vr.make_projector(vol_geom, proj_geom)
 
@@ -230,12 +237,12 @@ def run_recon(cfg):
     }
 
 
-def load_or_run(cache_path, cfg, force):
+def load_or_run(cache_path, cfg, force, arc_deg=50.0):
     if cache_path.exists() and not force:
         print(f"Loading cached recon from {cache_path}")
         with open(cache_path, "rb") as f:
             return pickle.load(f)
-    res = run_recon(cfg)
+    res = run_recon(cfg, arc_deg=arc_deg)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     with open(cache_path, "wb") as f:
         pickle.dump(res, f)
@@ -352,44 +359,145 @@ def fig_convergence(result, out_path, title=None, xlim=None):
     print(f"Saved {out_path}")
 
 
+def fig_error_ladder(result, iters, out_path, title=None, crop=None,
+                     err_range=None, style="signed"):
+    """Difference maps (reconstruction - ground truth), single vs
+    two-channel, across iterations, with a colorbar legend.
+
+    style:
+      "signed"    -- signed grayscale: black under-estimate, mid-gray 0,
+                     white over-estimate (the original representation).
+      "magnitude" -- absolute error in grayscale: black 0, white largest.
+                     Drops the sign; shows only where error is large.
+      "diverging" -- colourblind-safe diverging map (blue under, white 0,
+                     red over); high-contrast for a projector.
+
+    err_range (auto = 99th percentile of |difference| over all panels) is
+    symmetric for signed/diverging, [0, err_range] for magnitude.
+    """
+    phi = result["phantom"]
+    snaps_s = result["snapshots_single"]
+    snaps_t = result["snapshots_two"]
+    gt = _xy_slice(phi)
+
+    def crop_slice(s):
+        if crop is None:
+            return s
+        r0, r1, c0, c1 = crop
+        return s[r0:r1, c0:c1]
+
+    gt_c = crop_slice(gt)
+    diffs_s = [crop_slice(_xy_slice(snaps_s[it])) - gt_c for it in iters]
+    diffs_t = [crop_slice(_xy_slice(snaps_t[it])) - gt_c for it in iters]
+
+    if err_range is None:
+        allabs = np.concatenate([np.abs(d).ravel()
+                                 for d in diffs_s + diffs_t])
+        err_range = float(np.percentile(allabs, 99.0))
+
+    if style == "magnitude":
+        data_s = [np.abs(d) for d in diffs_s]
+        data_t = [np.abs(d) for d in diffs_t]
+        cmap, vmin, vmax = "gray", 0.0, err_range
+        ticks = [0.0, err_range]
+        ticklabels = ["0", f"{err_range:.2f}"]
+        cbar_label = ("absolute error |reconstruction - ground truth|   "
+                      "(black: no error,  white: largest error)")
+    elif style == "diverging":
+        data_s, data_t = diffs_s, diffs_t
+        cmap, vmin, vmax = "RdBu_r", -err_range, err_range
+        ticks = [-err_range, 0.0, err_range]
+        ticklabels = [f"-{err_range:.2f}", "0", f"+{err_range:.2f}"]
+        cbar_label = ("reconstruction - ground truth   "
+                      "(blue: under-estimate,  white: no error,  "
+                      "red: over-estimate)")
+    else:  # signed
+        data_s, data_t = diffs_s, diffs_t
+        cmap, vmin, vmax = "gray", -err_range, err_range
+        ticks = [-err_range, 0.0, err_range]
+        ticklabels = [f"-{err_range:.2f}", "0", f"+{err_range:.2f}"]
+        cbar_label = ("reconstruction - ground truth   "
+                      "(black: under-estimate,  mid-gray: no error,  "
+                      "white: over-estimate)")
+
+    n = len(iters)
+    fig, axes = plt.subplots(2, n, figsize=(2.1 * n, 4.6),
+                             constrained_layout=True)
+    for ax in axes.flat:
+        _strip(ax)
+    axes[0, 0].set_ylabel("single - truth", fontsize=11)
+    axes[1, 0].set_ylabel("two - truth", fontsize=11)
+    im = None
+    for i, it in enumerate(iters):
+        im = axes[0, i].imshow(data_s[i], cmap=cmap, vmin=vmin, vmax=vmax,
+                               origin="lower")
+        axes[0, i].set_title(f"iter {it}", fontsize=10)
+        axes[1, i].imshow(data_t[i], cmap=cmap, vmin=vmin, vmax=vmax,
+                          origin="lower")
+    if title is not None:
+        fig.suptitle(title, fontsize=11)
+    cbar = fig.colorbar(im, ax=axes, orientation="horizontal",
+                        fraction=0.05, pad=0.02, aspect=50, ticks=ticks)
+    cbar.ax.set_xticklabels(ticklabels)
+    cbar.ax.tick_params(labelsize=9)
+    cbar.set_label(cbar_label, fontsize=9)
+    fig.savefig(out_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved {out_path}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--phantom", required=True, choices=list(PHANTOM_CONFIGS))
+    ap.add_argument("--arc", type=float, default=50.0,
+                    help="LAR source-arc in degrees (default 50)")
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
 
     cfg = PHANTOM_CONFIGS[args.phantom]
-    cache_path = ROOT / "cache" / f"ct2_{args.phantom}_recon.pkl"
+    # Arc tag: empty for the default 50 deg, "_arc<N>" otherwise, so the
+    # wide-arc runs get their own cache and figure files.
+    tag = "" if abs(args.arc - 50.0) < 0.5 else f"_arc{int(round(args.arc))}"
+    cache_path = ROOT / "cache" / f"ct2_{args.phantom}_recon{tag}.pkl"
     fig_dir = ROOT / "presentation" / "figs"
     fig_dir.mkdir(parents=True, exist_ok=True)
 
-    result = load_or_run(cache_path, cfg, args.force)
+    result = load_or_run(cache_path, cfg, args.force, arc_deg=args.arc)
 
+    # Figure titles are intentionally omitted -- the slide frame title
+    # names the phantom and the slide caption carries the generation note.
     display = cfg.get("display")
     fig_phantom_intro(
         result,
-        fig_dir / f"ct2_{args.phantom}_phantom_intro.png",
-        title=cfg["intro_title"],
+        fig_dir / f"ct2_{args.phantom}_phantom_intro{tag}.png",
+        title=None,
         display=display,
     )
     fig_iter_ladder(
         result, cfg["ladder_iters"],
-        fig_dir / f"ct2_{args.phantom}_iter_ladder_xy.png",
-        title=cfg["ladder_title"],
+        fig_dir / f"ct2_{args.phantom}_iter_ladder_xy{tag}.png",
+        title=None,
         display=display,
     )
     fig_iter_ladder(
         result, cfg["ladder_iters"],
-        fig_dir / f"ct2_{args.phantom}_iter_ladder_roi.png",
-        title=cfg["roi_title"],
+        fig_dir / f"ct2_{args.phantom}_iter_ladder_roi{tag}.png",
+        title=None,
         crop=cfg["roi"],
         display=display,
     )
+    # Full slice (no ROI crop), magnitude style -- per team decision.
+    fig_error_ladder(
+        result, [50, 100, 200, 500],
+        fig_dir / f"ct2_{args.phantom}_error_ladder{tag}.png",
+        crop=None, style="magnitude",
+    )
     fig_convergence(
         result,
-        fig_dir / f"ct2_{args.phantom}_convergence.png",
-        title=cfg["conv_title"],
-        xlim=(0, 300),
+        fig_dir / f"ct2_{args.phantom}_convergence{tag}.png",
+        title=(f"Analytic {args.phantom} phantom ({args.arc:.0f} deg arc): "
+               f"image RMSE vs iteration"),
+        xlim=(0, 500),
     )
 
 

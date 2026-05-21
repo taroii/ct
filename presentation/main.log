@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.9.19)  20 MAY 2026 13:37
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.9.19)  21 MAY 2026 13:43
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -906,7 +906,7 @@ aTeX to use the Fira fonts on input line 95.
 
 ))
 LaTeX Font Info:    Trying to load font information for T1+lmss on input line 6
-3.
+6.
  (c:/texlive/2025/texmf-dist/tex/latex/lm/t1lmss.fd
 File: t1lmss.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -917,24 +917,24 @@ File: l3backend-pdftex.def 2025-06-09 L3 backend support: PDF output (pdfTeX)
 (./main.aux)
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 66.
+LaTeX Font Info:    ... okay on input line 66.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 66.
+LaTeX Font Info:    ... okay on input line 66.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 66.
+LaTeX Font Info:    ... okay on input line 66.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 66.
+LaTeX Font Info:    ... okay on input line 66.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 66.
+LaTeX Font Info:    ... okay on input line 66.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 66.
+LaTeX Font Info:    ... okay on input line 66.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 66.
+LaTeX Font Info:    ... okay on input line 66.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 66.
+LaTeX Font Info:    ... okay on input line 66.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 66.
+LaTeX Font Info:    ... okay on input line 66.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -992,58 +992,58 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-Package hyperref Info: Link coloring OFF on input line 63.
+Package hyperref Info: Link coloring OFF on input line 66.
 
 (./main.out) (./main.out)
 \@outlinefile=\write5
 \openout5 = `main.out'.
 
 LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
-(Font)                  OT1/lmr/m/n --> OT1/cmss/m/n on input line 63.
+(Font)                  OT1/lmr/m/n --> OT1/cmss/m/n on input line 66.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
-(Font)                  OT1/lmr/bx/n --> OT1/cmss/b/n on input line 63.
+(Font)                  OT1/lmr/bx/n --> OT1/cmss/b/n on input line 66.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
-(Font)                  OT1/cmss/m/n --> OT1/lmss/m/n on input line 63.
+(Font)                  OT1/cmss/m/n --> OT1/lmss/m/n on input line 66.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
-(Font)                  OT1/cmss/b/n --> OT1/lmss/b/n on input line 63.
+(Font)                  OT1/cmss/b/n --> OT1/lmss/b/n on input line 66.
 \symnumbers=\mathgroup6
 \sympureletters=\mathgroup7
 LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `normal'
-(Font)                  OT1/lmss/m/n --> T1/lmr/m/n on input line 63.
-LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 63.
+(Font)                  OT1/lmss/m/n --> T1/lmr/m/n on input line 66.
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
-(Font)                  OT1/lmr/bx/n --> T1/lmss/b/n on input line 63.
+(Font)                  OT1/lmr/bx/n --> T1/lmss/b/n on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
-(Font)                  OT1/lmr/bx/n --> T1/lmss/b/n on input line 63.
-LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 63.
+(Font)                  OT1/lmr/bx/n --> T1/lmss/b/n on input line 66.
+LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
-(Font)                  OT1/lmss/m/n --> T1/lmss/m/n on input line 63.
+(Font)                  OT1/lmss/m/n --> T1/lmss/m/n on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
-(Font)                  OT1/lmss/bx/n --> T1/lmss/m/n on input line 63.
-LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 63.
+(Font)                  OT1/lmss/bx/n --> T1/lmss/m/n on input line 66.
+LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
-(Font)                  OT1/lmr/m/it --> T1/lmss/m/it on input line 63.
+(Font)                  OT1/lmr/m/it --> T1/lmss/m/it on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
-(Font)                  OT1/lmr/bx/it --> T1/lmss/m/it on input line 63.
-LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 63.
+(Font)                  OT1/lmr/bx/it --> T1/lmss/m/it on input line 66.
+LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
-(Font)                  OT1/lmtt/m/n --> T1/lmtt/m/n on input line 63.
+(Font)                  OT1/lmtt/m/n --> T1/lmtt/m/n on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
-(Font)                  OT1/lmtt/m/n --> T1/lmtt/m/n on input line 63.
+(Font)                  OT1/lmtt/m/n --> T1/lmtt/m/n on input line 66.
 LaTeX Font Info:    Overwriting symbol font `numbers' in version `bold'
-(Font)                  T1/lmss/m/n --> T1/lmss/b/n on input line 63.
+(Font)                  T1/lmss/m/n --> T1/lmss/b/n on input line 66.
 LaTeX Font Info:    Overwriting symbol font `pureletters' in version `bold'
-(Font)                  T1/lmss/m/it --> T1/lmss/b/it on input line 63.
+(Font)                  T1/lmss/m/it --> T1/lmss/b/it on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `bold'
-(Font)                  OT1/lmss/b/n --> T1/lmr/b/n on input line 63.
+(Font)                  OT1/lmss/b/n --> T1/lmr/b/n on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
-(Font)                  T1/lmss/b/n --> T1/lmss/b/n on input line 63.
+(Font)                  T1/lmss/b/n --> T1/lmss/b/n on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
-(Font)                  T1/lmss/m/n --> T1/lmss/b/n on input line 63.
+(Font)                  T1/lmss/m/n --> T1/lmss/b/n on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
-(Font)                  T1/lmss/m/it --> T1/lmss/b/it on input line 63.
+(Font)                  T1/lmss/m/it --> T1/lmss/b/it on input line 66.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
-(Font)                  T1/lmtt/m/n --> T1/lmtt/b/n on input line 63.
+(Font)                  T1/lmtt/m/n --> T1/lmtt/b/n on input line 66.
 
 (c:/texlive/2025/texmf-dist/tex/latex/translator/translator-basic-dictionary-En
 glish.dict
@@ -1069,13 +1069,13 @@ Dictionary: translator-numbers-dictionary, Language: English
 English.dict
 Dictionary: translator-theorem-dictionary, Language: English 
 )
-LaTeX Info: Redefining \microtypecontext on input line 63.
-Package microtype Info: Applying patch `item' on input line 63.
-Package microtype Info: Applying patch `toc' on input line 63.
-Package microtype Info: Applying patch `eqnum' on input line 63.
-Package microtype Info: Applying patch `footnote' on input line 63.
-Package microtype Info: Applying patch `verbatim' on input line 63.
-LaTeX Info: Redefining \microtypesetup on input line 63.
+LaTeX Info: Redefining \microtypecontext on input line 66.
+Package microtype Info: Applying patch `item' on input line 66.
+Package microtype Info: Applying patch `toc' on input line 66.
+Package microtype Info: Applying patch `eqnum' on input line 66.
+Package microtype Info: Applying patch `footnote' on input line 66.
+Package microtype Info: Applying patch `verbatim' on input line 66.
+LaTeX Info: Redefining \microtypesetup on input line 66.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -1092,7 +1092,7 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             See the microtype manual for details.
  (./main.nav)
 LaTeX Font Info:    Trying to load font information for OT1+lmss on input line 
-68.
+71.
  (c:/texlive/2025/texmf-dist/tex/latex/lm/ot1lmss.fd
 File: ot1lmss.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -1100,30 +1100,30 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `lmss' (encoding: OT1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 6
-8.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 7
+1.
 (c:/texlive/2025/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-68.
+71.
 
 (c:/texlive/2025/texmf-dist/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-68.
+71.
 
 (c:/texlive/2025/texmf-dist/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 68.
+(Font)              <10> on input line 71.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 68.
+(Font)              <7> on input line 71.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 68.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 68.
+(Font)              <5> on input line 71.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 71.
 
 
 (c:/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa.fd
@@ -1132,7 +1132,7 @@ File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 (c:/texlive/2025/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 68.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 71.
 
 
 (c:/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb.fd
@@ -1142,21 +1142,21 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
 LaTeX Font Info:    Font shape `T1/lmss/m/it' in size <10> not available
-(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 68.
+(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 71.
 LaTeX Font Info:    Font shape `T1/lmss/m/it' in size <7> not available
-(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 68.
+(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 71.
 LaTeX Font Info:    Font shape `T1/lmss/m/it' in size <5> not available
-(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 68.
+(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 71.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 68.
+(Font)              <8> on input line 71.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 68.
+(Font)              <6> on input line 71.
 LaTeX Font Info:    Font shape `T1/lmss/m/it' in size <8> not available
-(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 68.
+(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 71.
 LaTeX Font Info:    Font shape `T1/lmss/m/it' in size <6> not available
-(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 68.
+(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 71.
 
-Overfull \vbox (15.63992pt too high) detected at line 68
+Overfull \vbox (15.63992pt too high) detected at line 71
  []
 
 
@@ -1166,16 +1166,16 @@ Overfull \vbox (15.63992pt too high) detected at line 68
 {c:/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/texlive/2025/
 texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 71.
+(Font)              <10.95> on input line 74.
 LaTeX Font Info:    Font shape `T1/lmss/m/it' in size <10.95> not available
-(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 71.
+(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 74.
 
 
 [2
 
 ]
 LaTeX Font Info:    Trying to load font information for TS1+lmss on input line 
-90.
+93.
  (c:/texlive/2025/texmf-dist/tex/latex/lm/ts1lmss.fd
 File: ts1lmss.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -1194,11 +1194,11 @@ f-dist/fonts/enc/dvips/lm/lm-mathsy.enc}]
 
 ]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <9> on input line 142.
+(Font)              <9> on input line 145.
 LaTeX Font Info:    Font shape `T1/lmss/m/it' in size <9> not available
-(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 142.
+(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 145.
 
-Overfull \vbox (26.23209pt too high) detected at line 142
+Overfull \vbox (26.23209pt too high) detected at line 145
  []
 
 
@@ -1215,8 +1215,8 @@ exmf-dist/fonts/enc/dvips/lm/lm-rm.enc}]
 [7
 
 ]
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 18
-9.
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 19
+2.
  (c:/texlive/2025/texmf-dist/tex/latex/lm/t1lmr.fd
 File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -1232,11 +1232,11 @@ File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman
 [9
 
 ]
-<figs/single_only_ladder_256_paper.png, id=111, 953.964pt x 177.7842pt>
+<figs/single_only_ladder_256_paper.png, id=115, 953.964pt x 177.7842pt>
 File: figs/single_only_ladder_256_paper.png Graphic file (type png)
 <use figs/single_only_ladder_256_paper.png>
 Package pdftex.def Info: figs/single_only_ladder_256_paper.png  used on input l
-ine 205.
+ine 209.
 (pdftex.def)             Requested size: 398.3477pt x 74.2375pt.
 
 
@@ -1255,7 +1255,7 @@ ine 205.
 [13
 
 ]
-Overfull \vbox (19.87688pt too high) detected at line 297
+Overfull \vbox (19.87688pt too high) detected at line 301
  []
 
 
@@ -1267,57 +1267,69 @@ Overfull \vbox (19.87688pt too high) detected at line 297
 [15
 
 ]
-<figs/iter_ladder_recon_256_paper.png, id=152, 953.60265pt x 320.51746pt>
+<figs/iter_ladder_recon_256_paper.png, id=157, 953.60265pt x 320.51746pt>
 File: figs/iter_ladder_recon_256_paper.png Graphic file (type png)
 <use figs/iter_ladder_recon_256_paper.png>
 Package pdftex.def Info: figs/iter_ladder_recon_256_paper.png  used on input li
-ne 312.
+ne 317.
 (pdftex.def)             Requested size: 398.32776pt x 133.8828pt.
+
+Overfull \vbox (18.46379pt too high) detected at line 317
+ []
+
 
 
 [16
 
  <./figs/iter_ladder_recon_256_paper.png>]
-<figs/iter_ladder_zoom_recon_256_paper.png, id=159, 953.60265pt x 320.51746pt>
+<figs/iter_ladder_zoom_recon_256_paper.png, id=164, 953.60265pt x 320.51746pt>
 File: figs/iter_ladder_zoom_recon_256_paper.png Graphic file (type png)
 <use figs/iter_ladder_zoom_recon_256_paper.png>
 Package pdftex.def Info: figs/iter_ladder_zoom_recon_256_paper.png  used on inp
-ut line 322.
+ut line 328.
 (pdftex.def)             Requested size: 398.32776pt x 133.8828pt.
 
 
 [17
 
  <./figs/iter_ladder_zoom_recon_256_paper.png>]
-<figs/error_pair_256_paper.png, id=166, 611.76555pt x 341.1144pt>
+<figs/error_pair_256_paper.png, id=171, 611.76555pt x 341.1144pt>
 File: figs/error_pair_256_paper.png Graphic file (type png)
 <use figs/error_pair_256_paper.png>
-Package pdftex.def Info: figs/error_pair_256_paper.png  used on input line 331.
+Package pdftex.def Info: figs/error_pair_256_paper.png  used on input line 339.
 
 (pdftex.def)             Requested size: 266.80664pt x 148.76872pt.
+
+Overfull \vbox (19.72481pt too high) detected at line 339
+ []
+
 
 
 [18
 
  <./figs/error_pair_256_paper.png>]
-<figs/iter_ladder_convergence_256_paper.png, id=173, 714.7503pt x 284.0211pt>
+<figs/iter_ladder_convergence_256_paper.png, id=179, 714.7503pt x 284.0211pt>
 File: figs/iter_ladder_convergence_256_paper.png Graphic file (type png)
 <use figs/iter_ladder_convergence_256_paper.png>
 Package pdftex.def Info: figs/iter_ladder_convergence_256_paper.png  used on in
-put line 341.
+put line 350.
 (pdftex.def)             Requested size: 351.69214pt x 139.75227pt.
+
+Overfull \vbox (20.30331pt too high) detected at line 350
+ []
+
 
 
 [19
 
  <./figs/iter_ladder_convergence_256_paper.png>]
-<figs/persistence_500iter.png, id=182, 787.0203pt x 252.2223pt>
+<figs/persistence_500iter.png, id=187, 787.0203pt x 252.2223pt>
 File: figs/persistence_500iter.png Graphic file (type png)
 <use figs/persistence_500iter.png>
-Package pdftex.def Info: figs/persistence_500iter.png  used on input line 352.
+Package pdftex.def Info: figs/persistence_500iter.png  used on input line 362.
 (pdftex.def)             Requested size: 398.33678pt x 127.65797pt.
 
-Overfull \vbox (1.15788pt too high) detected at line 352
+Overfull \vbox (24.29338pt too high) detected at line 362
  []
 
 
@@ -1325,47 +1337,55 @@ Overfull \vbox (1.15788pt too high) detected at line 352
 [20
 
  <./figs/persistence_500iter.png>]
-<figs/ct2_breast_phantom_intro.png, id=189, 787.38165pt x 278.9622pt>
+<figs/ct2_breast_phantom_intro.png, id=194, 787.38165pt x 278.9622pt>
 File: figs/ct2_breast_phantom_intro.png Graphic file (type png)
 <use figs/ct2_breast_phantom_intro.png>
 Package pdftex.def Info: figs/ct2_breast_phantom_intro.png  used on input line 
-361.
+372.
 (pdftex.def)             Requested size: 398.33945pt x 141.12807pt.
 
 
 [21
 
  <./figs/ct2_breast_phantom_intro.png>]
-<figs/ct2_breast_iter_ladder_xy.png, id=196, 673.19505pt x 397.485pt>
+<figs/ct2_breast_iter_ladder_xy.png, id=201, 673.19505pt x 397.485pt>
 File: figs/ct2_breast_iter_ladder_xy.png Graphic file (type png)
 <use figs/ct2_breast_iter_ladder_xy.png>
 Package pdftex.def Info: figs/ct2_breast_iter_ladder_xy.png  used on input line
- 370.
+ 382.
 (pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
+
+Overfull \vbox (11.58398pt too high) detected at line 382
+ []
+
 
 
 [22
 
  <./figs/ct2_breast_iter_ladder_xy.png>]
-<figs/ct2_breast_iter_ladder_roi.png, id=204, 673.19505pt x 397.485pt>
+<figs/ct2_breast_iter_ladder_roi.png, id=208, 673.19505pt x 397.485pt>
 File: figs/ct2_breast_iter_ladder_roi.png Graphic file (type png)
 <use figs/ct2_breast_iter_ladder_roi.png>
 Package pdftex.def Info: figs/ct2_breast_iter_ladder_roi.png  used on input lin
-e 380.
+e 393.
 (pdftex.def)             Requested size: 251.96474pt x 148.77144pt.
+
+Overfull \vbox (19.72752pt too high) detected at line 393
+ []
+
 
 
 [23
 
  <./figs/ct2_breast_iter_ladder_roi.png>]
-<figs/ct2_breast_convergence.png, id=211, 425.6703pt x 281.49165pt>
+<figs/ct2_breast_convergence.png, id=215, 425.6703pt x 281.49165pt>
 File: figs/ct2_breast_convergence.png Graphic file (type png)
 <use figs/ct2_breast_convergence.png>
-Package pdftex.def Info: figs/ct2_breast_convergence.png  used on input line 38
-9.
+Package pdftex.def Info: figs/ct2_breast_convergence.png  used on input line 40
+3.
 (pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
 
-Overfull \vbox (0.7052pt too high) detected at line 389
+Overfull \vbox (20.6007pt too high) detected at line 403
  []
 
 
@@ -1373,166 +1393,490 @@ Overfull \vbox (0.7052pt too high) detected at line 389
 [24
 
  <./figs/ct2_breast_convergence.png>]
-<figs/ct2_head_phantom_intro.png, id=218, 787.38165pt x 278.9622pt>
+<figs/ct2_head_phantom_intro.png, id=222, 787.38165pt x 278.9622pt>
 File: figs/ct2_head_phantom_intro.png Graphic file (type png)
 <use figs/ct2_head_phantom_intro.png>
-Package pdftex.def Info: figs/ct2_head_phantom_intro.png  used on input line 39
-8.
+Package pdftex.def Info: figs/ct2_head_phantom_intro.png  used on input line 41
+3.
 (pdftex.def)             Requested size: 398.33945pt x 141.12807pt.
 
 
 [25
 
  <./figs/ct2_head_phantom_intro.png>]
-<figs/ct2_head_iter_ladder_roi.png, id=226, 673.19505pt x 397.485pt>
-File: figs/ct2_head_iter_ladder_roi.png Graphic file (type png)
-<use figs/ct2_head_iter_ladder_roi.png>
-Package pdftex.def Info: figs/ct2_head_iter_ladder_roi.png  used on input line 
-407.
+<figs/ct2_head_iter_ladder_xy.png, id=230, 673.19505pt x 397.485pt>
+File: figs/ct2_head_iter_ladder_xy.png Graphic file (type png)
+<use figs/ct2_head_iter_ladder_xy.png>
+Package pdftex.def Info: figs/ct2_head_iter_ladder_xy.png  used on input line 4
+23.
 (pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
 
-
-[26
-
- <./figs/ct2_head_iter_ladder_roi.png>]
-<figs/ct2_head_convergence.png, id=233, 425.6703pt x 281.49165pt>
-File: figs/ct2_head_convergence.png Graphic file (type png)
-<use figs/ct2_head_convergence.png>
-Package pdftex.def Info: figs/ct2_head_convergence.png  used on input line 416.
-
-(pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
-
-
-[27
-
- <./figs/ct2_head_convergence.png>]
-<figs/ct2_jaw_phantom_intro.png, id=240, 787.38165pt x 278.9622pt>
-File: figs/ct2_jaw_phantom_intro.png Graphic file (type png)
-<use figs/ct2_jaw_phantom_intro.png>
-Package pdftex.def Info: figs/ct2_jaw_phantom_intro.png  used on input line 425
-.
-(pdftex.def)             Requested size: 398.33945pt x 141.12807pt.
-
-
-[28
-
- <./figs/ct2_jaw_phantom_intro.png>]
-<figs/ct2_jaw_iter_ladder_roi.png, id=247, 678.97665pt x 381.22424pt>
-File: figs/ct2_jaw_iter_ladder_roi.png Graphic file (type png)
-<use figs/ct2_jaw_iter_ladder_roi.png>
-Package pdftex.def Info: figs/ct2_jaw_iter_ladder_roi.png  used on input line 4
-34.
-(pdftex.def)             Requested size: 272.9845pt x 153.2723pt.
-
-
-[29
-
- <./figs/ct2_jaw_iter_ladder_roi.png>]
-<figs/ct2_jaw_convergence.png, id=254, 425.6703pt x 281.49165pt>
-File: figs/ct2_jaw_convergence.png Graphic file (type png)
-<use figs/ct2_jaw_convergence.png>
-Package pdftex.def Info: figs/ct2_jaw_convergence.png  used on input line 442.
-(pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
-
-
-[30
-
- <./figs/ct2_jaw_convergence.png>]
-
-[31
-
-]
-
-[32
-
-]
-
-[33
-
-]
-
-[34
-
-]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\translate ' on input line 483.
-
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 514.
-LaTeX Font Info:    Font shape `T1/lmss/m/it' in size <12> not available
-(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 514.
-
-
-[35
-
-]
-<figs/shepp_logan_phantom_intro.png, id=289, 785.21355pt x 286.9119pt>
-File: figs/shepp_logan_phantom_intro.png Graphic file (type png)
-<use figs/shepp_logan_phantom_intro.png>
-Package pdftex.def Info: figs/shepp_logan_phantom_intro.png  used on input line
- 522.
-(pdftex.def)             Requested size: 398.34488pt x 145.5526pt.
-
-
-[36
-
- <./figs/shepp_logan_phantom_intro.png>]
-<figs/shepp_logan_convergence.png, id=296, 425.6703pt x 281.49165pt>
-File: figs/shepp_logan_convergence.png Graphic file (type png)
-<use figs/shepp_logan_convergence.png>
-Package pdftex.def Info: figs/shepp_logan_convergence.png  used on input line 5
-32.
-(pdftex.def)             Requested size: 232.95674pt x 154.05203pt.
-
-
-[37
-
- <./figs/shepp_logan_convergence.png>]
-<figs/victre_phantom_intro.png, id=304, 751.608pt x 286.9119pt>
-File: figs/victre_phantom_intro.png Graphic file (type png)
-<use figs/victre_phantom_intro.png>
-Package pdftex.def Info: figs/victre_phantom_intro.png  used on input line 542.
-
-(pdftex.def)             Requested size: 398.33888pt x 152.05818pt.
-
-
-[38
-
- <./figs/victre_phantom_intro.png>]
-<figs/victre_iter_ladder_roi.png, id=311, 895.4253pt x 400.01445pt>
-File: figs/victre_iter_ladder_roi.png Graphic file (type png)
-<use figs/victre_iter_ladder_roi.png>
-Package pdftex.def Info: figs/victre_iter_ladder_roi.png  used on input line 55
-2.
-(pdftex.def)             Requested size: 344.84227pt x 154.05182pt.
-
-
-[39
-
- <./figs/victre_iter_ladder_roi.png>]
-Overfull \vbox (6.21487pt too high) detected at line 583
+Overfull \vbox (24.23392pt too high) detected at line 423
  []
 
 
 
-[40
+[26
+
+ <./figs/ct2_head_iter_ladder_xy.png>]
+<figs/ct2_head_error_ladder.png, id=237, 611.76555pt x 341.1144pt>
+File: figs/ct2_head_error_ladder.png Graphic file (type png)
+<use figs/ct2_head_error_ladder.png>
+Package pdftex.def Info: figs/ct2_head_error_ladder.png  used on input line 433
+.
+(pdftex.def)             Requested size: 266.80664pt x 148.76872pt.
+
+Overfull \vbox (7.07487pt too high) detected at line 433
+ []
+
+
+
+[27
+
+ <./figs/ct2_head_error_ladder.png>]
+<figs/ct2_head_convergence.png, id=244, 425.6703pt x 281.49165pt>
+File: figs/ct2_head_convergence.png Graphic file (type png)
+<use figs/ct2_head_convergence.png>
+Package pdftex.def Info: figs/ct2_head_convergence.png  used on input line 443.
+
+(pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
+
+Overfull \vbox (20.6007pt too high) detected at line 443
+ []
+
+
+
+[28
+
+ <./figs/ct2_head_convergence.png>]
+<figs/ct2_jaw_phantom_intro.png, id=251, 787.38165pt x 278.9622pt>
+File: figs/ct2_jaw_phantom_intro.png Graphic file (type png)
+<use figs/ct2_jaw_phantom_intro.png>
+Package pdftex.def Info: figs/ct2_jaw_phantom_intro.png  used on input line 453
+.
+(pdftex.def)             Requested size: 398.33945pt x 141.12807pt.
+
+
+[29
+
+ <./figs/ct2_jaw_phantom_intro.png>]
+<figs/ct2_jaw_iter_ladder_xy.png, id=258, 673.19505pt x 397.485pt>
+File: figs/ct2_jaw_iter_ladder_xy.png Graphic file (type png)
+<use figs/ct2_jaw_iter_ladder_xy.png>
+Package pdftex.def Info: figs/ct2_jaw_iter_ladder_xy.png  used on input line 46
+3.
+(pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
+
+Overfull \vbox (11.58398pt too high) detected at line 463
+ []
+
+
+
+[30
+
+ <./figs/ct2_jaw_iter_ladder_xy.png>]
+<figs/ct2_jaw_error_ladder.png, id=265, 611.76555pt x 341.1144pt>
+File: figs/ct2_jaw_error_ladder.png Graphic file (type png)
+<use figs/ct2_jaw_error_ladder.png>
+Package pdftex.def Info: figs/ct2_jaw_error_ladder.png  used on input line 473.
+
+(pdftex.def)             Requested size: 266.80664pt x 148.76872pt.
+
+Overfull \vbox (7.07487pt too high) detected at line 473
+ []
+
+
+
+[31
+
+ <./figs/ct2_jaw_error_ladder.png>]
+<figs/ct2_jaw_convergence.png, id=273, 425.6703pt x 281.49165pt>
+File: figs/ct2_jaw_convergence.png Graphic file (type png)
+<use figs/ct2_jaw_convergence.png>
+Package pdftex.def Info: figs/ct2_jaw_convergence.png  used on input line 482.
+(pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
+
+Overfull \vbox (20.6007pt too high) detected at line 482
+ []
+
+
+
+[32
+
+ <./figs/ct2_jaw_convergence.png>]
+
+[33
 
 ]
+<figs/ct2_breast_iter_ladder_xy_arc75.png, id=287, 673.19505pt x 397.485pt>
+File: figs/ct2_breast_iter_ladder_xy_arc75.png Graphic file (type png)
+<use figs/ct2_breast_iter_ladder_xy_arc75.png>
+Package pdftex.def Info: figs/ct2_breast_iter_ladder_xy_arc75.png  used on inpu
+t line 496.
+(pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <12> on input line 496.
+LaTeX Font Info:    Font shape `T1/lmss/m/it' in size <12> not available
+(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 496.
+
+Overfull \vbox (11.58398pt too high) detected at line 496
+ []
+
+
+
+[34
+
+ <./figs/ct2_breast_iter_ladder_xy_arc75.png>]
+<figs/ct2_breast_error_ladder_arc75.png, id=294, 611.76555pt x 341.1144pt>
+File: figs/ct2_breast_error_ladder_arc75.png Graphic file (type png)
+<use figs/ct2_breast_error_ladder_arc75.png>
+Package pdftex.def Info: figs/ct2_breast_error_ladder_arc75.png  used on input 
+line 506.
+(pdftex.def)             Requested size: 266.80664pt x 148.76872pt.
+
+Overfull \vbox (7.07487pt too high) detected at line 506
+ []
+
+
+
+[35
+
+ <./figs/ct2_breast_error_ladder_arc75.png>]
+<figs/ct2_breast_convergence_arc75.png, id=301, 425.6703pt x 281.49165pt>
+File: figs/ct2_breast_convergence_arc75.png Graphic file (type png)
+<use figs/ct2_breast_convergence_arc75.png>
+Package pdftex.def Info: figs/ct2_breast_convergence_arc75.png  used on input l
+ine 516.
+(pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
+
+Overfull \vbox (20.6007pt too high) detected at line 516
+ []
+
+
+
+[36
+
+ <./figs/ct2_breast_convergence_arc75.png>]
+<figs/ct2_head_iter_ladder_xy_arc75.png, id=308, 673.19505pt x 397.485pt>
+File: figs/ct2_head_iter_ladder_xy_arc75.png Graphic file (type png)
+<use figs/ct2_head_iter_ladder_xy_arc75.png>
+Package pdftex.def Info: figs/ct2_head_iter_ladder_xy_arc75.png  used on input 
+line 526.
+(pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
+
+Overfull \vbox (11.58398pt too high) detected at line 526
+ []
+
+
+
+[37
+
+ <./figs/ct2_head_iter_ladder_xy_arc75.png>]
+<figs/ct2_head_error_ladder_arc75.png, id=316, 611.76555pt x 341.1144pt>
+File: figs/ct2_head_error_ladder_arc75.png Graphic file (type png)
+<use figs/ct2_head_error_ladder_arc75.png>
+Package pdftex.def Info: figs/ct2_head_error_ladder_arc75.png  used on input li
+ne 535.
+(pdftex.def)             Requested size: 266.80664pt x 148.76872pt.
+
+Overfull \vbox (7.07487pt too high) detected at line 535
+ []
+
+
+
+[38
+
+ <./figs/ct2_head_error_ladder_arc75.png>]
+<figs/ct2_head_convergence_arc75.png, id=323, 425.6703pt x 281.49165pt>
+File: figs/ct2_head_convergence_arc75.png Graphic file (type png)
+<use figs/ct2_head_convergence_arc75.png>
+Package pdftex.def Info: figs/ct2_head_convergence_arc75.png  used on input lin
+e 545.
+(pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
+
+Overfull \vbox (20.6007pt too high) detected at line 545
+ []
+
+
+
+[39
+
+ <./figs/ct2_head_convergence_arc75.png>]
+<figs/ct2_jaw_iter_ladder_xy_arc75.png, id=330, 673.19505pt x 397.485pt>
+File: figs/ct2_jaw_iter_ladder_xy_arc75.png Graphic file (type png)
+<use figs/ct2_jaw_iter_ladder_xy_arc75.png>
+Package pdftex.def Info: figs/ct2_jaw_iter_ladder_xy_arc75.png  used on input l
+ine 554.
+(pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
+
+
+[40
+
+ <./figs/ct2_jaw_iter_ladder_xy_arc75.png>]
+<figs/ct2_jaw_error_ladder_arc75.png, id=337, 611.76555pt x 341.1144pt>
+File: figs/ct2_jaw_error_ladder_arc75.png Graphic file (type png)
+<use figs/ct2_jaw_error_ladder_arc75.png>
+Package pdftex.def Info: figs/ct2_jaw_error_ladder_arc75.png  used on input lin
+e 563.
+(pdftex.def)             Requested size: 266.80664pt x 148.76872pt.
+
+Overfull \vbox (7.07487pt too high) detected at line 563
+ []
+
+
 
 [41
 
-]
+ <./figs/ct2_jaw_error_ladder_arc75.png>]
+<figs/ct2_jaw_convergence_arc75.png, id=344, 425.6703pt x 281.49165pt>
+File: figs/ct2_jaw_convergence_arc75.png Graphic file (type png)
+<use figs/ct2_jaw_convergence_arc75.png>
+Package pdftex.def Info: figs/ct2_jaw_convergence_arc75.png  used on input line
+ 572.
+(pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
+
+Overfull \vbox (20.6007pt too high) detected at line 572
+ []
+
+
 
 [42
 
-]
+ <./figs/ct2_jaw_convergence_arc75.png>]
+<figs/ct2_breast_iter_ladder_xy_arc100.png, id=351, 673.19505pt x 397.485pt>
+File: figs/ct2_breast_iter_ladder_xy_arc100.png Graphic file (type png)
+<use figs/ct2_breast_iter_ladder_xy_arc100.png>
+Package pdftex.def Info: figs/ct2_breast_iter_ladder_xy_arc100.png  used on inp
+ut line 582.
+(pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
+
+Overfull \vbox (11.58398pt too high) detected at line 582
+ []
+
+
 
 [43
 
-]
+ <./figs/ct2_breast_iter_ladder_xy_arc100.png>]
+<figs/ct2_breast_error_ladder_arc100.png, id=360, 611.76555pt x 341.1144pt>
+File: figs/ct2_breast_error_ladder_arc100.png Graphic file (type png)
+<use figs/ct2_breast_error_ladder_arc100.png>
+Package pdftex.def Info: figs/ct2_breast_error_ladder_arc100.png  used on input
+ line 592.
+(pdftex.def)             Requested size: 266.80664pt x 148.76872pt.
+
+Overfull \vbox (7.07487pt too high) detected at line 592
+ []
+
+
 
 [44
+
+ <./figs/ct2_breast_error_ladder_arc100.png>]
+<figs/ct2_breast_convergence_arc100.png, id=367, 425.6703pt x 281.49165pt>
+File: figs/ct2_breast_convergence_arc100.png Graphic file (type png)
+<use figs/ct2_breast_convergence_arc100.png>
+Package pdftex.def Info: figs/ct2_breast_convergence_arc100.png  used on input 
+line 603.
+(pdftex.def)             Requested size: 224.97414pt x 148.77322pt.
+
+Overfull \vbox (19.72931pt too high) detected at line 603
+ []
+
+
+
+[45
+
+ <./figs/ct2_breast_convergence_arc100.png>]
+<figs/ct2_head_iter_ladder_xy_arc100.png, id=374, 673.19505pt x 397.485pt>
+File: figs/ct2_head_iter_ladder_xy_arc100.png Graphic file (type png)
+<use figs/ct2_head_iter_ladder_xy_arc100.png>
+Package pdftex.def Info: figs/ct2_head_iter_ladder_xy_arc100.png  used on input
+ line 613.
+(pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
+
+Overfull \vbox (11.58398pt too high) detected at line 613
+ []
+
+
+
+[46
+
+ <./figs/ct2_head_iter_ladder_xy_arc100.png>]
+<figs/ct2_head_error_ladder_arc100.png, id=381, 611.76555pt x 341.1144pt>
+File: figs/ct2_head_error_ladder_arc100.png Graphic file (type png)
+<use figs/ct2_head_error_ladder_arc100.png>
+Package pdftex.def Info: figs/ct2_head_error_ladder_arc100.png  used on input l
+ine 622.
+(pdftex.def)             Requested size: 266.80664pt x 148.76872pt.
+
+Overfull \vbox (7.07487pt too high) detected at line 622
+ []
+
+
+
+[47
+
+ <./figs/ct2_head_error_ladder_arc100.png>]
+<figs/ct2_head_convergence_arc100.png, id=388, 425.6703pt x 281.49165pt>
+File: figs/ct2_head_convergence_arc100.png Graphic file (type png)
+<use figs/ct2_head_convergence_arc100.png>
+Package pdftex.def Info: figs/ct2_head_convergence_arc100.png  used on input li
+ne 632.
+(pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
+
+Overfull \vbox (20.6007pt too high) detected at line 632
+ []
+
+
+
+[48
+
+ <./figs/ct2_head_convergence_arc100.png>]
+<figs/ct2_jaw_iter_ladder_xy_arc100.png, id=395, 673.19505pt x 397.485pt>
+File: figs/ct2_jaw_iter_ladder_xy_arc100.png Graphic file (type png)
+<use figs/ct2_jaw_iter_ladder_xy_arc100.png>
+Package pdftex.def Info: figs/ct2_jaw_iter_ladder_xy_arc100.png  used on input 
+line 641.
+(pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
+
+
+[49
+
+ <./figs/ct2_jaw_iter_ladder_xy_arc100.png>]
+<figs/ct2_jaw_error_ladder_arc100.png, id=403, 611.76555pt x 341.1144pt>
+File: figs/ct2_jaw_error_ladder_arc100.png Graphic file (type png)
+<use figs/ct2_jaw_error_ladder_arc100.png>
+Package pdftex.def Info: figs/ct2_jaw_error_ladder_arc100.png  used on input li
+ne 650.
+(pdftex.def)             Requested size: 266.80664pt x 148.76872pt.
+
+Overfull \vbox (7.07487pt too high) detected at line 650
+ []
+
+
+
+[50
+
+ <./figs/ct2_jaw_error_ladder_arc100.png>]
+<figs/ct2_jaw_convergence_arc100.png, id=410, 425.6703pt x 281.49165pt>
+File: figs/ct2_jaw_convergence_arc100.png Graphic file (type png)
+<use figs/ct2_jaw_convergence_arc100.png>
+Package pdftex.def Info: figs/ct2_jaw_convergence_arc100.png  used on input lin
+e 660.
+(pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
+
+Overfull \vbox (20.6007pt too high) detected at line 660
+ []
+
+
+
+[51
+
+ <./figs/ct2_jaw_convergence_arc100.png>]
+
+[52
+
+]
+
+[53
+
+]
+
+[54
+
+]
+
+[55
+
+]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\translate ' on input line 701.
+
+
+
+[56
+
+]
+<figs/shepp_logan_phantom_intro.png, id=445, 785.21355pt x 286.9119pt>
+File: figs/shepp_logan_phantom_intro.png Graphic file (type png)
+<use figs/shepp_logan_phantom_intro.png>
+Package pdftex.def Info: figs/shepp_logan_phantom_intro.png  used on input line
+ 741.
+(pdftex.def)             Requested size: 398.34488pt x 145.5526pt.
+
+
+[57
+
+ <./figs/shepp_logan_phantom_intro.png>]
+<figs/shepp_logan_convergence.png, id=452, 425.6703pt x 281.49165pt>
+File: figs/shepp_logan_convergence.png Graphic file (type png)
+<use figs/shepp_logan_convergence.png>
+Package pdftex.def Info: figs/shepp_logan_convergence.png  used on input line 7
+52.
+(pdftex.def)             Requested size: 232.95674pt x 154.05203pt.
+
+Overfull \vbox (17.00812pt too high) detected at line 752
+ []
+
+
+
+[58
+
+ <./figs/shepp_logan_convergence.png>]
+<figs/victre_phantom_intro.png, id=459, 751.608pt x 286.9119pt>
+File: figs/victre_phantom_intro.png Graphic file (type png)
+<use figs/victre_phantom_intro.png>
+Package pdftex.def Info: figs/victre_phantom_intro.png  used on input line 763.
+
+(pdftex.def)             Requested size: 398.33888pt x 152.05818pt.
+
+Overfull \vbox (2.36427pt too high) detected at line 763
+ []
+
+
+
+[59
+
+ <./figs/victre_phantom_intro.png>]
+<figs/victre_iter_ladder_roi.png, id=466, 895.4253pt x 400.01445pt>
+File: figs/victre_iter_ladder_roi.png Graphic file (type png)
+<use figs/victre_iter_ladder_roi.png>
+Package pdftex.def Info: figs/victre_iter_ladder_roi.png  used on input line 77
+4.
+(pdftex.def)             Requested size: 344.84227pt x 154.05182pt.
+
+Overfull \vbox (17.00784pt too high) detected at line 774
+ []
+
+
+
+[60
+
+ <./figs/victre_iter_ladder_roi.png>]
+Overfull \vbox (6.21487pt too high) detected at line 805
+ []
+
+
+
+[61
+
+]
+
+[62
+
+]
+
+[63
+
+]
+
+[64
+
+]
+
+[65
 
 ]
 \tf@nav=\write6
@@ -1550,14 +1894,14 @@ LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-09-02>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 8AB8CFE296C749AD6BE397C5664FCE7A;817.
+(rerunfilecheck)             Checksum: A9CA071BBC2CEDCFBFF25A96033D64CA;1067.
  ) 
 Here is how much of TeX's memory you used:
- 28799 strings out of 467797
- 572241 string characters out of 5435982
- 968724 words of memory out of 5000000
- 56536 multiletter control sequences out of 15000+600000
- 756828 words of font info for 228 fonts, out of 8000000 for 9000
+ 29079 strings out of 467797
+ 580711 string characters out of 5435982
+ 969599 words of memory out of 5000000
+ 56763 multiletter control sequences out of 15000+600000
+ 757367 words of font info for 233 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  128i,13n,123p,1871b,794s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmex10.pfb><c:/texlive/2025
@@ -1578,10 +1922,10 @@ texmf-dist/fonts/type1/public/lm/lmsy10.pfb><c:/texlive/2025/texmf-dist/fonts/t
 ype1/public/lm/lmsy6.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmsy
 7.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmsy8.pfb><c:/texlive/2
 025/texmf-dist/fonts/type1/public/lm/lmsy9.pfb>
-Output written on main.pdf (44 pages, 5931452 bytes).
+Output written on main.pdf (65 pages, 17103093 bytes).
 PDF statistics:
- 485 PDF objects out of 1000 (max. 8388607)
- 337 compressed objects within 4 object streams
- 96 named destinations out of 1000 (max. 500000)
- 86215 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 649 PDF objects out of 1000 (max. 8388607)
+ 439 compressed objects within 5 object streams
+ 139 named destinations out of 1000 (max. 500000)
+ 86323 words of extra memory for PDF output out of 89155 (max. 10000000)
 

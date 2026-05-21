@@ -37,7 +37,10 @@ FIG_DIR = ROOT / "presentation" / "figs"
 FIG_DIR.mkdir(parents=True, exist_ok=True)
 
 DISPLAY_VMIN = 0.0
-DISPLAY_VMAX = 1.0
+# Widened from 1.0: the phantom reaches ~1.54 (calcifications) and recons
+# overshoot above 1.0, so a [0,1.0] window saturated soft tissue to white.
+# A wider window keeps the mid-gray nuance visible.
+DISPLAY_VMAX = 1.6
 LF_SIGMA = 8.0
 
 
@@ -74,17 +77,40 @@ def load_or_run():
     return result
 
 
-def fig_error_pair(result, iters, out_path, title=None, err_range=0.3):
-    """Plain (no filtering) error maps at a few iterations, single vs two,
-    with a colorbar legend for the difference scale.
+def fig_error_pair(result, iters, out_path, title=None, err_range=0.5,
+                   style="magnitude"):
+    """Error maps at a few iterations, single vs two-channel, with a
+    colorbar legend.
 
-    Used in place of the Gaussian-LP-filtered version --- the math jargon
-    is unnecessary friction for an engineering audience.
+    style "magnitude" -- absolute error in grayscale: black 0, white
+                         largest. Drops the sign; darker row = less error.
+    style "signed"    -- signed grayscale: black under, mid-gray 0,
+                         white over.
     """
     snaps_s = result["snapshots_single"]
     snaps_t = result["snapshots_two"]
     phi = result["phimage"]
     n = len(iters)
+    diffs_s = [(snaps_s[it] - phi).T for it in iters]
+    diffs_t = [(snaps_t[it] - phi).T for it in iters]
+
+    if style == "magnitude":
+        data_s = [np.abs(d) for d in diffs_s]
+        data_t = [np.abs(d) for d in diffs_t]
+        cmap, vmin, vmax = "gray", 0.0, err_range
+        ticks = [0.0, err_range]
+        ticklabels = ["0", f"{err_range:g}"]
+        cbar_label = ("absolute error |reconstruction - ground truth|   "
+                      "(black: no error,  white: largest error)")
+    else:  # signed
+        data_s, data_t = diffs_s, diffs_t
+        cmap, vmin, vmax = "gray", -err_range, err_range
+        ticks = [-err_range, 0.0, err_range]
+        ticklabels = [f"-{err_range:g}", "0", f"+{err_range:g}"]
+        cbar_label = ("reconstruction - ground truth   "
+                      "(black: under-estimate,  mid-gray: no error,  "
+                      "white: over-estimate)")
+
     fig, axes = plt.subplots(2, n, figsize=(2.1 * n, 4.6),
                              constrained_layout=True)
     for ax in axes.flat:
@@ -93,24 +119,18 @@ def fig_error_pair(result, iters, out_path, title=None, err_range=0.3):
     axes[1, 0].set_ylabel("two - truth", fontsize=11)
     im = None
     for i, it in enumerate(iters):
-        d_s = snaps_s[it] - phi
-        d_t = snaps_t[it] - phi
-        im = axes[0, i].imshow(d_s.T, cmap="gray", vmin=-err_range,
-                               vmax=err_range, origin="lower")
+        im = axes[0, i].imshow(data_s[i], cmap=cmap, vmin=vmin, vmax=vmax,
+                               origin="lower")
         axes[0, i].set_title(f"iter {it}", fontsize=10)
-        axes[1, i].imshow(d_t.T, cmap="gray", vmin=-err_range,
-                          vmax=err_range, origin="lower")
+        axes[1, i].imshow(data_t[i], cmap=cmap, vmin=vmin, vmax=vmax,
+                          origin="lower")
     if title is not None:
         fig.suptitle(title, fontsize=11)
     cbar = fig.colorbar(im, ax=axes, orientation="horizontal",
-                        fraction=0.05, pad=0.02, aspect=50,
-                        ticks=[-err_range, 0.0, err_range])
-    cbar.ax.set_xticklabels([f"-{err_range:g}", "0", f"+{err_range:g}"])
+                        fraction=0.05, pad=0.02, aspect=50, ticks=ticks)
+    cbar.ax.set_xticklabels(ticklabels)
     cbar.ax.tick_params(labelsize=9)
-    cbar.set_label(
-        "reconstruction - ground truth   "
-        "(black: under-estimate,  mid-gray: zero error,  "
-        "white: over-estimate)", fontsize=9)
+    cbar.set_label(cbar_label, fontsize=9)
     fig.savefig(out_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved {out_path}")
@@ -271,7 +291,7 @@ def main():
         result, [50, 100, 200, 300],
         FIG_DIR / "error_pair_256_paper.png",
         title=None,
-        err_range=0.3,
+        err_range=0.5,
     )
 
     fig_lf_error_ladder(

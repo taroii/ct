@@ -60,6 +60,9 @@
     {\fbox{\parbox{0.7\linewidth}{\centering\small\vspace{2em}%
        \textit{[\detokenize{#2} -- not generated]}\vspace{2em}}}}}
 
+% Small italic "how it was generated" note pinned to each figure slide.
+\newcommand{\geomnote}[1]{\par\smallskip{\scriptsize\itshape #1}}
+
 \begin{document}
 
 % =========================================================================
@@ -202,6 +205,7 @@
           intensity error, through iter ${\sim}100\text{--}300$.
     \item This is the low-frequency convergence bottleneck.
   \end{itemize}
+  \geomnote{2D fan-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $256^2$ grid}
 \end{frame}
 
 \begin{frame}{Why does this happen?}
@@ -309,6 +313,7 @@
     \item Two-channel resolves recognizable soft-tissue structure several
           iterations earlier.
   \end{itemize}
+  \geomnote{2D fan-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $256^2$ grid}
 \end{frame}
 
 \begin{frame}{Soft-tissue ROI: low-frequency error}
@@ -319,15 +324,18 @@
   slowly-varying intensity error through iterations $50\text{--}200$;
   two-channel reaches a uniform soft-tissue level several iterations
   earlier.
+  \geomnote{2D fan-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $256^2$ grid}
 \end{frame}
 
 \begin{frame}{Where is the error?}
   \centering
   \deckfig[0.66]{error_pair_256_paper.png}\\[0.3em]
   \footnotesize
-  Difference image, reconstruction $-$ ground truth (scale bar below).
-  Single-channel at iter $100\text{--}200$ carries a broad bright
-  low-frequency bias; two-channel stays near uniform gray.
+  Absolute error $|$reconstruction $-$ ground truth$|$ (scale bar below;
+  darker is less error). Single-channel at iter $100\text{--}200$ shows a
+  broad bright low-frequency error region; the two-channel row stays
+  darker throughout.
+  \geomnote{2D fan-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $256^2$ grid}
 \end{frame}
 
 \begin{frame}{Convergence behaviour}
@@ -338,6 +346,7 @@
           the cross-band interference predicted by the spectral analysis.
     \item Two-channel converges smoothly from the start.
   \end{itemize}
+  \geomnote{2D fan-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $256^2$ grid}
 \end{frame}
 
 \begin{frame}{Persistence across image sizes}
@@ -349,6 +358,7 @@
           $256^{2}$, $62\%$ at $128^{2}$.
     \item Consistent across the resolution sweep.
   \end{itemize}
+  \geomnote{2D fan-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $512^2$/$256^2$/$128^2$ grids}
 \end{frame}
 
 \begin{frame}{3D: Analytic breast phantom}
@@ -358,6 +368,7 @@
   Analytic breast phantom: fatty soft-tissue background with discrete
   fatty-mass inserts and a chest-wall region. $144 \times 144 \times 32$
   grid at $1.5$~mm isotropic voxels.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
 \end{frame}
 
 \begin{frame}{Analytic breast --- mid-axial iteration ladder}
@@ -367,6 +378,7 @@
   Cone-beam LAR ($25$ views / $50^{\circ}$), mid-axial slice. Two-channel
   image RMSE is $8\%$ lower at iter $20$, rising to a $35\%$ reduction at
   iter $200$; it resolves the discrete masses earlier.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
 \end{frame}
 
 \begin{frame}{Analytic breast --- soft-tissue ROI}
@@ -377,6 +389,7 @@
   iter $100$: single $0.077$ vs.\ two-channel $0.051$ --- a $34\%$
   reduction. Two-channel shows discrete mass contours while single-channel
   retains a diffuse intensity bias.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
 \end{frame}
 
 \begin{frame}{Analytic breast --- convergence}
@@ -386,6 +399,7 @@
   Image RMSE vs.\ iteration. Two-channel leads throughout: a $34\%$
   reduction at iter $100$, peaking near $35\%$ at iter $200$ and holding
   $16\%$ at iter $500$.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
 \end{frame}
 
 \begin{frame}{3D: Analytic head phantom}
@@ -395,15 +409,27 @@
   Analytic head phantom: skull shell with sinuses, brain with ventricle
   and FORBILD low-contrast spots, subdural hematoma. $26$~cm FOV, thin
   axial slab.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $176\times176\times16$ grid}
 \end{frame}
 
-\begin{frame}{Analytic head --- central brain ROI}
+\begin{frame}{Analytic head --- mid-axial iteration ladder}
   \centering
-  \phantomfig[0.68]{ct2_head_iter_ladder_roi.png}\\[0.3em]
+  \phantomfig[0.68]{ct2_head_iter_ladder_xy.png}\\[0.3em]
   \footnotesize
-  Central brain region (low-contrast FORBILD spots, ventricle). Both
-  methods drift upward under the under-determined geometry; the
-  convergence plot makes the comparison quantitative.
+  Full mid-axial slice, single vs two-channel. Both methods drift upward
+  as iterations proceed under the under-determined geometry; the magnitude
+  difference image and convergence plot make the comparison quantitative.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $176\times176\times16$ grid}
+\end{frame}
+
+\begin{frame}{Analytic head --- reconstruction error}
+  \centering
+  \phantomfig[0.66]{ct2_head_error_ladder.png}\\[0.3em]
+  \footnotesize
+  Absolute error $|$reconstruction $-$ ground truth$|$, full mid-axial
+  slice (scale bar below; darker is less error). The two-channel row
+  stays consistently darker --- less error --- than single-channel.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $176\times176\times16$ grid}
 \end{frame}
 
 \begin{frame}{Analytic head --- convergence}
@@ -413,6 +439,7 @@
   Image RMSE vs.\ iteration. Two-channel stays below single-channel from
   early iterations onward; the gap widens from $12\%$ at iter $100$ to
   $19\%$ at iter $500$.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $176\times176\times16$ grid}
 \end{frame}
 
 \begin{frame}{3D: Analytic jaw phantom}
@@ -422,15 +449,27 @@
   Analytic jaw phantom: mandible/maxilla with $28$ teeth, three gold
   crowns (high-$\mu$ scatterers), low-contrast tongue tumour. $12$~cm tall
   volume.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times80$ grid}
 \end{frame}
 
-\begin{frame}{Analytic jaw --- mouth/teeth ROI}
+\begin{frame}{Analytic jaw --- mid-axial iteration ladder}
   \centering
-  \phantomfig[0.68]{ct2_jaw_iter_ladder_roi.png}\\[0.3em]
+  \phantomfig[0.68]{ct2_jaw_iter_ladder_xy.png}\\[0.3em]
   \footnotesize
-  Mouth/teeth region. The gold crowns ($\mu = 19.3$) dominate the
-  projection energy, leaving less low-frequency structure for the band
-  split to act on; the convergence plot quantifies the gap.
+  Full mid-axial slice, single vs two-channel. The gold crowns
+  ($\mu = 19.3$) dominate the projection energy; the magnitude difference
+  image and convergence plot quantify the gap.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times80$ grid}
+\end{frame}
+
+\begin{frame}{Analytic jaw --- reconstruction error}
+  \centering
+  \phantomfig[0.66]{ct2_jaw_error_ladder.png}\\[0.3em]
+  \footnotesize
+  Absolute error $|$reconstruction $-$ ground truth$|$, full mid-axial
+  slice (scale bar below; darker is less error). The two-channel row
+  stays darker --- less error --- than single-channel.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times80$ grid}
 \end{frame}
 
 \begin{frame}{Analytic jaw --- convergence}
@@ -439,6 +478,185 @@
   \footnotesize
   Image RMSE vs.\ iteration. Two-channel converges to a lower RMSE; the
   gap grows from $5\%$ at iter $100$ to $17\%$ at iter $500$.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times80$ grid}
+\end{frame}
+
+% =========================================================================
+\section{Wider-arc reconstructions (exploratory)}
+% =========================================================================
+
+\begin{frame}{Analytic breast at 75$^\circ$ --- iteration ladder}
+  \centering
+  \phantomfig[0.68]{ct2_breast_iter_ladder_xy_arc75.png}\\[0.3em]
+  \footnotesize
+  Full mid-axial slice, $75^\circ$ arc. Two-channel resolves the discrete
+  masses earlier; iter-500 RMSE is $16\%$ lower (single $0.069$,
+  two-channel $0.058$).
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 75$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
+\end{frame}
+
+\begin{frame}{Analytic breast at 75$^\circ$ --- reconstruction error}
+  \centering
+  \phantomfig[0.66]{ct2_breast_error_ladder_arc75.png}\\[0.3em]
+  \footnotesize
+  Absolute error $|$reconstruction $-$ ground truth$|$, $75^\circ$ arc
+  (darker is less error). The two-channel row stays darker than
+  single-channel.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 75$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
+\end{frame}
+
+\begin{frame}{Analytic breast at 75$^\circ$ --- convergence}
+  \centering
+  \phantomfig[0.72]{ct2_breast_convergence_arc75.png}\\[0.3em]
+  \footnotesize
+  Image RMSE vs.\ iteration, $75^\circ$ arc. Two-channel stays below
+  single-channel; the gap is $+30\%$ at iter $200$ and $+16\%$ at iter
+  $500$.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 75$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
+\end{frame}
+
+\begin{frame}{Analytic head at 75$^\circ$ --- iteration ladder}
+  \centering
+  \phantomfig[0.68]{ct2_head_iter_ladder_xy_arc75.png}\\[0.3em]
+  \footnotesize
+  Full mid-axial slice, $75^\circ$ arc --- visibly cleaner than at
+  $50^\circ$. Two-channel iter-500 RMSE is $17\%$ lower (single $0.649$,
+  two-channel $0.541$).
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 75$^\circ$ arc $\cdot$ $176\times176\times16$ grid}
+\end{frame}
+
+\begin{frame}{Analytic head at 75$^\circ$ --- reconstruction error}
+  \centering
+  \phantomfig[0.66]{ct2_head_error_ladder_arc75.png}\\[0.3em]
+  \footnotesize
+  Absolute error $|$reconstruction $-$ ground truth$|$, $75^\circ$ arc
+  (darker is less error). The two-channel row is consistently darker.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 75$^\circ$ arc $\cdot$ $176\times176\times16$ grid}
+\end{frame}
+
+\begin{frame}{Analytic head at 75$^\circ$ --- convergence}
+  \centering
+  \phantomfig[0.72]{ct2_head_convergence_arc75.png}\\[0.3em]
+  \footnotesize
+  Image RMSE vs.\ iteration, $75^\circ$ arc. Two-channel stays below
+  single-channel ($+19\%$ at iter $200$, $+17\%$ at iter $500$); the
+  semi-convergence rise is smaller than at $50^\circ$.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 75$^\circ$ arc $\cdot$ $176\times176\times16$ grid}
+\end{frame}
+
+\begin{frame}{Analytic jaw at 75$^\circ$ --- iteration ladder}
+  \centering
+  \phantomfig[0.68]{ct2_jaw_iter_ladder_xy_arc75.png}\\[0.3em]
+  \footnotesize
+  Full mid-axial slice, $75^\circ$ arc. Two-channel iter-500 RMSE is
+  $14\%$ lower (single $0.593$, two-channel $0.509$).
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 75$^\circ$ arc $\cdot$ $144\times144\times80$ grid}
+\end{frame}
+
+\begin{frame}{Analytic jaw at 75$^\circ$ --- reconstruction error}
+  \centering
+  \phantomfig[0.66]{ct2_jaw_error_ladder_arc75.png}\\[0.3em]
+  \footnotesize
+  Absolute error $|$reconstruction $-$ ground truth$|$, $75^\circ$ arc
+  (darker is less error). The two-channel row stays darker.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 75$^\circ$ arc $\cdot$ $144\times144\times80$ grid}
+\end{frame}
+
+\begin{frame}{Analytic jaw at 75$^\circ$ --- convergence}
+  \centering
+  \phantomfig[0.72]{ct2_jaw_convergence_arc75.png}\\[0.3em]
+  \footnotesize
+  Image RMSE vs.\ iteration, $75^\circ$ arc. Two-channel stays below
+  single-channel; the gap reaches $+14\%$ at iter $500$.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 75$^\circ$ arc $\cdot$ $144\times144\times80$ grid}
+\end{frame}
+
+\begin{frame}{Analytic breast at 100$^\circ$ --- iteration ladder}
+  \centering
+  \phantomfig[0.68]{ct2_breast_iter_ladder_xy_arc100.png}\\[0.3em]
+  \footnotesize
+  Full mid-axial slice, $100^\circ$ arc. At this wide arc the breast
+  problem is well-conditioned --- both methods reconstruct it well, and
+  single-channel converges fastest here (see convergence).
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 100$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
+\end{frame}
+
+\begin{frame}{Analytic breast at 100$^\circ$ --- reconstruction error}
+  \centering
+  \phantomfig[0.66]{ct2_breast_error_ladder_arc100.png}\\[0.3em]
+  \footnotesize
+  Absolute error $|$reconstruction $-$ ground truth$|$, $100^\circ$ arc
+  (darker is less error). Both rows are dark --- low error --- with
+  single-channel the cleaner of the two at this well-conditioned arc.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 100$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
+\end{frame}
+
+\begin{frame}{Analytic breast at 100$^\circ$ --- convergence}
+  \centering
+  \phantomfig[0.66]{ct2_breast_convergence_arc100.png}\\[0.3em]
+  \footnotesize
+  Image RMSE vs.\ iteration, $100^\circ$ arc. The breast problem is now
+  well-conditioned: single-channel converges to a near-perfect RMSE
+  ($0.010$), beating two-channel ($0.021$). The two-channel gain is a
+  limited-angle effect --- it fades once the arc is wide enough.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 100$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
+\end{frame}
+
+\begin{frame}{Analytic head at 100$^\circ$ --- iteration ladder}
+  \centering
+  \phantomfig[0.68]{ct2_head_iter_ladder_xy_arc100.png}\\[0.3em]
+  \footnotesize
+  Full mid-axial slice, $100^\circ$ arc --- markedly cleaner than at
+  $50^\circ$. Two-channel iter-500 RMSE is $13\%$ lower (single $0.570$,
+  two-channel $0.497$).
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 100$^\circ$ arc $\cdot$ $176\times176\times16$ grid}
+\end{frame}
+
+\begin{frame}{Analytic head at 100$^\circ$ --- reconstruction error}
+  \centering
+  \phantomfig[0.66]{ct2_head_error_ladder_arc100.png}\\[0.3em]
+  \footnotesize
+  Absolute error $|$reconstruction $-$ ground truth$|$, $100^\circ$ arc
+  (darker is less error). The two-channel row stays darker.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 100$^\circ$ arc $\cdot$ $176\times176\times16$ grid}
+\end{frame}
+
+\begin{frame}{Analytic head at 100$^\circ$ --- convergence}
+  \centering
+  \phantomfig[0.72]{ct2_head_convergence_arc100.png}\\[0.3em]
+  \footnotesize
+  Image RMSE vs.\ iteration, $100^\circ$ arc. Two-channel stays below
+  single-channel throughout ($+16\%$ at iter $200$, $+13\%$ at iter
+  $500$).
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 100$^\circ$ arc $\cdot$ $176\times176\times16$ grid}
+\end{frame}
+
+\begin{frame}{Analytic jaw at 100$^\circ$ --- iteration ladder}
+  \centering
+  \phantomfig[0.68]{ct2_jaw_iter_ladder_xy_arc100.png}\\[0.3em]
+  \footnotesize
+  Full mid-axial slice, $100^\circ$ arc. Two-channel iter-500 RMSE is
+  $8\%$ lower (single $0.516$, two-channel $0.476$).
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 100$^\circ$ arc $\cdot$ $144\times144\times80$ grid}
+\end{frame}
+
+\begin{frame}{Analytic jaw at 100$^\circ$ --- reconstruction error}
+  \centering
+  \phantomfig[0.66]{ct2_jaw_error_ladder_arc100.png}\\[0.3em]
+  \footnotesize
+  Absolute error $|$reconstruction $-$ ground truth$|$, $100^\circ$ arc
+  (darker is less error). The two-channel row stays darker.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 100$^\circ$ arc $\cdot$ $144\times144\times80$ grid}
+\end{frame}
+
+\begin{frame}{Analytic jaw at 100$^\circ$ --- convergence}
+  \centering
+  \phantomfig[0.72]{ct2_jaw_convergence_arc100.png}\\[0.3em]
+  \footnotesize
+  Image RMSE vs.\ iteration, $100^\circ$ arc. Two-channel stays below
+  single-channel; the gap narrows to $+8\%$ at iter $500$ as the problem
+  becomes better conditioned.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 100$^\circ$ arc $\cdot$ $144\times144\times80$ grid}
 \end{frame}
 
 % =========================================================================
@@ -519,6 +737,7 @@
   \footnotesize
   Classical 3D Shepp-Logan: $10$ ellipsoids, skull at $\mu = 2.0$, brain
   at $\mu = 1.0$, three small low-contrast inserts at $\mu = 1.0 \pm 0.02$.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $128\times128\times64$ grid}
 \end{frame}
 
 \begin{frame}{Backup: Shepp-Logan at a clinical $50^{\circ}$ arc}
@@ -529,6 +748,7 @@
   superimposed (single is ${\sim}7\%$ lower at iter $500$). With little
   intermediate spatial structure there is no low-frequency deficit for the
   spectral split to address --- a well-conditioned negative control.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $128\times128\times64$ grid}
 \end{frame}
 
 \begin{frame}{Backup: 3D VICTRE breast phantom}
@@ -539,6 +759,7 @@
   ${\sim}10^{6}$ voxels at $0.4$~mm after $4\times$ downsampling).
   Anatomically distributed glandular structure rather than discrete
   analytic inserts.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ VICTRE breast, $4\times$ downsampled}
 \end{frame}
 
 \begin{frame}{Backup: VICTRE at a clinical $50^{\circ}$ arc}
@@ -549,6 +770,7 @@
   dominates both methods. Under the paper step sizes single-channel has
   the lower RMSE; tuning the CP step sizes produces an early two-channel
   lead that fades after iter ${\sim}200$ (see summary table).
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ VICTRE breast, $4\times$ downsampled}
 \end{frame}
 
 \begin{frame}{Backup: full constrained objective}
