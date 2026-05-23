@@ -1,0 +1,344 @@
+Started at Fri May 22 17:28:04 PDT 2026
+Loaded 4 cached two-channel runs + single from /Users/taro/Documents/ct/cache/H1_cutoff_sweep_256.pkl
+
+=== two-channel: c_hi=4.0, c_lo=4.0, eps_lo/eps_hi=1.25 ===
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=500
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4939, sig: 66.940020, tau: 0.006694
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489495, img_err=0.532447, TV=648.04
+  Iter 5: data_err=0.247480, img_err=0.342717, TV=2506.94
+  Iter 10: data_err=0.439370, img_err=0.483102, TV=3934.50
+  Iter 20: data_err=0.385295, img_err=0.427180, TV=3589.06
+  Iter 50: data_err=0.109366, img_err=0.183450, TV=4308.03
+  Iter 100: data_err=0.114296, img_err=0.220244, TV=3653.61
+  Iter 200: data_err=0.040449, img_err=0.182874, TV=3272.66
+  Iter 300: data_err=0.013050, img_err=0.148161, TV=2973.30
+  Iter 400: data_err=0.004669, img_err=0.116670, TV=2959.78
+  Iter 500: data_err=0.002350, img_err=0.098402, TV=2775.27
+Running two-channel...
+  Total norm: 1.4304, sig_hi: 69.911798, sig_lo: 279.647192, tau: 0.006991
+  Iter 1: data_err=0.574457, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.219811, img_err=0.329343, TV=2026.33
+  Iter 5: data_err=0.394734, img_err=0.447976, TV=2977.28
+  Iter 10: data_err=0.231824, img_err=0.312321, TV=3221.27
+  Iter 20: data_err=0.116315, img_err=0.196888, TV=4121.18
+  Iter 50: data_err=0.037378, img_err=0.185367, TV=3328.57
+  Iter 100: data_err=0.008692, img_err=0.160309, TV=3157.93
+  Iter 200: data_err=0.003224, img_err=0.119524, TV=2756.99
+  Iter 300: data_err=0.002642, img_err=0.098864, TV=2540.33
+  Iter 400: data_err=0.001747, img_err=0.083735, TV=2453.96
+  Iter 500: data_err=0.001620, img_err=0.076684, TV=2410.73
+  Single-channel: 13.1s, final RMSE=0.098402
+  Two-channel: 19.3s, final RMSE=0.076684
+  elapsed 46.0s, final RMSE 0.0767
+[skip] c_lo=6.0 already cached
+[skip] c_lo=8.0 already cached
+[skip] c_lo=12.0 already cached
+[skip] c_lo=16.0 already cached
+
+=== two-channel: c_hi=4.0, c_lo=24.0, eps_lo/eps_hi=1.25 ===
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=500
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4939, sig: 66.939391, tau: 0.006694
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489493, img_err=0.532445, TV=648.06
+  Iter 5: data_err=0.247466, img_err=0.342708, TV=2507.00
+  Iter 10: data_err=0.439376, img_err=0.483107, TV=3934.52
+  Iter 20: data_err=0.385286, img_err=0.427173, TV=3589.01
+  Iter 50: data_err=0.109314, img_err=0.183420, TV=4307.97
+  Iter 100: data_err=0.114309, img_err=0.220250, TV=3653.65
+  Iter 200: data_err=0.040442, img_err=0.182871, TV=3272.67
+  Iter 300: data_err=0.013042, img_err=0.148159, TV=2973.32
+  Iter 400: data_err=0.004664, img_err=0.116668, TV=2959.78
+  Iter 500: data_err=0.002351, img_err=0.098401, TV=2775.28
+Running two-channel...
+  Total norm: 1.4296, sig_hi: 69.947192, sig_lo: 279.788769, tau: 0.006995
+  Iter 1: data_err=0.562441, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.222708, img_err=0.339491, TV=883.74
+  Iter 5: data_err=0.383605, img_err=0.447092, TV=2761.06
+  Iter 10: data_err=0.230410, img_err=0.318857, TV=3357.19
+  Iter 20: data_err=0.116332, img_err=0.203759, TV=4111.96
+  Iter 50: data_err=0.037391, img_err=0.186022, TV=3380.95
+  Iter 100: data_err=0.010475, img_err=0.166056, TV=3261.94
+  Iter 200: data_err=0.004294, img_err=0.123778, TV=2926.93
+  Iter 300: data_err=0.002087, img_err=0.100491, TV=2626.26
+  Iter 400: data_err=0.001662, img_err=0.084855, TV=2488.90
+  Iter 500: data_err=0.001652, img_err=0.076136, TV=2421.56
+  Single-channel: 13.6s, final RMSE=0.098401
+  Two-channel: 19.4s, final RMSE=0.076136
+  elapsed 47.1s, final RMSE 0.0761
+
+=== two-channel: c_hi=4.0, c_lo=32.0, eps_lo/eps_hi=1.25 ===
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=500
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4942, sig: 66.924774, tau: 0.006692
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489446, img_err=0.532406, TV=648.42
+  Iter 5: data_err=0.247185, img_err=0.342510, TV=2508.21
+  Iter 10: data_err=0.439493, img_err=0.483208, TV=3934.64
+  Iter 20: data_err=0.385122, img_err=0.427037, TV=3587.93
+  Iter 50: data_err=0.108280, img_err=0.182831, TV=4306.40
+  Iter 100: data_err=0.114558, img_err=0.220378, TV=3654.27
+  Iter 200: data_err=0.040311, img_err=0.182818, TV=3272.59
+  Iter 300: data_err=0.012888, img_err=0.148107, TV=2973.31
+  Iter 400: data_err=0.004566, img_err=0.116616, TV=2959.44
+  Iter 500: data_err=0.002356, img_err=0.098366, TV=2775.20
+Running two-channel...
+  Total norm: 1.4291, sig_hi: 69.975540, sig_lo: 279.902158, tau: 0.006998
+  Iter 1: data_err=0.558755, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.222579, img_err=0.342759, TV=813.58
+  Iter 5: data_err=0.379475, img_err=0.446302, TV=2588.71
+  Iter 10: data_err=0.229696, img_err=0.321129, TV=3325.88
+  Iter 20: data_err=0.119430, img_err=0.209677, TV=4174.47
+  Iter 50: data_err=0.046811, img_err=0.187571, TV=3359.52
+  Iter 100: data_err=0.011798, img_err=0.165733, TV=3303.00
+  Iter 200: data_err=0.005417, img_err=0.128295, TV=2985.78
+  Iter 300: data_err=0.002684, img_err=0.103102, TV=2667.32
+  Iter 400: data_err=0.001797, img_err=0.086004, TV=2520.40
+  Iter 500: data_err=0.001601, img_err=0.075908, TV=2438.84
+  Single-channel: 13.5s, final RMSE=0.098366
+  Two-channel: 19.8s, final RMSE=0.075908
+  elapsed 47.5s, final RMSE 0.0759
+Saved /Users/taro/Documents/ct/final_figures/H1_cutoff_recon_256.png
+Saved /Users/taro/Documents/ct/final_figures/H1_cutoff_error_256.png
+Saved /Users/taro/Documents/ct/final_figures/H1_cutoff_lferror_256.png
+Saved /Users/taro/Documents/ct/final_figures/H1_cutoff_convergence_256.png
+
+H1 cutoff sweep -- 2D paper-breast 256x256
+c_hi fixed at 4.0, eps_lo/eps_hi = 1.25
+itermax = 500
+========================================================================
+
+config                 | iter   50 | iter  100 | iter  200 | iter  500 | LF RMSE @ iter 200
+------------------------------------------------------------------------
+single (ref)           | 0.1834     | 0.2202     | 0.1829     | 0.0984     | 0.1292
+two c_lo=4.0           | 0.1854     | 0.1603     | 0.1195     | 0.0767     | 0.0637
+two c_lo=6.0           | 0.1855     | 0.1612     | 0.1194     | 0.0768     | 0.0629
+two c_lo=8.0           | 0.1855     | 0.1617     | 0.1193     | 0.0768     | 0.0621
+two c_lo=12.0          | 0.1853     | 0.1623     | 0.1190     | 0.0768     | 0.0605
+two c_lo=16.0          | 0.1857     | 0.1633     | 0.1195     | 0.0766     | 0.0598
+two c_lo=24.0          | 0.1860     | 0.1661     | 0.1238     | 0.0761     | 0.0627
+two c_lo=32.0          | 0.1876     | 0.1657     | 0.1283     | 0.0759     | 0.0664
+Saved /Users/taro/Documents/ct/final_figures/H1_cutoff_summary_256.txt
+=== H1 ext done ===
+Loaded 5 cached runs + single from /Users/taro/Documents/ct/cache/H2_eps_sweep_256.pkl
+[skip] eps_lo/eps_hi=0.25 already cached
+[skip] eps_lo/eps_hi=0.5 already cached
+[skip] eps_lo/eps_hi=1.0 already cached
+[skip] eps_lo/eps_hi=1.25 already cached
+[skip] eps_lo/eps_hi=2.0 already cached
+
+=== two-channel: eps_lo/eps_hi=3.0, c_hi=4.0, c_lo=8.0 ===
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=500
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4939, sig: 66.940020, tau: 0.006694
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489495, img_err=0.532447, TV=648.04
+  Iter 5: data_err=0.247480, img_err=0.342717, TV=2506.94
+  Iter 10: data_err=0.439370, img_err=0.483102, TV=3934.50
+  Iter 20: data_err=0.385295, img_err=0.427180, TV=3589.06
+  Iter 50: data_err=0.109366, img_err=0.183450, TV=4308.03
+  Iter 100: data_err=0.114296, img_err=0.220244, TV=3653.61
+  Iter 200: data_err=0.040449, img_err=0.182874, TV=3272.66
+  Iter 300: data_err=0.013050, img_err=0.148161, TV=2973.30
+  Iter 400: data_err=0.004669, img_err=0.116670, TV=2959.78
+  Iter 500: data_err=0.002350, img_err=0.098402, TV=2775.27
+Running two-channel...
+  Total norm: 1.4302, sig_hi: 69.918262, sig_lo: 279.673047, tau: 0.006992
+  Iter 1: data_err=0.571752, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.221487, img_err=0.331572, TV=1432.32
+  Iter 5: data_err=0.390051, img_err=0.445881, TV=3404.68
+  Iter 10: data_err=0.233241, img_err=0.314982, TV=3058.40
+  Iter 20: data_err=0.111039, img_err=0.195535, TV=4014.71
+  Iter 50: data_err=0.035911, img_err=0.176406, TV=3314.99
+  Iter 100: data_err=0.007994, img_err=0.148489, TV=3062.95
+  Iter 200: data_err=0.003377, img_err=0.115099, TV=2690.56
+  Iter 300: data_err=0.003266, img_err=0.098064, TV=2524.85
+  Iter 400: data_err=0.003160, img_err=0.085278, TV=2457.17
+  Iter 500: data_err=0.003153, img_err=0.076252, TV=2417.08
+  Single-channel: 13.6s, final RMSE=0.098402
+  Two-channel: 19.9s, final RMSE=0.076252
+  elapsed 47.9s, final RMSE 0.0763
+
+=== two-channel: eps_lo/eps_hi=4.0, c_hi=4.0, c_lo=8.0 ===
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=500
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4939, sig: 66.939391, tau: 0.006694
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489493, img_err=0.532445, TV=648.06
+  Iter 5: data_err=0.247466, img_err=0.342708, TV=2507.00
+  Iter 10: data_err=0.439376, img_err=0.483107, TV=3934.52
+  Iter 20: data_err=0.385286, img_err=0.427173, TV=3589.01
+  Iter 50: data_err=0.109314, img_err=0.183420, TV=4307.97
+  Iter 100: data_err=0.114309, img_err=0.220250, TV=3653.65
+  Iter 200: data_err=0.040442, img_err=0.182871, TV=3272.67
+  Iter 300: data_err=0.013042, img_err=0.148159, TV=2973.32
+  Iter 400: data_err=0.004664, img_err=0.116668, TV=2959.78
+  Iter 500: data_err=0.002351, img_err=0.098401, TV=2775.28
+Running two-channel...
+  Total norm: 1.4312, sig_hi: 69.871757, sig_lo: 279.487027, tau: 0.006987
+  Iter 1: data_err=0.571752, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.222466, img_err=0.332198, TV=1428.22
+  Iter 5: data_err=0.388428, img_err=0.444579, TV=3400.13
+  Iter 10: data_err=0.233231, img_err=0.315012, TV=3054.40
+  Iter 20: data_err=0.106888, img_err=0.193785, TV=3999.11
+  Iter 50: data_err=0.035288, img_err=0.171630, TV=3288.99
+  Iter 100: data_err=0.007972, img_err=0.142872, TV=3009.34
+  Iter 200: data_err=0.004188, img_err=0.113485, TV=2659.48
+  Iter 300: data_err=0.004143, img_err=0.097601, TV=2521.22
+  Iter 400: data_err=0.004115, img_err=0.085651, TV=2458.94
+  Iter 500: data_err=0.004116, img_err=0.076636, TV=2419.89
+  Single-channel: 14.0s, final RMSE=0.098401
+  Two-channel: 20.1s, final RMSE=0.076636
+  elapsed 48.6s, final RMSE 0.0766
+
+=== two-channel: eps_lo/eps_hi=6.0, c_hi=4.0, c_lo=8.0 ===
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=500
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4942, sig: 66.924774, tau: 0.006692
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489446, img_err=0.532406, TV=648.42
+  Iter 5: data_err=0.247185, img_err=0.342510, TV=2508.21
+  Iter 10: data_err=0.439493, img_err=0.483208, TV=3934.64
+  Iter 20: data_err=0.385122, img_err=0.427037, TV=3587.93
+  Iter 50: data_err=0.108280, img_err=0.182831, TV=4306.40
+  Iter 100: data_err=0.114558, img_err=0.220378, TV=3654.27
+  Iter 200: data_err=0.040311, img_err=0.182818, TV=3272.59
+  Iter 300: data_err=0.012888, img_err=0.148107, TV=2973.31
+  Iter 400: data_err=0.004566, img_err=0.116616, TV=2959.44
+  Iter 500: data_err=0.002356, img_err=0.098366, TV=2775.20
+Running two-channel...
+  Total norm: 1.4322, sig_hi: 69.824067, sig_lo: 279.296266, tau: 0.006982
+  Iter 1: data_err=0.571752, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.223718, img_err=0.333002, TV=1423.17
+  Iter 5: data_err=0.384844, img_err=0.441691, TV=3391.20
+  Iter 10: data_err=0.231103, img_err=0.313596, TV=3047.43
+  Iter 20: data_err=0.100551, img_err=0.191455, TV=3973.36
+  Iter 50: data_err=0.034942, img_err=0.163178, TV=3241.49
+  Iter 100: data_err=0.008868, img_err=0.134516, TV=2925.04
+  Iter 200: data_err=0.006098, img_err=0.110674, TV=2626.70
+  Iter 300: data_err=0.006077, img_err=0.096318, TV=2516.78
+  Iter 400: data_err=0.006077, img_err=0.085276, TV=2460.93
+  Iter 500: data_err=0.006078, img_err=0.076488, TV=2423.82
+  Single-channel: 14.1s, final RMSE=0.098366
+  Two-channel: 20.0s, final RMSE=0.076488
+  elapsed 48.7s, final RMSE 0.0765
+
+=== two-channel: eps_lo/eps_hi=10.0, c_hi=4.0, c_lo=8.0 ===
+
+============================================================
+RUNNING RECONSTRUCTION FOR 256x256 (mfact=2)
+alpha=1.9, beta=10.0, itermax=500
+============================================================
+Loading phantom data...
+Generating sinogram data...
+Ground truth TV: 2365.86
+Computing operator norms...
+
+Running single-channel...
+  Total norm: 1.4938, sig: 66.941340, tau: 0.006694
+  Iter 1: data_err=0.574461, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.489495, img_err=0.532446, TV=648.04
+  Iter 5: data_err=0.247485, img_err=0.342721, TV=2506.97
+  Iter 10: data_err=0.439371, img_err=0.483102, TV=3934.55
+  Iter 20: data_err=0.385296, img_err=0.427181, TV=3589.12
+  Iter 50: data_err=0.109368, img_err=0.183451, TV=4308.09
+  Iter 100: data_err=0.114296, img_err=0.220245, TV=3653.63
+  Iter 200: data_err=0.040449, img_err=0.182875, TV=3272.65
+  Iter 300: data_err=0.013050, img_err=0.148162, TV=2973.29
+  Iter 400: data_err=0.004669, img_err=0.116672, TV=2959.76
+  Iter 500: data_err=0.002350, img_err=0.098404, TV=2775.25
+Running two-channel...
+  Total norm: 1.4310, sig_hi: 69.881547, sig_lo: 279.526186, tau: 0.006988
+  Iter 1: data_err=0.571752, img_err=0.603139, TV=0.00
+  Iter 2: data_err=0.225808, img_err=0.334346, TV=1414.95
+  Iter 5: data_err=0.377311, img_err=0.435635, TV=3372.77
+  Iter 10: data_err=0.225565, img_err=0.309937, TV=3036.53
+  Iter 20: data_err=0.088759, img_err=0.188014, TV=3922.37
+  Iter 50: data_err=0.036063, img_err=0.150587, TV=3176.02
+  Iter 100: data_err=0.012274, img_err=0.125156, TV=2826.90
+  Iter 200: data_err=0.010069, img_err=0.105962, TV=2597.80
+  Iter 300: data_err=0.010047, img_err=0.092972, TV=2511.95
+  Iter 400: data_err=0.010047, img_err=0.082779, TV=2462.75
+  Iter 500: data_err=0.010047, img_err=0.074428, TV=2429.30
+  Single-channel: 14.0s, final RMSE=0.098404
+  Two-channel: 19.9s, final RMSE=0.074428
+  elapsed 48.5s, final RMSE 0.0744
+Saved /Users/taro/Documents/ct/final_figures/H2_eps_recon_256.png
+Saved /Users/taro/Documents/ct/final_figures/H2_eps_error_256.png
+Saved /Users/taro/Documents/ct/final_figures/H2_eps_lferror_256.png
+Saved /Users/taro/Documents/ct/final_figures/H2_eps_convergence_256.png
+
+H2 eps_lo/eps_hi sweep -- 2D paper-breast 256x256
+c_hi=4.0, c_lo=8.0 fixed; itermax=500
+========================================================================
+
+config                       | iter   50 | iter  100 | iter  200 | iter  500 | LF RMSE @ iter 200
+------------------------------------------------------------------------
+single (ref)                 | 0.1834     | 0.2202     | 0.1829     | 0.0984     | 0.1292
+two eps_lo/eps_hi=0.25       | 0.1910     | 0.1711     | 0.1234     | 0.0921     | 0.0657
+two eps_lo/eps_hi=0.5        | 0.1896     | 0.1686     | 0.1222     | 0.0853     | 0.0647
+two eps_lo/eps_hi=1.0        | 0.1868     | 0.1639     | 0.1201     | 0.0782     | 0.0629
+two eps_lo/eps_hi=1.25       | 0.1855     | 0.1615     | 0.1192     | 0.0768     | 0.0621
+two eps_lo/eps_hi=2.0        | 0.1816     | 0.1552     | 0.1171     | 0.0757     | 0.0603
+two eps_lo/eps_hi=3.0        | 0.1764     | 0.1485     | 0.1151     | 0.0763     | 0.0584
+two eps_lo/eps_hi=4.0        | 0.1716     | 0.1429     | 0.1135     | 0.0766     | 0.0571
+two eps_lo/eps_hi=6.0        | 0.1632     | 0.1345     | 0.1107     | 0.0765     | 0.0550
+two eps_lo/eps_hi=10.0       | 0.1506     | 0.1252     | 0.1060     | 0.0744     | 0.0523
+Saved /Users/taro/Documents/ct/final_figures/H2_eps_summary_256.txt
+=== H2 ext done ===

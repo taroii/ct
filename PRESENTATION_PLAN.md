@@ -1,5 +1,53 @@
 # CT Meeting 2026 - Presentation & Experiments Plan
 
+## Status (updated 2026-05-22) — Emil's second email
+
+After seeing the slides, Emil wrote:
+
+> "After seeing the slides, it occurred to me that it would be good to see
+> more results centered on the impact of band selection and data-error
+> constraint values. Maybe have more results along those lines and focus
+> only on the 2d and 3d breast phantoms."
+
+Reading this as two technical asks plus a scope-narrow:
+
+1. **Band selection** — show how the choice of filter design changes the
+   reconstruction. Knobs in our two-channel code: `cutoffparm` (c_hi),
+   `cutoffparm_lo` (c_lo), and whether they form a partition of unity. The
+   current talk shows one specific design (c_hi=4 / c_lo=8, non-PoU);
+   the audience can't see the design space.
+2. **Data-error constraints** — show how the per-band tolerances
+   `eps_hi`, `eps_lo` change the reconstruction. This is the lever the
+   manuscript already calls out as the one that shifts the fixed point
+   (sigma_lo only changes the trajectory). Right now eps_lo/eps_hi = 1.25
+   is the only data point in the deck.
+3. **Scope** — focus on **2D paper breast phantom + 3D analytic breast** only.
+   Drop head/jaw/Shepp-Logan from the main flow (keep available in figures
+   directory; can stay as backup slides).
+
+Project pivot: **moved away from dyadic k>=3.** Convergence guarantees for
+the dyadic case were never proven in the abstract, so the talk and journal
+extension stay inside the two-channel formulation. References to k>=3 in
+older sections of this plan are marked `[DROPPED]` rather than deleted, so
+the option is still visible to the user.
+
+What we already have that's reusable:
+- `scripts/sweep_eps_lo.py` produces RMSE-curves + table over an eps_lo
+  ratio sweep at 2D; needs an extension that *renders the actual
+  reconstructions* at a fixed iteration count across the sweep.
+- `scripts/sweep_pou_cutoff.py` does the same for PoU matched cutoffs c;
+  same extension needed.
+- `scripts/visualize_early_iterations.py` already knows how to capture
+  snapshots from `run_reconstruction_for_mfact` and lay them out as a
+  ladder — its `make_recon_grid` / `make_error_grid` /
+  `make_lf_error_grid` helpers are directly reusable.
+- 3D analytic breast pipeline:
+  `scripts/presentation_ct2_breast_ladder.py` already reconstructs and
+  saves snapshots for the 50/75/100-deg arc figures in the deck. Needs a
+  band-sweep / eps-sweep driver that varies cutoff or eps_lo and rerenders.
+
+What's needed (mapped to deliverables — see new Section H below).
+
 ## Status (updated 2026-05-17)
 
 The 2D regression in `final_figures/rmse_table.txt` has been diagnosed and the
@@ -18,7 +66,10 @@ talk's story re-grounded:
 
 Talk re-framed around the early-iteration / trajectory advantage, with full-
 convergence parity disclosed and the dyadic k>=3 manuscript positioned as the
-principled path to closing the asymptotic gap.
+principled path to closing the asymptotic gap. **[2026-05-22 UPDATE: dyadic
+extension has been dropped from the talk and journal extension scope, since
+convergence guarantees were never proven in the abstract; keep the manuscript
+as background only.]**
 
 Current figures (all in `final_figures/`, 256x256, PoU c=4, 2000 iter):
 
@@ -158,13 +209,16 @@ Cached intermediate snapshots: `cache/early_iteration_snapshots_256.pkl`.
 - Optional noise sweep: existing `addnoise=0` switch in
   `scripts/compare_methods_multiresolution.py`, wire up to test Poisson noise.
 
-#### C. Dyadic k>=3 implementation (after other phantoms)
+#### C. Dyadic k>=3 implementation (after other phantoms) **[DROPPED 2026-05-22]**
 - Implement the dyadic shell construction from `paper/dyadic ct.tex` Sec III.A
   (eq `dyadic-filters`) and the geometric `sigma_i = 2^i sigma_0` schedule.
 - Likely lives as a new function `run_reconstruction_dyadic(mfact, k, ...)` in
   `compare_methods_multiresolution.py` or as a parallel module.
 - Real chance this closes the asymptotic gap; even if it doesn't, the talk
   benefits from showing the dyadic depth-vs-RMSE trend.
+- **Why dropped:** convergence guarantees were never proven for k>=3 in the
+  abstract / accepted paper; presenting dyadic results would overclaim.
+  Kept here for visibility; do not pursue for the talk.
 
 #### D. Limited-angle window sweep
 - Run single vs two-channel at multiple arcs (e.g. 50 / 90 / 180-deg+fan).
@@ -192,6 +246,138 @@ Cached intermediate snapshots: `cache/early_iteration_snapshots_256.pkl`.
   `scripts/visualize_early_iterations.py` is the right metric for the talk's
   story; print it under each panel in figures.
 
+#### H. Band selection and data-error constraint results (2026-05-22, per Emil)
+
+Emil's follow-up email after seeing the slides:
+
+> "it would be good to see more results centered on the impact of band
+> selection and data-error constraint values. Maybe have more results
+> along those lines and focus only on the 2d and 3d breast phantoms."
+
+Two design knobs to make visible, on two phantoms.
+
+**Knob 1 — Band selection.** The choice of the high/low channel filter design:
+- Cutoff sweep: `c_hi`, `c_lo`. Two views: matched-cutoff PoU (c_hi = c_lo)
+  with c in {2, 4, 8, 16}; and paper-style non-PoU where c_lo > c_hi (e.g.
+  c_hi=4 fixed, c_lo in {6, 8, 12, 16}).
+- PoU vs non-PoU at fixed scale (e.g. c_hi=4, c_lo=8 paper config vs
+  c_hi=c_lo=4 matched PoU). One slide showing visually what the PoU
+  construction buys (or doesn't).
+
+**Knob 2 — Data-error constraints.** The `eps_hi`, `eps_lo` per-band radii:
+- eps_lo/eps_hi sweep at fixed band design (default c_hi=4, c_lo=8). Ratios
+  in {0.25, 0.5, 1.0, 1.25, 2.0} should span "tighten LF" to "loosen LF"
+  relative to the paper config.
+- (Optional) eps_hi sweep at fixed eps_lo to show symmetry — likely just for
+  appendix.
+
+**Phantoms.**
+1. 2D paper digital breast (`data/phantoms_from_paper/...`, imagenumber=3),
+   single representative resolution (256 most likely — fastest, already the
+   reference in `presentation_iter_ladder.py`).
+2. 3D ct-2 analytic breast at 50-deg arc (matches the current main-flow 3D
+   slide). Pipeline already lives in `scripts/presentation_ct2_breast_ladder.py`.
+
+**Presentation style.** Crucial difference from the existing sweep figures
+(which are just RMSE-vs-iter curves): for each knob value, *render the
+reconstruction itself* at one or two fixed iteration counts (e.g. iter 100
+and iter 500) as a row in a grid. The audience needs to see the visual
+consequence of each knob setting, not just an RMSE number. Mirror this with
+a difference-map row underneath, same color scale across the row.
+
+**Concrete new scripts to add:**
+1. `scripts/sweep_cutoff_visual_2d.py` — vary the cutoff (PoU and/or
+   non-PoU) on 2D paper-breast, run 256 to N=500, render a recon-row +
+   error-row grid plus the RMSE curve. Reuse helpers from
+   `visualize_early_iterations.py`.
+2. `scripts/sweep_eps_visual_2d.py` — same shape for the eps_lo/eps_hi ratio
+   sweep.
+3. `scripts/sweep_cutoff_visual_ct2breast.py` — equivalent on the 3D ct-2
+   breast at 50-deg, mid-axial slice rendered as the row image. Reuse the
+   reconstruction loop from `presentation_ct2_breast_ladder.py`.
+4. `scripts/sweep_eps_visual_ct2breast.py` — eps version on 3D ct-2 breast.
+
+**Decisions outstanding (ask user before running):**
+- Which iteration counts to render per knob value? Default proposal:
+  iter 100 (early-advantage regime) + iter 500 (where the deck currently
+  reports headline numbers).
+- Cutoff sweep extent: spend more effort on PoU matched sweep, or on
+  non-PoU varying c_lo? Or both?
+- For the 3D ct-2 sweeps: stick to the existing 50-deg arc or also include
+  the 75-deg point where the gap is more dramatic?
+- VICTRE: Emil said "breast phantoms" plural — should we read VICTRE in
+  *or* read it as ct-2 analytic breast only? VICTRE currently lives in
+  backup; if it's meant to be in the main story, the sweep work doubles.
+
+**Findings (2026-05-22, from H1 + H2 runs at 256x256, itermax=500):**
+
+H1 -- band-selection (c_lo sweep, c_hi=4 fixed, eps_lo/eps_hi=1.25):
+
+- The two-channel image RMSE is **nearly flat** across c_lo in {4, 6, 8, 12, 16}
+  at every iteration count. Numbers within +-0.002 RMSE of each other.
+  This includes the PoU case (c_lo=4 with c_hi=4); PoU is theoretically tidier
+  but visually indistinguishable from the paper's non-PoU c_lo=8.
+- LF RMSE @ iter 200 reaches its minimum at **c_lo=16** (0.0598) and degrades
+  past that (c_lo=24 -> 0.0627, c_lo=32 -> 0.0664). Beyond c_lo=16 the early-
+  iter image RMSE also degrades; only the iter-500 asymptote benefits.
+- **Story for the talk:** the design is robust over a wide c_lo plateau; the
+  paper's c_lo=8 sits in the middle of it.
+
+H2 -- data-error constraint (eps_lo/eps_hi sweep, c_hi=4, c_lo=8 fixed):
+
+- Image RMSE has a **smooth unimodal interior optimum at r in [15, 20]**.
+  Improves through r=10..15, plateaus 15..20, degrades 20..50, then
+  collapses at r=10^6 (the "no LF constraint" limit gives RMSE ~ 0.55 --
+  the method is unusable without an LF constraint).
+- Best-found point: r=15 wins iter-100/200/500 and LF RMSE; r=20 wins
+  iter-50 by a hair. Going with r=15 as the headline.
+- Headline at r=15 vs paper config (r=1.25):
+    iter  50: 0.1430 vs 0.1855 (-23%)
+    iter 100: 0.1215 vs 0.1615 (-25%)
+    iter 200: 0.1035 vs 0.1192 (-13%)
+    iter 500: 0.0732 vs 0.0768  (-5%)
+    LF RMSE @ iter 200: 0.0518 vs 0.0621 (-17%)
+- Headline at r=15 vs single-channel @ iter 100: 0.1215 vs 0.2202 (-45%).
+- **Interpretation:** the LF channel needs to be *loose but not vacuous*.
+  The paper's r=1.25 is too tight; r >> 20 strands the LF correction
+  entirely. The clinically useful window is r in [10, 20].
+- Smooth curve over 16 r values from 0.25 to 30 (plus 50, 10^6) available
+  in `final_figures/H2_eps_convergence_256.png`; flat plateau in the
+  optimum window plus the catastrophic r=10^6 collapse make this an
+  excellent "what's the right slack?" slide.
+
+H6 -- eps_hi scale sweep (at r=10 fixed, c_hi=4, c_lo=8 fixed):
+
+- Also has an interior optimum, at eps_hi/eps ~ 1..2. Tightening to 0.5
+  hurts early iters; loosening to 4 hurts uniformly.
+- Headline at the best-tested point (eps_hi/eps=2) vs paper (eps_hi/eps=1):
+    iter  50: 0.1413 vs 0.1506 (-6%)
+    iter 100: 0.1222 vs 0.1252 (-2%)
+- Cross-check caveat: H6 (eps_hi/eps=2, r=10) and H2 (r=20, eps_hi/eps=1)
+  are the *same parameter point* but produce slightly different curves
+  due to the unseeded `np.random.randn` power-iteration init. The
+  difference is 1-3% in RMSE; trends are unaffected. Seedable in
+  compare_methods_multiresolution.py if bit-identity is needed.
+
+**Combined picture (for the talk's "designer view"):**
+
+1. **Band selection (c_lo)** -- broad plateau c_lo in [4, 16]; PoU and
+   non-PoU indistinguishable. "Method is robust to filter shape."
+2. **LF/HF balance (r = eps_lo/eps_hi)** -- interior optimum at r ~ 20;
+   paper's r=1.25 leaves ~25% RMSE on the table at clinical iter counts.
+3. **Overall scale (eps_hi)** -- paper's eps_hi=cm.eps is near-optimal;
+   small benefit from eps_hi=2*cm.eps but not robust at iter 500.
+4. **At the best 2D config** (r=15, eps_hi=cm.eps): iter-100 RMSE 0.1215
+   vs paper config 0.1615 (-25%) vs single-channel 0.2202 (-45%).
+
+**Scope cut for the talk (per Emil "focus only on 2D + 3D breast"):**
+- Head and jaw 3D analytic phantoms move from main flow to backup.
+- Shepp-Logan stays in backup (already is).
+- Wider-arc (75/100-deg) results stay available as backup since they
+  buttress the LAR framing, but step back from the main flow if needed.
+- These cuts are noted here but **not yet applied to main.tex** — pending
+  user direction.
+
 ### Figure deliverables checklist
 
 - [x] 2D single-channel + two-channel iteration series at 256 (early_iter_recon_256.png)
@@ -202,10 +388,16 @@ Cached intermediate snapshots: `cache/early_iteration_snapshots_256.pkl`.
 - [ ] 2D zoomed ROI comparison on a homogeneous breast region
 - [ ] Limited-angle sweep comparison (50 / 90 / wider arcs)
 - [ ] Other phantom families (Shepp-Logan, ct-2 analytic, alternate breast slices)
-- [ ] Dyadic k>=3 results (3- and 4-channel) at 256
+- [~] Dyadic k>=3 results (3- and 4-channel) at 256 — **DROPPED 2026-05-22**
 - [ ] 3D VICTRE slice panels (xy/xz/yz), single vs two-channel + difference (user's PC)
 - [ ] 3D VICTRE convergence curve (user's PC)
 - [ ] RMSE / LF-RMSE tables (appendix)
+- [scaffolded] **H1. 2D paper-breast cutoff sweep -- `scripts/sweep_cutoff_visual_2d.py` (non-PoU, c_hi=4, c_lo in {6,8,12,16}, iters 50/100/200/500). Not yet run.**
+- [scaffolded] **H2. 2D paper-breast eps_lo/eps_hi sweep -- `scripts/sweep_eps_visual_2d.py` (ratios {0.25, 0.5, 1.0, 1.25, 2.0}). Not yet run.**
+- [scaffolded] **H3. 3D ct-2 breast (50-deg) cutoff sweep -- `scripts/sweep_cutoff_visual_ct2breast.py`. Needs astra-toolbox **with CUDA** (the 3D module only exposes `*_gpu` calls). Confirmed unrunnable on this macOS box even after astra 2.4.1 install via conda-forge.**
+- [scaffolded] **H4. 3D ct-2 breast (50-deg) eps sweep -- `scripts/sweep_eps_visual_ct2breast.py`. Same CUDA constraint as H3.**
+- [observed in H1] **H5. PoU vs non-PoU at fixed scale** -- H1 with c_lo=4 (PoU) and c_lo=8 (paper non-PoU) shows the two are numerically indistinguishable (within +-0.002 RMSE everywhere). No further work needed for the talk.
+- [ ] **H6. 2D paper-breast eps_hi sweep at r=eps_lo/eps_hi=10 fixed -- `scripts/sweep_eps_hi_visual_2d.py` (eps_hi/eps in {0.5, 1, 2, 4}). Probes the overall scale.**
 
 ---
 
@@ -217,3 +409,9 @@ Cached intermediate snapshots: `cache/early_iteration_snapshots_256.pkl`.
 - Acceptable to present updated 2D numbers if they differ from the paper, or
   must the figures exactly reproduce the published table?
 - Which single phantom/setting becomes the "hero" motivation image?
+- (2026-05-22) For Section H: which iteration counts per knob value (default
+  100 + 500), how wide the cutoff and eps sweeps should be, whether VICTRE
+  is in scope for the sweeps, and whether to include the 75-deg arc point
+  on 3D ct-2 breast.
+- (2026-05-22) Once Section H lands: are head, jaw, Shepp-Logan, and wider
+  arcs trimmed from the main flow of `presentation/main.tex` or kept?
