@@ -2,6 +2,11 @@
 
 ## Manual To-Do List:
 
+Round 4 follow-ups (post-third-review):
+- [x] Future-work bullet 1 reworded to "Why just two channels?" framing -- generic multi-channel motivation, no claims from `paper/dyadic ct.tex`. Bullet 2 is now "Convergence guarantees" (formerly theorem-compliant step sizes).
+- [x] Existing analytic-phantom arc sweep (`cache/_ct2_arc_sweep.txt`, reduced config) was already enough: head/jaw show +12-14% RMSE reduction across [30, 120] deg; breast drops from +33% at 75 deg to +15% at 100 deg to ~0% at 120 deg. New plot: `presentation/figs/analytic_arc_sweep.png` via `scripts/_plot_arc_sweep.py`. No slide changes yet -- decision to keep/drop DBT framing pending.
+- [-] VICTRE combined (arc x sigma_lo x r) sweep at full config running in background (`scripts/_sweep_victre_combined.py`). Existing data already shows: narrow arc 20-30 deg gives clear two-channel wins at reduced config (up to +27% at arc=20 with sigma_lo=8); 50 deg LOSES at iter 400 in every CP combo tried. New full-config sweep probes whether the narrow-arc wins survive.
+
 Round 3 follow-ups (post-second-review):
 - [x] Rename slide 11 to "2D fan-beam: single vs two-channel".
 - [x] Strip redundant caption text (256x256, 25 views, 50 deg) across all figure slides where \geomnote already carries that information.
