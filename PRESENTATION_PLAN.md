@@ -1,5 +1,51 @@
 # CT Meeting 2026 - Presentation & Experiments Plan
 
+## Manual To-Do List:
+
+Round 3 follow-ups (post-second-review):
+- [x] Rename slide 11 to "2D fan-beam: single vs two-channel".
+- [x] Strip redundant caption text (256x256, 25 views, 50 deg) across all figure slides where \geomnote already carries that information.
+- [x] Drop slide 14 (3D analytic breast phantom intro three-view) entirely.
+- [x] Revert head/jaw 100 deg figures to iter 300 instead of iter 500 (RMSE rises after iter ~100-200). Ladder now shows GT/iter-100/iter-300; convergence x-axis clipped to 0-300. Scripts: `_regen_ct2_ladders.py`, `_regen_ct2_convergence_arc100.py`. New caption numbers: head -16% (0.554 vs 0.463), jaw -12% (0.494 vs 0.436).
+- [x] Summary slide: "2D paper breast" -> "2D breast phantom".
+- [x] Move design-space material from live deck to appendix and expand to two slides: (a) "The per-band tolerance ratio" explaining what r is and what tuning does, (b) "Tolerance-ratio sweep across phantoms" with the redesigned single-panel figure and the cross-phantom story.
+- [x] Future work rewritten: "Dyadic multi-channel fidelity" bullet now tied to the dyadic ct.tex manuscript (partition-of-unity bank, sigma_i = 2^i sigma_0, operator norm linear in k). LF-tolerance bullet rewritten for a first-time audience now that the design-space context is in the appendix. The "Realistic voxelized anatomy" bullet has been omitted -- see Future-work-deferred section below.
+- [x] Clear out the rest of the appendix. Now only "Backup: per-band tolerance tuning" (two slides) + References.
+
+Future-work bullets deferred (omitted from live deck for the practice run, may be re-added):
+- Realistic voxelized anatomy / VICTRE breast. Original phrasing: "On voxelized glandular-structure phantoms the two-channel gain at 50 deg is front-loaded; sustaining it is ongoing." Cut because the result is honest-but-weak and the talk does not currently include a VICTRE figure. Re-add if Sidky asks for a discussion of how the method translates to anatomically realistic phantoms.
+
+Pre-practice-run priorities (Sidky practice 2026-05-27):
+
+Cuts (do first, biggest time-budget impact):
+- [x] Drop VICTRE and Shepp-Logan entirely (live deck and appendix). Remove the slides, the figure references, and the future-work line that names VICTRE.
+- [x] Consolidate 4 design-knob slides into 1 live "design space" slide. v2: replaced the spaghetti convergence plot with an iter-100-RMSE-reduction vs r line chart (2D vs 3D, paper config and 2D-best marked). Sweep detail kept in appendix.
+- [x] 2D paper breast: keep iteration ladder + convergence only. Convergence figure regenerated linear-only (`scripts/_regen_2d_convergence_linear.py`).
+- [x] 3D breast: keep ladder + convergence. Ladder bumped to include iter 500 (`scripts/_regen_ct2_ladders.py`).
+- [x] Wider-arc: superseded by the per-phantom redesign. Live deck now has two slides ("Analytic jaw phantom" and "Analytic head phantom") each pairing a 3-column ladder (GT / iter 100 / iter 500) with the convergence plot for that phantom at 100°. Multi-arc-convergence slide removed; head/jaw 50° and 75° material stays in appendix.
+- [x] Clean up appendix after the above cuts.
+
+Edits:
+- [x] Em-dash sweep across the whole deck.
+- [x] Fill the placeholder DBT geometry schematic on the "Why limited-angle?" slide. v2 TikZ: bigger compressed-breast half-ellipse between detector and a top paddle, two extreme rays defining the 50° wedge, three source dots on a dashed arc.
+- [x] Rework the "Reconstruction with PDHG (Chambolle-Pock)" slide. Current bullets are too dense for ~30 s of delivery. Either compress to one sentence + reference to backup, or split the operator-norm line out entirely.
+- [x] Rename "Design knob 1" to "Band-cutoff robustness" (or similar) and remove every "PoU" mention from the live deck.
+- [x] Summary slide: switch the -45% / -25% numbers to the iter-100 paper-config numbers from the 2D and 3D breast results that survive the cut, so the live numbers and the summary agree.
+- [x] Future-work slide: drop the VICTRE-named bullet; reword the "realistic voxelized anatomy" point without naming VICTRE.
+
+Speaker-side / script:
+- [ ] Decide whether to retitle away from "Limited-Angle DBT" toward "Limited-Angle Tomography" (or similar). The wider-arc head/jaw slides land better under a non-DBT-specific title; Emil also suggested de-emphasising DBT.
+- [ ] Speaker notes: explain empirical phenomena out loud (why iter 5 is uniformly blurry, why iter 20 is the inflection). Otherwise drop iters 5 and 20 from the ladder and start at iter 50.
+- [ ] Speaker notes: pre-empt the 3D semi-convergence question. Say out loud that both methods rise after iter ~100 and the comparison is at a stopping point, not asymptotic.
+- [ ] Speaker notes for the design-space slide: plan to say "I condensed the design-knob material because of the time cap and because the tolerance optimum doesn't transfer between 2D and 3D; happy to expand if you'd prefer."
+
+Experiments still open:
+- [ ] Test wider angles on the analytic phantoms ([50, 100] degree range). If we do better at higher angles, we can reduce the DBT framing and write it as a more general LAR setting. 
+
+---
+
+# old
+
 ## Reconciliation (2026-05-21, desktop) — two threads aligned
 
 Two threads have been running in parallel:

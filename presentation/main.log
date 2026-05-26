@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.9.19)  25 MAY 2026 16:33
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.9.19)  26 MAY 2026 12:22
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1196,11 +1196,11 @@ vips/lm/lm-rm.enc}{c:/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}
 
 ]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <9> on input line 145.
+(Font)              <9> on input line 164.
 LaTeX Font Info:    Font shape `T1/lmss/m/it' in size <9> not available
-(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 145.
+(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 164.
 
-Overfull \vbox (26.23209pt too high) detected at line 145
+Overfull \vbox (26.23209pt too high) detected at line 164
  []
 
 
@@ -1216,7 +1216,7 @@ Overfull \vbox (26.23209pt too high) detected at line 145
 [7
 
 ]
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 19
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 20
 2.
  (c:/texlive/2025/texmf-dist/tex/latex/lm/t1lmr.fd
 File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
@@ -1233,11 +1233,11 @@ File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman
 [9
 
 ]
-<figs/single_only_ladder_256_paper.png, id=127, 953.964pt x 177.7842pt>
+<figs/single_only_ladder_256_paper.png, id=115, 953.964pt x 177.7842pt>
 File: figs/single_only_ladder_256_paper.png Graphic file (type png)
 <use figs/single_only_ladder_256_paper.png>
 Package pdftex.def Info: figs/single_only_ladder_256_paper.png  used on input l
-ine 209.
+ine 219.
 (pdftex.def)             Requested size: 398.3477pt x 74.2375pt.
 
 
@@ -1256,7 +1256,7 @@ ine 209.
 [13
 
 ]
-Overfull \vbox (19.87688pt too high) detected at line 301
+Overfull \vbox (19.87688pt too high) detected at line 311
  []
 
 
@@ -1268,14 +1268,14 @@ Overfull \vbox (19.87688pt too high) detected at line 301
 [15
 
 ]
-<figs/iter_ladder_recon_256_paper.png, id=169, 953.60265pt x 320.51746pt>
+<figs/iter_ladder_recon_256_paper.png, id=156, 953.60265pt x 320.51746pt>
 File: figs/iter_ladder_recon_256_paper.png Graphic file (type png)
 <use figs/iter_ladder_recon_256_paper.png>
 Package pdftex.def Info: figs/iter_ladder_recon_256_paper.png  used on input li
-ne 319.
+ne 328.
 (pdftex.def)             Requested size: 398.32776pt x 133.8828pt.
 
-Overfull \vbox (18.46379pt too high) detected at line 319
+Overfull \vbox (18.46379pt too high) detected at line 328
  []
 
 
@@ -1283,763 +1283,155 @@ Overfull \vbox (18.46379pt too high) detected at line 319
 [16
 
  <./figs/iter_ladder_recon_256_paper.png>]
-<figs/iter_ladder_zoom_recon_256_paper.png, id=176, 953.60265pt x 320.51746pt>
-File: figs/iter_ladder_zoom_recon_256_paper.png Graphic file (type png)
-<use figs/iter_ladder_zoom_recon_256_paper.png>
-Package pdftex.def Info: figs/iter_ladder_zoom_recon_256_paper.png  used on inp
-ut line 330.
-(pdftex.def)             Requested size: 398.32776pt x 133.8828pt.
+<figs/iter_ladder_convergence_256_paper.png, id=163, 469.0323pt x 295.94565pt>
+File: figs/iter_ladder_convergence_256_paper.png Graphic file (type png)
+<use figs/iter_ladder_convergence_256_paper.png>
+Package pdftex.def Info: figs/iter_ladder_convergence_256_paper.png  used on in
+put line 338.
+(pdftex.def)             Requested size: 221.49011pt x 139.75377pt.
+
+Overfull \vbox (6.50488pt too high) detected at line 338
+ []
+
 
 
 [17
 
- <./figs/iter_ladder_zoom_recon_256_paper.png>]
-<figs/error_pair_256_paper.png, id=184, 611.76555pt x 341.1144pt>
-File: figs/error_pair_256_paper.png Graphic file (type png)
-<use figs/error_pair_256_paper.png>
-Package pdftex.def Info: figs/error_pair_256_paper.png  used on input line 341.
+ <./figs/iter_ladder_convergence_256_paper.png>]
+<figs/persistence_500iter.png, id=170, 787.0203pt x 252.2223pt>
+File: figs/persistence_500iter.png Graphic file (type png)
+<use figs/persistence_500iter.png>
+Package pdftex.def Info: figs/persistence_500iter.png  used on input line 349.
+(pdftex.def)             Requested size: 398.33678pt x 127.65797pt.
 
-(pdftex.def)             Requested size: 266.80664pt x 148.76872pt.
-
-Overfull \vbox (19.72481pt too high) detected at line 341
+Overfull \vbox (10.04901pt too high) detected at line 349
  []
 
 
 
 [18
 
- <./figs/error_pair_256_paper.png>]
-<figs/iter_ladder_convergence_256_paper.png, id=191, 714.7503pt x 284.0211pt>
-File: figs/iter_ladder_convergence_256_paper.png Graphic file (type png)
-<use figs/iter_ladder_convergence_256_paper.png>
-Package pdftex.def Info: figs/iter_ladder_convergence_256_paper.png  used on in
-put line 352.
-(pdftex.def)             Requested size: 351.69214pt x 139.75227pt.
+ <./figs/persistence_500iter.png>]
+<figs/ct2_breast_iter_ladder_xy.png, id=178, 673.19505pt x 397.485pt>
+File: figs/ct2_breast_iter_ladder_xy.png Graphic file (type png)
+<use figs/ct2_breast_iter_ladder_xy.png>
+Package pdftex.def Info: figs/ct2_breast_iter_ladder_xy.png  used on input line
+ 361.
+(pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
 
-Overfull \vbox (20.30331pt too high) detected at line 352
+Overfull \vbox (11.58398pt too high) detected at line 361
  []
 
 
 
 [19
 
- <./figs/iter_ladder_convergence_256_paper.png>]
-<figs/persistence_500iter.png, id=199, 787.0203pt x 252.2223pt>
-File: figs/persistence_500iter.png Graphic file (type png)
-<use figs/persistence_500iter.png>
-Package pdftex.def Info: figs/persistence_500iter.png  used on input line 364.
-(pdftex.def)             Requested size: 398.33678pt x 127.65797pt.
+ <./figs/ct2_breast_iter_ladder_xy.png>]
+<figs/ct2_breast_convergence.png, id=186, 425.6703pt x 281.49165pt>
+File: figs/ct2_breast_convergence.png Graphic file (type png)
+<use figs/ct2_breast_convergence.png>
+Package pdftex.def Info: figs/ct2_breast_convergence.png  used on input line 37
+0.
+(pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
 
-Overfull \vbox (24.29338pt too high) detected at line 364
+Overfull \vbox (20.6007pt too high) detected at line 370
  []
 
 
 
 [20
 
- <./figs/persistence_500iter.png>]
-<../final_figures/H1_cutoff_convergence_256.png, id=206, 498.663pt x 317.988pt>
+ <./figs/ct2_breast_convergence.png>]
+<figs/ct2_jaw_iter_ladder_xy_arc100.png, id=193, 401.45985pt x 397.485pt>
+File: figs/ct2_jaw_iter_ladder_xy_arc100.png Graphic file (type png)
+<use figs/ct2_jaw_iter_ladder_xy_arc100.png>
+Package pdftex.def Info: figs/ct2_jaw_iter_ladder_xy_arc100.png  used on input 
+line 386.
+(pdftex.def)             Requested size: 147.98036pt x 146.51521pt.
+<figs/ct2_jaw_convergence_arc100.png, id=194, 425.6703pt x 281.853pt>
+File: figs/ct2_jaw_convergence_arc100.png Graphic file (type png)
+<use figs/ct2_jaw_convergence_arc100.png>
+Package pdftex.def Info: figs/ct2_jaw_convergence_arc100.png  used on input lin
+e 386.
+(pdftex.def)             Requested size: 167.30328pt x 110.77806pt.
 
-File: ../final_figures/H1_cutoff_convergence_256.png Graphic file (type png)
-<use ../final_figures/H1_cutoff_convergence_256.png>
-Package pdftex.def Info: ../final_figures/H1_cutoff_convergence_256.png  used o
-n input line 377.
-(pdftex.def)             Requested size: 233.29877pt x 148.77022pt.
-
-Overfull \vbox (19.7263pt too high) detected at line 377
+Overfull \vbox (8.59956pt too high) detected at line 386
  []
 
 
 
 [21
 
- <../final_figures/H1_cutoff_convergence_256.png>]
-<../final_figures/H2_eps_convergence_256.png, id=213, 498.663pt x 317.988pt>
-File: ../final_figures/H2_eps_convergence_256.png Graphic file (type png)
-<use ../final_figures/H2_eps_convergence_256.png>
-Package pdftex.def Info: ../final_figures/H2_eps_convergence_256.png  used on i
-nput line 389.
-(pdftex.def)             Requested size: 233.29877pt x 148.77022pt.
+ <./figs/ct2_jaw_iter_ladder_xy_arc100.png> <./figs/ct2_jaw_convergence_arc100.
+png>]
+<figs/ct2_head_iter_ladder_xy_arc100.png, id=202, 401.45985pt x 397.485pt>
+File: figs/ct2_head_iter_ladder_xy_arc100.png Graphic file (type png)
+<use figs/ct2_head_iter_ladder_xy_arc100.png>
+Package pdftex.def Info: figs/ct2_head_iter_ladder_xy_arc100.png  used on input
+ line 401.
+(pdftex.def)             Requested size: 147.98036pt x 146.51521pt.
+<figs/ct2_head_convergence_arc100.png, id=203, 425.6703pt x 281.853pt>
+File: figs/ct2_head_convergence_arc100.png Graphic file (type png)
+<use figs/ct2_head_convergence_arc100.png>
+Package pdftex.def Info: figs/ct2_head_convergence_arc100.png  used on input li
+ne 401.
+(pdftex.def)             Requested size: 167.30328pt x 110.77806pt.
 
-Overfull \vbox (19.7263pt too high) detected at line 389
+Overfull \vbox (8.59956pt too high) detected at line 401
  []
 
 
 
 [22
 
- <../final_figures/H2_eps_convergence_256.png>]
-<../final_figures/H2_eps_headline_recon_256.png, id=220, 689.81715pt x 441.9310
-5pt>
-File: ../final_figures/H2_eps_headline_recon_256.png Graphic file (type png)
-<use ../final_figures/H2_eps_headline_recon_256.png>
-Package pdftex.def Info: ../final_figures/H2_eps_headline_recon_256.png  used o
-n input line 400.
-(pdftex.def)             Requested size: 246.29198pt x 157.78683pt.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 400.
-LaTeX Font Info:    Font shape `T1/lmss/m/it' in size <12> not available
-(Font)              Font shape `T1/lmss/m/sl' tried instead on input line 400.
-
-Overfull \vbox (28.74292pt too high) detected at line 400
- []
-
-
+ <./figs/ct2_head_iter_ladder_xy_arc100.png> <./figs/ct2_head_convergence_arc10
+0.png>]
 
 [23
 
- <../final_figures/H2_eps_headline_recon_256.png>]
-<figs/ct2_breast_phantom_intro.png, id=229, 787.38165pt x 278.9622pt>
-File: figs/ct2_breast_phantom_intro.png Graphic file (type png)
-<use figs/ct2_breast_phantom_intro.png>
-Package pdftex.def Info: figs/ct2_breast_phantom_intro.png  used on input line 
-412.
-(pdftex.def)             Requested size: 398.33945pt x 141.12807pt.
-
+]
 
 [24
 
- <./figs/ct2_breast_phantom_intro.png>]
-<figs/ct2_breast_iter_ladder_xy.png, id=236, 673.19505pt x 397.485pt>
-File: figs/ct2_breast_iter_ladder_xy.png Graphic file (type png)
-<use figs/ct2_breast_iter_ladder_xy.png>
-Package pdftex.def Info: figs/ct2_breast_iter_ladder_xy.png  used on input line
- 422.
-(pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
-
-Overfull \vbox (11.58398pt too high) detected at line 422
- []
-
-
+]
 
 [25
 
- <./figs/ct2_breast_iter_ladder_xy.png>]
-<figs/ct2_breast_iter_ladder_roi.png, id=244, 673.19505pt x 397.485pt>
-File: figs/ct2_breast_iter_ladder_roi.png Graphic file (type png)
-<use figs/ct2_breast_iter_ladder_roi.png>
-Package pdftex.def Info: figs/ct2_breast_iter_ladder_roi.png  used on input lin
-e 433.
-(pdftex.def)             Requested size: 251.96474pt x 148.77144pt.
-
-Overfull \vbox (19.72752pt too high) detected at line 433
- []
-
-
+]
 
 [26
 
- <./figs/ct2_breast_iter_ladder_roi.png>]
-<figs/ct2_breast_error_ladder.png, id=251, 611.76555pt x 341.1144pt>
-File: figs/ct2_breast_error_ladder.png Graphic file (type png)
-<use figs/ct2_breast_error_ladder.png>
-Package pdftex.def Info: figs/ct2_breast_error_ladder.png  used on input line 4
-43.
-(pdftex.def)             Requested size: 266.80664pt x 148.76872pt.
+]
 
-Overfull \vbox (7.07487pt too high) detected at line 443
- []
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\translate ' on input line 447.
 
 
 
 [27
 
- <./figs/ct2_breast_error_ladder.png>]
-<figs/ct2_breast_convergence.png, id=258, 425.6703pt x 281.49165pt>
-File: figs/ct2_breast_convergence.png Graphic file (type png)
-<use figs/ct2_breast_convergence.png>
-Package pdftex.def Info: figs/ct2_breast_convergence.png  used on input line 45
-3.
-(pdftex.def)             Requested size: 245.42102pt x 162.29454pt.
-
-Overfull \vbox (20.6007pt too high) detected at line 453
- []
-
-
+]
 
 [28
 
- <./figs/ct2_breast_convergence.png>]
-<figs/ct2_breast_H3_cutoff_convergence.png, id=265, 497.57895pt x 317.2653pt>
-File: figs/ct2_breast_H3_cutoff_convergence.png Graphic file (type png)
-<use figs/ct2_breast_H3_cutoff_convergence.png>
-Package pdftex.def Info: figs/ct2_breast_H3_cutoff_convergence.png  used on inp
-ut line 465.
-(pdftex.def)             Requested size: 233.33066pt x 148.77583pt.
+]
+<figs/design_space_iter100.png, id=244, 533.3526pt x 306.4248pt>
+File: figs/design_space_iter100.png Graphic file (type png)
+<use figs/design_space_iter100.png>
+Package pdftex.def Info: figs/design_space_iter100.png  used on input line 490.
 
-Overfull \vbox (7.08199pt too high) detected at line 465
+(pdftex.def)             Requested size: 223.445pt x 128.37491pt.
+
+Overfull \vbox (30.71576pt too high) detected at line 490
  []
 
 
 
 [29
 
- <./figs/ct2_breast_H3_cutoff_convergence.png>]
-<figs/ct2_breast_H4_eps_convergence.png, id=272, 497.57895pt x 317.2653pt>
-File: figs/ct2_breast_H4_eps_convergence.png Graphic file (type png)
-<use figs/ct2_breast_H4_eps_convergence.png>
-Package pdftex.def Info: figs/ct2_breast_H4_eps_convergence.png  used on input 
-line 476.
-(pdftex.def)             Requested size: 233.33066pt x 148.77583pt.
-
-Overfull \vbox (19.73192pt too high) detected at line 476
- []
-
-
+ <./figs/design_space_iter100.png>]
 
 [30
-
- <./figs/ct2_breast_H4_eps_convergence.png>]
-<figs/ct2_head_iter_ladder_xy_arc100.png, id=279, 673.19505pt x 397.485pt>
-File: figs/ct2_head_iter_ladder_xy_arc100.png Graphic file (type png)
-<use figs/ct2_head_iter_ladder_xy_arc100.png>
-Package pdftex.def Info: figs/ct2_head_iter_ladder_xy_arc100.png  used on input
- line 486.
-(pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
-
-Overfull \vbox (11.58398pt too high) detected at line 486
- []
-
-
-
-[31
-
- <./figs/ct2_head_iter_ladder_xy_arc100.png>]
-<figs/ct2_jaw_iter_ladder_xy_arc100.png, id=287, 673.19505pt x 397.485pt>
-File: figs/ct2_jaw_iter_ladder_xy_arc100.png Graphic file (type png)
-<use figs/ct2_jaw_iter_ladder_xy_arc100.png>
-Package pdftex.def Info: figs/ct2_jaw_iter_ladder_xy_arc100.png  used on input 
-line 495.
-(pdftex.def)             Requested size: 259.59691pt x 153.27783pt.
-
-Overfull \vbox (11.58398pt too high) detected at line 495
- []
-
-
-
-[32
-
- <./figs/ct2_jaw_iter_ladder_xy_arc100.png>]
-<figs/multi_arc_convergence_head_jaw.png, id=294, 839.41605pt x 340.75305pt>
-File: figs/multi_arc_convergence_head_jaw.png Graphic file (type png)
-<use figs/multi_arc_convergence_head_jaw.png>
-Package pdftex.def Info: figs/multi_arc_convergence_head_jaw.png  used on input
- line 507.
-(pdftex.def)             Requested size: 344.26527pt x 139.75124pt.
-
-Overfull \vbox (10.70732pt too high) detected at line 507
- []
-
-
-
-[33
-
- <./figs/multi_arc_convergence_head_jaw.png>]
-
-[34
-
-]
-
-[35
-
-]
-
-[36
-
-]
-
-[37
-
-]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\translate ' on input line 556.
-
-<../final_figures/H6_eps_hi_convergence_256.png, id=323, 498.663pt x 317.988pt>
-
-File: ../final_figures/H6_eps_hi_convergence_256.png Graphic file (type png)
-<use ../final_figures/H6_eps_hi_convergence_256.png>
-Package pdftex.def Info: ../final_figures/H6_eps_hi_convergence_256.png  used o
-n input line 571.
-(pdftex.def)             Requested size: 241.57733pt x 154.04932pt.
-
-Overfull \vbox (17.0054pt too high) detected at line 571
- []
-
-
-
-[38
-
- <../final_figures/H6_eps_hi_convergence_256.png>]
-
-[39
-
-]
-<figs/ct2_head_phantom_intro.png, id=337, 787.38165pt x 278.9622pt>
-File: figs/ct2_head_phantom_intro.png Graphic file (type png)
-<use figs/ct2_head_phantom_intro.png>
-Package pdftex.def Info: figs/ct2_head_phantom_intro.png  used on input line 58
-5.
-(pdftex.def)             Requested size: 398.33945pt x 141.12807pt.
-
-
-[40
-
- <./figs/ct2_head_phantom_intro.png>]
-<figs/ct2_head_iter_ladder_xy.png, id=344, 673.19505pt x 397.485pt>
-File: figs/ct2_head_iter_ladder_xy.png Graphic file (type png)
-<use figs/ct2_head_iter_ladder_xy.png>
-Package pdftex.def Info: figs/ct2_head_iter_ladder_xy.png  used on input line 5
-95.
-(pdftex.def)             Requested size: 268.811pt x 158.71825pt.
-
-Overfull \vbox (21.67433pt too high) detected at line 595
- []
-
-
-
-[41
-
- <./figs/ct2_head_iter_ladder_xy.png>]
-<figs/ct2_head_error_ladder.png, id=352, 611.76555pt x 341.1144pt>
-File: figs/ct2_head_error_ladder.png Graphic file (type png)
-<use figs/ct2_head_error_ladder.png>
-Package pdftex.def Info: figs/ct2_head_error_ladder.png  used on input line 605
-.
-(pdftex.def)             Requested size: 276.28143pt x 154.05177pt.
-
-Overfull \vbox (4.35793pt too high) detected at line 605
- []
-
-
-
-[42
-
- <./figs/ct2_head_error_ladder.png>]
-<figs/ct2_head_convergence.png, id=359, 425.6703pt x 281.49165pt>
-File: figs/ct2_head_convergence.png Graphic file (type png)
-<use figs/ct2_head_convergence.png>
-Package pdftex.def Info: figs/ct2_head_convergence.png  used on input line 615.
-
-(pdftex.def)             Requested size: 254.13109pt x 168.05441pt.
-
-Overfull \vbox (18.36057pt too high) detected at line 615
- []
-
-
-
-[43
-
- <./figs/ct2_head_convergence.png>]
-<figs/ct2_jaw_phantom_intro.png, id=367, 787.38165pt x 278.9622pt>
-File: figs/ct2_jaw_phantom_intro.png Graphic file (type png)
-<use figs/ct2_jaw_phantom_intro.png>
-Package pdftex.def Info: figs/ct2_jaw_phantom_intro.png  used on input line 625
-.
-(pdftex.def)             Requested size: 398.33945pt x 141.12807pt.
-
-
-[44
-
- <./figs/ct2_jaw_phantom_intro.png>]
-<figs/ct2_jaw_iter_ladder_xy.png, id=374, 673.19505pt x 397.485pt>
-File: figs/ct2_jaw_iter_ladder_xy.png Graphic file (type png)
-<use figs/ct2_jaw_iter_ladder_xy.png>
-Package pdftex.def Info: figs/ct2_jaw_iter_ladder_xy.png  used on input line 63
-5.
-(pdftex.def)             Requested size: 268.811pt x 158.71825pt.
-
-Overfull \vbox (9.0244pt too high) detected at line 635
- []
-
-
-
-[45
-
- <./figs/ct2_jaw_iter_ladder_xy.png>]
-<figs/ct2_jaw_error_ladder.png, id=381, 611.76555pt x 341.1144pt>
-File: figs/ct2_jaw_error_ladder.png Graphic file (type png)
-<use figs/ct2_jaw_error_ladder.png>
-Package pdftex.def Info: figs/ct2_jaw_error_ladder.png  used on input line 645.
-
-(pdftex.def)             Requested size: 276.28143pt x 154.05177pt.
-
-Overfull \vbox (4.35793pt too high) detected at line 645
- []
-
-
-
-[46
-
- <./figs/ct2_jaw_error_ladder.png>]
-<figs/ct2_jaw_convergence.png, id=388, 425.6703pt x 281.49165pt>
-File: figs/ct2_jaw_convergence.png Graphic file (type png)
-<use figs/ct2_jaw_convergence.png>
-Package pdftex.def Info: figs/ct2_jaw_convergence.png  used on input line 654.
-(pdftex.def)             Requested size: 254.13109pt x 168.05441pt.
-
-Overfull \vbox (18.36057pt too high) detected at line 654
- []
-
-
-
-[47
-
- <./figs/ct2_jaw_convergence.png>]
-
-[48
-
-]
-<figs/ct2_breast_iter_ladder_xy_arc75.png, id=401, 673.19505pt x 397.485pt>
-File: figs/ct2_breast_iter_ladder_xy_arc75.png Graphic file (type png)
-<use figs/ct2_breast_iter_ladder_xy_arc75.png>
-Package pdftex.def Info: figs/ct2_breast_iter_ladder_xy_arc75.png  used on inpu
-t line 668.
-(pdftex.def)             Requested size: 268.811pt x 158.71825pt.
-
-Overfull \vbox (9.0244pt too high) detected at line 668
- []
-
-
-
-[49
-
- <./figs/ct2_breast_iter_ladder_xy_arc75.png>]
-<figs/ct2_breast_error_ladder_arc75.png, id=409, 611.76555pt x 341.1144pt>
-File: figs/ct2_breast_error_ladder_arc75.png Graphic file (type png)
-<use figs/ct2_breast_error_ladder_arc75.png>
-Package pdftex.def Info: figs/ct2_breast_error_ladder_arc75.png  used on input 
-line 678.
-(pdftex.def)             Requested size: 276.28143pt x 154.05177pt.
-
-Overfull \vbox (4.35793pt too high) detected at line 678
- []
-
-
-
-[50
-
- <./figs/ct2_breast_error_ladder_arc75.png>]
-<figs/ct2_breast_convergence_arc75.png, id=416, 425.6703pt x 281.49165pt>
-File: figs/ct2_breast_convergence_arc75.png Graphic file (type png)
-<use figs/ct2_breast_convergence_arc75.png>
-Package pdftex.def Info: figs/ct2_breast_convergence_arc75.png  used on input l
-ine 688.
-(pdftex.def)             Requested size: 254.13109pt x 168.05441pt.
-
-Overfull \vbox (18.36057pt too high) detected at line 688
- []
-
-
-
-[51
-
- <./figs/ct2_breast_convergence_arc75.png>]
-<figs/ct2_head_iter_ladder_xy_arc75.png, id=423, 673.19505pt x 397.485pt>
-File: figs/ct2_head_iter_ladder_xy_arc75.png Graphic file (type png)
-<use figs/ct2_head_iter_ladder_xy_arc75.png>
-Package pdftex.def Info: figs/ct2_head_iter_ladder_xy_arc75.png  used on input 
-line 698.
-(pdftex.def)             Requested size: 268.811pt x 158.71825pt.
-
-Overfull \vbox (9.0244pt too high) detected at line 698
- []
-
-
-
-[52
-
- <./figs/ct2_head_iter_ladder_xy_arc75.png>]
-<figs/ct2_head_error_ladder_arc75.png, id=430, 611.76555pt x 341.1144pt>
-File: figs/ct2_head_error_ladder_arc75.png Graphic file (type png)
-<use figs/ct2_head_error_ladder_arc75.png>
-Package pdftex.def Info: figs/ct2_head_error_ladder_arc75.png  used on input li
-ne 707.
-(pdftex.def)             Requested size: 276.28143pt x 154.05177pt.
-
-Overfull \vbox (4.35793pt too high) detected at line 707
- []
-
-
-
-[53
-
- <./figs/ct2_head_error_ladder_arc75.png>]
-<figs/ct2_head_convergence_arc75.png, id=437, 425.6703pt x 281.49165pt>
-File: figs/ct2_head_convergence_arc75.png Graphic file (type png)
-<use figs/ct2_head_convergence_arc75.png>
-Package pdftex.def Info: figs/ct2_head_convergence_arc75.png  used on input lin
-e 717.
-(pdftex.def)             Requested size: 254.13109pt x 168.05441pt.
-
-Overfull \vbox (18.36057pt too high) detected at line 717
- []
-
-
-
-[54
-
- <./figs/ct2_head_convergence_arc75.png>]
-<figs/ct2_jaw_iter_ladder_xy_arc75.png, id=444, 673.19505pt x 397.485pt>
-File: figs/ct2_jaw_iter_ladder_xy_arc75.png Graphic file (type png)
-<use figs/ct2_jaw_iter_ladder_xy_arc75.png>
-Package pdftex.def Info: figs/ct2_jaw_iter_ladder_xy_arc75.png  used on input l
-ine 726.
-(pdftex.def)             Requested size: 268.811pt x 158.71825pt.
-
-
-[55
-
- <./figs/ct2_jaw_iter_ladder_xy_arc75.png>]
-<figs/ct2_jaw_error_ladder_arc75.png, id=452, 611.76555pt x 341.1144pt>
-File: figs/ct2_jaw_error_ladder_arc75.png Graphic file (type png)
-<use figs/ct2_jaw_error_ladder_arc75.png>
-Package pdftex.def Info: figs/ct2_jaw_error_ladder_arc75.png  used on input lin
-e 735.
-(pdftex.def)             Requested size: 276.28143pt x 154.05177pt.
-
-Overfull \vbox (4.35793pt too high) detected at line 735
- []
-
-
-
-[56
-
- <./figs/ct2_jaw_error_ladder_arc75.png>]
-<figs/ct2_jaw_convergence_arc75.png, id=459, 425.6703pt x 281.49165pt>
-File: figs/ct2_jaw_convergence_arc75.png Graphic file (type png)
-<use figs/ct2_jaw_convergence_arc75.png>
-Package pdftex.def Info: figs/ct2_jaw_convergence_arc75.png  used on input line
- 744.
-(pdftex.def)             Requested size: 254.13109pt x 168.05441pt.
-
-Overfull \vbox (18.36057pt too high) detected at line 744
- []
-
-
-
-[57
-
- <./figs/ct2_jaw_convergence_arc75.png>]
-<figs/ct2_breast_iter_ladder_xy_arc100.png, id=466, 673.19505pt x 397.485pt>
-File: figs/ct2_breast_iter_ladder_xy_arc100.png Graphic file (type png)
-<use figs/ct2_breast_iter_ladder_xy_arc100.png>
-Package pdftex.def Info: figs/ct2_breast_iter_ladder_xy_arc100.png  used on inp
-ut line 754.
-(pdftex.def)             Requested size: 268.811pt x 158.71825pt.
-
-Overfull \vbox (9.0244pt too high) detected at line 754
- []
-
-
-
-[58
-
- <./figs/ct2_breast_iter_ladder_xy_arc100.png>]
-<figs/ct2_breast_error_ladder_arc100.png, id=473, 611.76555pt x 341.1144pt>
-File: figs/ct2_breast_error_ladder_arc100.png Graphic file (type png)
-<use figs/ct2_breast_error_ladder_arc100.png>
-Package pdftex.def Info: figs/ct2_breast_error_ladder_arc100.png  used on input
- line 764.
-(pdftex.def)             Requested size: 276.28143pt x 154.05177pt.
-
-Overfull \vbox (4.35793pt too high) detected at line 764
- []
-
-
-
-[59
-
- <./figs/ct2_breast_error_ladder_arc100.png>]
-<figs/ct2_breast_convergence_arc100.png, id=480, 425.6703pt x 281.49165pt>
-File: figs/ct2_breast_convergence_arc100.png Graphic file (type png)
-<use figs/ct2_breast_convergence_arc100.png>
-Package pdftex.def Info: figs/ct2_breast_convergence_arc100.png  used on input 
-line 775.
-(pdftex.def)             Requested size: 232.95674pt x 154.05203pt.
-
-Overfull \vbox (17.00812pt too high) detected at line 775
- []
-
-
-
-[60
-
- <./figs/ct2_breast_convergence_arc100.png>]
-File: figs/ct2_head_iter_ladder_xy_arc100.png Graphic file (type png)
-<use figs/ct2_head_iter_ladder_xy_arc100.png>
-Package pdftex.def Info: figs/ct2_head_iter_ladder_xy_arc100.png  used on input
- line 785.
-(pdftex.def)             Requested size: 268.811pt x 158.71825pt.
-
-Overfull \vbox (9.0244pt too high) detected at line 785
- []
-
-
-
-[61
-
-]
-<figs/ct2_head_error_ladder_arc100.png, id=493, 611.76555pt x 341.1144pt>
-File: figs/ct2_head_error_ladder_arc100.png Graphic file (type png)
-<use figs/ct2_head_error_ladder_arc100.png>
-Package pdftex.def Info: figs/ct2_head_error_ladder_arc100.png  used on input l
-ine 794.
-(pdftex.def)             Requested size: 276.28143pt x 154.05177pt.
-
-Overfull \vbox (4.35793pt too high) detected at line 794
- []
-
-
-
-[62
-
- <./figs/ct2_head_error_ladder_arc100.png>]
-<figs/ct2_head_convergence_arc100.png, id=500, 425.6703pt x 281.49165pt>
-File: figs/ct2_head_convergence_arc100.png Graphic file (type png)
-<use figs/ct2_head_convergence_arc100.png>
-Package pdftex.def Info: figs/ct2_head_convergence_arc100.png  used on input li
-ne 804.
-(pdftex.def)             Requested size: 254.13109pt x 168.05441pt.
-
-Overfull \vbox (18.36057pt too high) detected at line 804
- []
-
-
-
-[63
-
- <./figs/ct2_head_convergence_arc100.png>]
-File: figs/ct2_jaw_iter_ladder_xy_arc100.png Graphic file (type png)
-<use figs/ct2_jaw_iter_ladder_xy_arc100.png>
-Package pdftex.def Info: figs/ct2_jaw_iter_ladder_xy_arc100.png  used on input 
-line 813.
-(pdftex.def)             Requested size: 268.811pt x 158.71825pt.
-
-
-[64
-
-]
-<figs/ct2_jaw_error_ladder_arc100.png, id=512, 611.76555pt x 341.1144pt>
-File: figs/ct2_jaw_error_ladder_arc100.png Graphic file (type png)
-<use figs/ct2_jaw_error_ladder_arc100.png>
-Package pdftex.def Info: figs/ct2_jaw_error_ladder_arc100.png  used on input li
-ne 822.
-(pdftex.def)             Requested size: 276.28143pt x 154.05177pt.
-
-Overfull \vbox (4.35793pt too high) detected at line 822
- []
-
-
-
-[65
-
- <./figs/ct2_jaw_error_ladder_arc100.png>]
-<figs/ct2_jaw_convergence_arc100.png, id=520, 425.6703pt x 281.49165pt>
-File: figs/ct2_jaw_convergence_arc100.png Graphic file (type png)
-<use figs/ct2_jaw_convergence_arc100.png>
-Package pdftex.def Info: figs/ct2_jaw_convergence_arc100.png  used on input lin
-e 832.
-(pdftex.def)             Requested size: 254.13109pt x 168.05441pt.
-
-Overfull \vbox (18.36057pt too high) detected at line 832
- []
-
-
-
-[66
-
- <./figs/ct2_jaw_convergence_arc100.png>]
-
-[67
-
-]
-
-[68
-
-]
-<figs/shepp_logan_phantom_intro.png, id=540, 785.21355pt x 286.9119pt>
-File: figs/shepp_logan_phantom_intro.png Graphic file (type png)
-<use figs/shepp_logan_phantom_intro.png>
-Package pdftex.def Info: figs/shepp_logan_phantom_intro.png  used on input line
- 875.
-(pdftex.def)             Requested size: 398.34488pt x 145.5526pt.
-
-
-[69
-
- <./figs/shepp_logan_phantom_intro.png>]
-<figs/shepp_logan_convergence.png, id=547, 425.6703pt x 281.49165pt>
-File: figs/shepp_logan_convergence.png Graphic file (type png)
-<use figs/shepp_logan_convergence.png>
-Package pdftex.def Info: figs/shepp_logan_convergence.png  used on input line 8
-86.
-(pdftex.def)             Requested size: 232.95674pt x 154.05203pt.
-
-Overfull \vbox (17.00812pt too high) detected at line 886
- []
-
-
-
-[70
-
- <./figs/shepp_logan_convergence.png>]
-<figs/victre_phantom_intro.png, id=554, 751.608pt x 286.9119pt>
-File: figs/victre_phantom_intro.png Graphic file (type png)
-<use figs/victre_phantom_intro.png>
-Package pdftex.def Info: figs/victre_phantom_intro.png  used on input line 897.
-
-(pdftex.def)             Requested size: 398.33888pt x 152.05818pt.
-
-Overfull \vbox (2.36427pt too high) detected at line 897
- []
-
-
-
-[71
-
- <./figs/victre_phantom_intro.png>]
-<figs/victre_iter_ladder_roi.png, id=561, 895.4253pt x 400.01445pt>
-File: figs/victre_iter_ladder_roi.png Graphic file (type png)
-<use figs/victre_iter_ladder_roi.png>
-Package pdftex.def Info: figs/victre_iter_ladder_roi.png  used on input line 90
-8.
-(pdftex.def)             Requested size: 344.84227pt x 154.05182pt.
-
-Overfull \vbox (17.00784pt too high) detected at line 908
- []
-
-
-
-[72
-
- <./figs/victre_iter_ladder_roi.png>]
-
-[73
-
-]
-Overfull \vbox (6.21487pt too high) detected at line 943
- []
-
-
-
-[74
-
-]
-
-[75
-
-]
-
-[76
-
-]
-
-[77
-
-]
-
-[78
 
 ]
 \tf@nav=\write6
@@ -2057,40 +1449,37 @@ LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-09-02>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: C978961F9331F3258AFB7C8580308323;1645.
+(rerunfilecheck)             Checksum: A02A988BBA7FADD04EF5ADAF0F140A9A;1042.
  ) 
 Here is how much of TeX's memory you used:
- 29226 strings out of 467797
- 584712 string characters out of 5435982
- 970333 words of memory out of 5000000
- 56873 multiletter control sequences out of 15000+600000
- 757871 words of font info for 237 fonts, out of 8000000 for 9000
+ 28661 strings out of 467797
+ 569123 string characters out of 5435982
+ 968744 words of memory out of 5000000
+ 56462 multiletter control sequences out of 15000+600000
+ 742445 words of font info for 203 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 128i,13n,123p,1871b,794s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 128i,13n,123p,1871b,1009s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmex10.pfb><c:/texlive/2025
 /texmf-dist/fonts/type1/public/lm/lmmi10.pfb><c:/texlive/2025/texmf-dist/fonts/
-type1/public/lm/lmmi12.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lm
-mi7.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmmi8.pfb><c:/texlive
-/2025/texmf-dist/fonts/type1/public/lm/lmmi9.pfb><c:/texlive/2025/texmf-dist/fo
-nts/type1/public/lm/lmr10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm
-/lmr5.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmr6.pfb><c:/texliv
-e/2025/texmf-dist/fonts/type1/public/lm/lmr7.pfb><c:/texlive/2025/texmf-dist/fo
-nts/type1/public/lm/lmr8.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/
-lmss10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmss12.pfb><c:/tex
-live/2025/texmf-dist/fonts/type1/public/lm/lmss8.pfb><c:/texlive/2025/texmf-dis
-t/fonts/type1/public/lm/lmss9.pfb><c:/texlive/2025/texmf-dist/fonts/type1/publi
-c/lm/lmssbx10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmsso10.pfb
-><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmsso12.pfb><c:/texlive/2025
-/texmf-dist/fonts/type1/public/lm/lmsso8.pfb><c:/texlive/2025/texmf-dist/fonts/
-type1/public/lm/lmsso9.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lm
-sy10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmsy6.pfb><c:/texliv
-e/2025/texmf-dist/fonts/type1/public/lm/lmsy7.pfb><c:/texlive/2025/texmf-dist/f
-onts/type1/public/lm/lmsy8.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/l
-m/lmsy9.pfb>
-Output written on main.pdf (78 pages, 19639465 bytes).
+type1/public/lm/lmmi7.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmm
+i8.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmmi9.pfb><c:/texlive/
+2025/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/texlive/2025/texmf-dist/fon
+ts/type1/public/lm/lmr6.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/l
+mr7.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmr8.pfb><c:/texlive/
+2025/texmf-dist/fonts/type1/public/lm/lmss10.pfb><c:/texlive/2025/texmf-dist/fo
+nts/type1/public/lm/lmss12.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/l
+m/lmss8.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmss9.pfb><c:/tex
+live/2025/texmf-dist/fonts/type1/public/lm/lmssbx10.pfb><c:/texlive/2025/texmf-
+dist/fonts/type1/public/lm/lmsso10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/
+public/lm/lmsso8.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmsso9.p
+fb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lmsy10.pfb><c:/texlive/202
+5/texmf-dist/fonts/type1/public/lm/lmsy6.pfb><c:/texlive/2025/texmf-dist/fonts/
+type1/public/lm/lmsy8.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/lm/lms
+y9.pfb>
+Output written on main.pdf (30 pages, 3780341 bytes).
 PDF statistics:
- 766 PDF objects out of 1000 (max. 8388607)
- 521 compressed objects within 6 object streams
- 168 named destinations out of 1000 (max. 500000)
- 86387 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 378 PDF objects out of 1000 (max. 8388607)
+ 268 compressed objects within 3 object streams
+ 69 named destinations out of 1000 (max. 500000)
+ 75938 words of extra memory for PDF output out of 89155 (max. 10000000)
 

@@ -27,7 +27,9 @@ os.chdir(ROOT)
 import victre_reconstruction as vr            # noqa: E402
 import presentation_ct2_phantom_ladder as pl  # noqa: E402
 
-ARCS      = [30.0, 50.0, 75.0, 100.0, 120.0]
+import argparse
+
+ARCS_DEFAULT = [30.0, 50.0, 75.0, 100.0, 120.0]
 ITERMAX   = 250
 NPOWER    = 100
 SNAPSHOTS = None
@@ -53,23 +55,35 @@ def gap(s, t, it):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--arcs", type=float, nargs="+", default=ARCS_DEFAULT,
+                        help="Arcs (deg) to sweep, e.g. 60 70 80 90")
+    parser.add_argument("--phantoms", type=str, nargs="+",
+                        default=["breast", "head", "jaw"],
+                        help="Which phantoms to run")
+    parser.add_argument("--append", action="store_true",
+                        help="Append to existing OUT file instead of overwriting")
+    args = parser.parse_args()
+    arcs = args.arcs
+
     vr.CONFIG["itermax"] = ITERMAX
     vr.CONFIG["npower"] = NPOWER
 
     header = ("phantom  arc  | " + " | ".join(f"i{i}" for i in REPORT))
-    OUT.write_text(
-        f"Analytic-phantom arc sweep (reduced config: itermax={ITERMAX}, "
-        f"npower={NPOWER}, halved detector)\n"
-        "two-channel vs single image-RMSE gap (%); positive favours "
-        "two-channel\n" + header + "\n")
+    if not args.append:
+        OUT.write_text(
+            f"Analytic-phantom arc sweep (reduced config: itermax={ITERMAX}, "
+            f"npower={NPOWER}, halved detector)\n"
+            "two-channel vs single image-RMSE gap (%); positive favours "
+            "two-channel\n" + header + "\n")
     print(header)
 
-    for name in ("breast", "head", "jaw"):
+    for name in args.phantoms:
         cfg = pl.PHANTOM_CONFIGS[name]
         phantom = pl.build_phantom_volume(cfg)
         det_row, det_col, det_sp = RED_DET[name]
 
-        for arc in ARCS:
+        for arc in arcs:
             vg, pg, gi = vr.build_geometry(
                 phantom.shape, cfg["dx_cm"],
                 det_row_count=det_row, det_col_count=det_col,
