@@ -1,5 +1,192 @@
 # CT Meeting 2026 - Presentation & Experiments Plan
 
+## Reconciliation (2026-05-21, desktop) — two threads aligned
+
+Two threads have been running in parallel:
+- **Laptop thread** (this file's recent notes): scaffolded the band /
+  eps sweep direction and ran H1, H2, H6 on 2D paper-breast.
+- **Desktop thread** (not previously written here): rebuilt
+  `presentation/main.tex` against an in-person review with Emil; ran
+  the 75- and 100-deg analytic-phantom reconstructions.
+
+### Desktop changes since this file was last updated
+
+Slide-by-slide rebuild of `presentation/main.tex` (now 65 pages):
+- Motivation reworked: removed the takeaway slide; added a "What is
+  limited-angle reconstruction?" slide (the 180-deg+fan sampling fact
+  now lives there, not under "Space"); old slide 4 became "Two
+  reconstruction settings: 2D and 3D".
+- Reconstruction setup reworked: removed "in one slide", "Step sizes
+  are not free", and the strict stability inequality that the talk
+  doesn't follow; added "Why not gradient descent?"; intuitive
+  primal/dual alternation. Footnote citation on the single-channel slide.
+- "Wobble" removed from every slide; AI-flavoured phrasings replaced
+  with plain academic sentences; "reproduces the paper's abstract" line
+  removed.
+- Two-channel iteration diagram redrawn in tikz (clean loop with
+  feedback arrow).
+- Difference plots converted to **magnitude** (black 0, white largest),
+  full slice for the 3D phantoms; the 2D "Where is the error?" slide
+  was updated to match. Colorbar added with labels.
+- Display windows widened to stop recons saturating white: 2D 1.0 ->
+  1.6; breast vmax 0.6; head vmax 2.6; jaw vmax 3.0.
+- All figure suptitles dropped (slide title carries the name); every
+  figure slide gets a small italic generation note via a new
+  `\geomnote` macro: "modality, 25 views, 50 deg arc, grid".
+- Head/jaw iteration-ladder slides switched from ROI crop to full
+  slice; reconstruction-error and convergence slides added for each
+  of breast/head/jaw.
+- Added `--arc` argument to `presentation_ct2_phantom_ladder.py`; ran
+  75-deg and 100-deg reconstructions for breast/head/jaw. 18 wide-arc
+  slides added under a new section "Wider-arc reconstructions
+  (exploratory)". Notable: at 100 deg the breast problem becomes
+  well-conditioned and **single-channel wins** (RMSE 0.010 vs
+  two-channel 0.021) -- crossover into the well-conditioned regime.
+- Shepp-Logan and VICTRE moved out of the main flow into the appendix
+  with a 50-deg paper-vs-tuned summary table; conclusion/future work
+  rewritten accordingly.
+- New helper scripts under `scripts/_*`: `_regen_ct2_figs.py`,
+  `_regen_convergence_figs.py`, `_error_style_variants.py`,
+  `_sweep_ct2_arcs.py`, `_inspect_arc_gaps.py`, `_inspect_display_ranges.py`.
+
+### Reconciliation with Emil's 2026-05-22 scope cut
+
+Emil asked for band-selection and data-error results, focused on **2D
+and 3D breast only**. None of the 2D/3D band-selection or eps sweep
+results are in the deck yet; the deck still contains head, jaw,
+Shepp-Logan (appendix), VICTRE (appendix), and 75/100-deg head/jaw.
+Forward plan:
+
+1. **Slides for H1 (2D band sweep).** Figures already at
+   `final_figures/H1_cutoff_{recon,error,lferror,convergence}_256.png`.
+   Owner: either thread.
+2. **Slides for H2 (2D eps sweep, r=15 headline).** Figures at
+   `final_figures/H2_eps_*`. **Headline:** -25% iter-100 RMSE vs paper
+   r=1.25, -45% vs single-channel. Owner: either thread.
+3. **Run H3 (3D ct-2 breast cutoff sweep).**
+   `scripts/sweep_cutoff_visual_ct2breast.py` -- CUDA required ->
+   **desktop owns**.
+4. **Run H4 (3D ct-2 breast eps sweep).**
+   `scripts/sweep_eps_visual_ct2breast.py` -- CUDA required ->
+   **desktop owns**.
+5. **Trim head/jaw from main flow** -- move to appendix.
+   Owner: either thread.
+6. **Decide on wide-arc 75/100 slides.** Per scope-cut, head/jaw
+   75/100 also move to appendix; breast 75/100 stays. The breast-100
+   "single wins" result is honest and worth keeping (shows where the
+   method's limited-angle benefit ends).
+7. **If H4 corroborates r=15 on 3D ct-2 breast**, regenerate the 3D
+   breast main-flow figures at r=15 so the deck shows the tuned
+   configuration rather than the paper default. Decide after H4 lands.
+
+### H3 + H4 findings (2026-05-21, desktop -- CUDA box)
+
+H3 -- 3D ct-2 breast, c_hi=4 fixed, eps_lo/eps_hi=1.25, c_lo in {4, 6, 8,
+12, 16}, itermax=500, 50-deg arc:
+
+- All five c_lo values give image RMSE within +-0.005 at every iteration
+  count. PoU (c_lo=4) and non-PoU (c_lo=8) indistinguishable.
+  iter-100 RMSE 0.0504-0.0535 across the sweep; iter-500 0.0956-0.0974.
+- Confirms the 2D H1 result on 3D: **band selection is robust on both**.
+  Designer does not need to fine-tune the filter shape.
+- Figures: `presentation/figs/ct2_breast_H3_cutoff_{recon,error,convergence}.png`;
+  summary in `ct2_breast_H3_cutoff_summary.txt`; cache at
+  `cache/ct2_breast_H3_cutoff_sweep.pkl`.
+
+H4 -- 3D ct-2 breast, c_hi=4, c_lo=8 fixed, r=eps_lo/eps_hi in {0.25, 0.5,
+1.0, 1.25, 2.0, 5.0, 10.0, 15.0, 20.0, 30.0}:
+
+- **r=15 does NOT transfer to 3D.** On 3D breast the paper's r=1.25 is at
+  or near the iter-100+ optimum; tightening to r=0.25 wins iter-200/500
+  by ~3%, loosening to r >= 5 progressively hurts iter 100+.
+- Key numbers vs single (0.0773 at iter 100):
+    r=0.25  | 0.0508 | iter 100 (-34% vs single, best iter-500=0.0931)
+    r=1.25  | 0.0508 | iter 100 (paper config; iter-500=0.0960)
+    r=15    | 0.0525 | iter 100 (worse than paper at iter 100+;
+                                  only wins iter-50 by ~6%)
+    r=30    | 0.0557 | iter 100 (loosest tested; iter-500=0.1221)
+- The 3D semi-convergence rise dominates regardless of r: every two-channel
+  curve has a minimum near iter 60-80 and rises thereafter. Loose r
+  produces a slightly lower minimum that rebounds faster; tight r holds
+  the iter-500 RMSE slightly lower.
+- Figures: `presentation/figs/ct2_breast_H4_eps_{recon,error,convergence}.png`;
+  summary in `ct2_breast_H4_eps_summary.txt`; cache at
+  `cache/ct2_breast_H4_eps_sweep.pkl`.
+
+**Implication for the talk.** The 2D and 3D phantoms have different
+sensitivity to r. Honest design-space picture:
+
+- Band design (c_lo, PoU vs not): **robust on both 2D and 3D.**
+- LF tolerance (r = eps_lo/eps_hi): **tunable on 2D paper-breast**
+  (r=15, -25% iter-100 vs paper), **near-optimal at the paper config
+  on 3D ct-2 breast** (no big gain available).
+- Two-channel vs single (at clinical iter counts): solid on both
+  phantoms (~30-45% RMSE reduction at iter 100).
+
+So the talk does NOT regenerate the 3D breast main-flow figures at r=15
+(item 7 above is dropped). Keep the paper config on the 3D side, and
+present H4 as "the design landscape on 3D breast is forgiving in the
+neighborhood of the paper config."
+
+### Deck restructure landed (2026-05-21, desktop, post-H3/H4)
+
+`presentation/main.tex` reorganised to Emil's scope. Now 75 pages total:
+
+- **Main flow (~34 pages incl section pages):**
+  Motivation -> Setup -> Problem -> Idea -> Results: 2D paper breast
+  (iter ladder / soft-tissue ROI / "Where is the error?" / convergence /
+  persistence) -> **2D design knobs (NEW: H1 band, H2 eps conv, H2 eps
+  headline recon)** -> 3D analytic breast (intro / mid-axial ladder /
+  ROI / **reconstruction error NEW** / convergence) -> **3D design
+  knobs (NEW: H3 band, H4 eps)** -> Conclusion (Summary updated, Future
+  work updated).
+- **Appendix (~38 pages):**
+  H6 (2D eps_hi supplementary, NEW) -> Backup: 3D analytic head and
+  jaw (8 slides MOVED from main) -> Backup: wider-arc reconstructions
+  (18 slides MOVED) -> Backup: Shepp-Logan and VICTRE -> Backup:
+  method details (objective / Algorithm 1 / step-size / full-resolution
+  RMSE) -> References.
+
+The H2 recon figure (`H2_eps_recon_256.png`) is too tall to render
+legibly on a slide (16+ ratio rows). New focused figure
+`final_figures/H2_eps_headline_recon_256.png` (3 rows: single / paper
+r=1.25 / tuned r=15) generated by `scripts/_d3_headline_recon.py`;
+this is the figure D3 references. Tuned-r=15 recon snapshots cached at
+`cache/iter_ladder_tuned_r15_256.pkl`.
+
+Summary slide now reads:
+- LAR DBT bottleneck.
+- Two-channel splits and accelerates LF.
+- Confirmed on 2D paper breast and 3D analytic breast at 50 deg.
+- Design space: band selection robust on both; LF tolerance tunable on
+  2D (r=15, -25% iter-100 vs paper, -45% vs single), near-optimal at
+  the paper r=1.25 on 3D breast.
+
+Future work now: multi-band fidelity, theorem-compliant step sizes,
+**LF-tolerance scaling (NEW: 2D vs 3D r-optimum gap)**, VICTRE / realistic
+voxelized anatomy.
+
+### Remaining work
+- User wants to revisit head/jaw to see if any design-space tuning can
+  push them into a stronger "favorable" zone -- to be tackled after the
+  base presentation is signed off.
+
+### Handoff convention
+- Laptop: 2D experiment runs (CPU ok), slide editing, plan upkeep.
+- Desktop: anything CUDA (H3, H4, 3D recons), slide editing, plan upkeep.
+- Both threads edit `presentation/main.tex` and update this file on
+  material changes.
+- 2D caches: `cache/iter_ladder_paper_256.pkl`. 3D ct-2:
+  `cache/ct2_<name>_recon[_arc<N>].pkl`.
+
+### What the sections below now describe
+The "Slide structure (target ~15 min)" in Part 1 is older than the
+current deck (the deck is more developed). Treat it as motivation
+for the current `presentation/main.tex` rather than a literal
+description. The H1/H2/H6 findings in Section H **are** current.
+
+---
+
 ## Status (updated 2026-05-22) — Emil's second email
 
 After seeing the slides, Emil wrote:

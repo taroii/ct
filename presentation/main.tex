@@ -87,7 +87,7 @@
           determine the image: a wedge of spatial frequencies is never
           observed.
     \item Digital breast tomosynthesis (DBT) operates deep in this regime
-          --- a source arc of only ${\sim}50^{\circ}$ --- so its
+          --- a source arc of only $[15^{\circ}, 50^{\circ}]$ --- so its
           reconstruction is severely ill-posed.
   \end{itemize}
 \end{frame}
@@ -304,6 +304,8 @@
 \section{Results}
 % =========================================================================
 
+% --- 2D paper breast -----------------------------------------------------
+
 \begin{frame}{Iteration ladder --- single vs.\ two-channel}
   \centering
   \deckfig[0.62]{iter_ladder_recon_256_paper.png}
@@ -361,6 +363,44 @@
   \geomnote{2D fan-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $512^2$/$256^2$/$128^2$ grids}
 \end{frame}
 
+% --- 2D design-knob exploration ------------------------------------------
+
+\begin{frame}{Design knob 1: band selection (2D)}
+  \centering
+  \deckfig[0.66]{H1_cutoff_convergence_256.png}\\[0.3em]
+  \footnotesize
+  Cutoff sweep at fixed $c_{\mathrm{hi}}=4$, $c_{\mathrm{lo}}$ varying
+  from $4$ (PoU) to $32$. The two-channel image-RMSE curves are visually
+  indistinguishable across the sweep --- the method is robust to filter
+  shape, and PoU vs non-PoU is empirically equivalent.
+  \geomnote{2D fan-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $256^2$ grid}
+\end{frame}
+
+\begin{frame}{Design knob 2: LF tolerance (2D) --- a clear sweet spot}
+  \centering
+  \deckfig[0.66]{H2_eps_convergence_256.png}\\[0.3em]
+  \footnotesize
+  Per-band tolerance sweep, $r = \varepsilon_{\mathrm{lo}}/\varepsilon_{\mathrm{hi}}$,
+  at $c_{\mathrm{hi}}=4$, $c_{\mathrm{lo}}=8$. A broad interior optimum
+  around $r \approx 15$; the paper's $r=1.25$ is too tight; $r \to \infty$
+  collapses (no LF constraint --- the recon flat-lines near the
+  single-channel value).
+  \geomnote{2D fan-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $256^2$ grid}
+\end{frame}
+
+\begin{frame}{Design knob 2: tuned $r=15$ recovers earlier (2D)}
+  \centering
+  \deckfig[0.70]{H2_eps_headline_recon_256.png}\\[0.3em]
+  \footnotesize
+  Single-channel vs paper config ($r=1.25$) vs tuned ($r=15$). At iter
+  $100$ the tuned RMSE is $0.122$ vs paper $0.162$ ($-25\%$) and vs
+  single $0.220$ ($-45\%$). Loosening the LF constraint lets the
+  low-frequency channel correct the bias.
+  \geomnote{2D fan-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $256^2$ grid}
+\end{frame}
+
+% --- 3D analytic breast --------------------------------------------------
+
 \begin{frame}{3D: Analytic breast phantom}
   \centering
   \phantomfig[0.66]{ct2_breast_phantom_intro.png}\\[0.3em]
@@ -392,6 +432,16 @@
   \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
 \end{frame}
 
+\begin{frame}{Analytic breast --- reconstruction error}
+  \centering
+  \phantomfig[0.66]{ct2_breast_error_ladder.png}\\[0.3em]
+  \footnotesize
+  Absolute error $|$reconstruction $-$ ground truth$|$, full mid-axial
+  slice (scale bar below; darker is less error). The two-channel row
+  stays consistently darker than single-channel.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
+\end{frame}
+
 \begin{frame}{Analytic breast --- convergence}
   \centering
   \phantomfig[0.72]{ct2_breast_convergence.png}\\[0.3em]
@@ -401,6 +451,128 @@
   $16\%$ at iter $500$.
   \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
 \end{frame}
+
+% --- 3D design-knob exploration ------------------------------------------
+
+\begin{frame}{Design knob 1: band selection (3D breast)}
+  \centering
+  \phantomfig[0.66]{ct2_breast_H3_cutoff_convergence.png}\\[0.3em]
+  \footnotesize
+  Same cutoff sweep on the 3D analytic breast at $50^\circ$ arc,
+  $c_{\mathrm{lo}}$ in $\{4, 6, 8, 12, 16\}$. The five curves overlap
+  throughout --- the band-selection robustness carries over from 2D.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
+\end{frame}
+
+\begin{frame}{Design knob 2: LF tolerance (3D breast) --- paper config near-optimal}
+  \centering
+  \phantomfig[0.66]{ct2_breast_H4_eps_convergence.png}\\[0.3em]
+  \footnotesize
+  $r$ sweep on the 3D analytic breast. Unlike the 2D case, the paper's
+  $r=1.25$ is already at or near the iter-$100^+$ optimum --- loosening
+  to $r=15$ helps only at iter ${\sim}50$ and degrades thereafter. The
+  3D semi-convergence rise dominates the picture.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
+\end{frame}
+
+\begin{frame}{Wider arcs: head at $100^\circ$}
+  \centering
+  \phantomfig[0.68]{ct2_head_iter_ladder_xy_arc100.png}\\[0.3em]
+  \footnotesize
+  Analytic head, full mid-axial slice. At $100^\circ$ the streaking
+  recedes and the two-channel improvement is visible directly: the
+  two-channel row is markedly cleaner than single-channel.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 100$^\circ$ arc $\cdot$ $176\times176\times16$ grid}
+\end{frame}
+
+\begin{frame}{Wider arcs: jaw at $100^\circ$}
+  \centering
+  \phantomfig[0.68]{ct2_jaw_iter_ladder_xy_arc100.png}\\[0.3em]
+  \footnotesize
+  Analytic jaw, full mid-axial slice. Same picture as head: at
+  $100^\circ$ the two-channel row is visibly cleaner than single-channel.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 100$^\circ$ arc $\cdot$ $144\times144\times80$ grid}
+\end{frame}
+
+\begin{frame}{Convergence across arcs --- head and jaw}
+  \centering
+  \phantomfig[0.62]{multi_arc_convergence_head_jaw.png}\\[0.3em]
+  \footnotesize
+  Single-channel (dashed) vs two-channel (solid) at $50^\circ$ (red),
+  $75^\circ$ (green), $100^\circ$ (blue). At every arc the two-channel
+  curve sits below single-channel --- the gap is most legible at
+  $100^\circ$ (where the visual ladder above confirms it) and persists
+  at $75^\circ$ and $50^\circ$, where the visual difference is subtler.
+  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ analytic head and jaw}
+\end{frame}
+
+% =========================================================================
+\section{Conclusion}
+% =========================================================================
+
+\begin{frame}{Summary}
+  \begin{itemize}
+    \item LAR DBT reconstruction has a \emph{mode-dependent} convergence
+          bottleneck: low spatial frequencies are starved of corrective
+          drive because the PDHG step size is bound by high-frequency
+          stability.
+    \item Splitting the data fidelity into a low-pass and a high-pass
+          channel, each with its own dual variable and step size,
+          accelerates low-frequency settling without breaking stability.
+    \item Confirmed on the 2D paper breast and the 3D analytic breast at
+          a clinical $50^\circ$ arc.
+    \item \textbf{Design space.} Band selection is robust on both
+          phantoms (filter shape doesn't matter much). LF tolerance is
+          the real lever --- tunable on 2D (best $r{\approx}15$ gives a
+          $25\%$ iter-$100$ reduction over the paper config and $45\%$
+          over single-channel), near-optimal at the paper's $r=1.25$ on
+          3D breast.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Future work}
+  \begin{itemize}
+    \item \textbf{Multi-band fidelity.} Generalize from two channels to a
+          geometric sequence of band-pass filters with matched per-shell
+          step sizes. Manuscript in preparation.
+    \item \textbf{Theorem-compliant step sizes.} Derive step sizes from a
+          weighted power iteration so the empirical balance heuristic
+          connects to the product-space PDHG convergence guarantee.
+    \item \textbf{LF-tolerance scaling.} The 2D paper-breast optimum
+          $r{\approx}15$ does not transfer to 3D analytic breast;
+          characterising which problem features control the optimum is
+          open.
+    \item \textbf{Realistic voxelized anatomy.} On the VICTRE breast
+          phantom the two-channel gain at $50^\circ$ is front-loaded ---
+          present early, then overtaken; sustaining it is ongoing.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[standout]
+  Questions?
+\end{frame}
+
+% =========================================================================
+\appendix
+% =========================================================================
+
+% --- Design knob 3 (supplementary) ---------------------------------------
+
+\begin{frame}{Backup: 2D $\varepsilon_{\mathrm{hi}}$ scale sweep}
+  \centering
+  \deckfig[0.66]{H6_eps_hi_convergence_256.png}\\[0.3em]
+  \footnotesize
+  With the LF-tolerance ratio held at $r=10$, the overall scale
+  $\varepsilon_{\mathrm{hi}}/\varepsilon$ has an interior optimum near
+  $1$--$2$. Tightening to $0.5$ hurts early iterations; loosening to $4$
+  degrades uniformly. The paper's $\varepsilon_{\mathrm{hi}}=\varepsilon$
+  is near-optimal.
+  \geomnote{2D fan-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $256^2$ grid}
+\end{frame}
+
+% =========================================================================
+\section{Backup: 3D analytic head and jaw}
+% =========================================================================
 
 \begin{frame}{3D: Analytic head phantom}
   \centering
@@ -482,7 +654,7 @@
 \end{frame}
 
 % =========================================================================
-\section{Wider-arc reconstructions (exploratory)}
+\section{Backup: wider-arc reconstructions}
 % =========================================================================
 
 \begin{frame}{Analytic breast at 75$^\circ$ --- iteration ladder}
@@ -660,45 +832,7 @@
 \end{frame}
 
 % =========================================================================
-\section{Conclusion}
-% =========================================================================
-
-\begin{frame}{Summary}
-  \begin{itemize}
-    \item LAR DBT reconstruction has a \emph{mode-dependent} convergence
-          bottleneck: low spatial frequencies are starved of corrective
-          drive because the PDHG step size is bound by high-frequency
-          stability.
-    \item Splitting the data fidelity into a low-pass and a high-pass
-          channel, each with its own dual variable and step size,
-          accelerates low-frequency settling without breaking stability.
-    \item Consistent improvement at clinical iteration counts: 2D
-          fan-beam across image sizes, and 3D cone-beam on the analytic
-          breast, head, and jaw phantoms.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Future work}
-  \begin{itemize}
-    \item \textbf{Multi-band fidelity.} Generalize from two channels to a
-          geometric sequence of band-pass filters with matched per-shell
-          step sizes. Manuscript in preparation.
-    \item \textbf{Theorem-compliant step sizes.} Derive step sizes from a
-          weighted power iteration so the empirical balance heuristic
-          connects to the product-space PDHG convergence guarantee.
-    \item \textbf{Realistic voxelized anatomy.} On the VICTRE breast
-          phantom the two-channel gain at a clinical $50^{\circ}$ arc is
-          front-loaded --- present early, then overtaken; sustaining it is
-          ongoing work.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}[standout]
-  Questions?
-\end{frame}
-
-% =========================================================================
-\appendix
+\section{Backup: Shepp-Logan and VICTRE}
 % =========================================================================
 
 \begin{frame}{Backup: 3D phantoms at a clinical $50^{\circ}$ arc}
@@ -772,6 +906,10 @@
   lead that fades after iter ${\sim}200$ (see summary table).
   \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ VICTRE breast, $4\times$ downsampled}
 \end{frame}
+
+% =========================================================================
+\section{Backup: method details}
+% =========================================================================
 
 \begin{frame}{Backup: full constrained objective}
   \[
