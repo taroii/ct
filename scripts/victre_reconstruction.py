@@ -236,6 +236,69 @@ def build_geometry(phantom_shape, dx_cm,
           f"@ {det_spacing*10:.2f} mm, arc = {arc_deg} deg, SOD/ODD = {source_origin}/{origin_det} cm")
     return vol_geom, proj_geom, info
 
+
+def build_dbt_geometry(phantom_shape, dx_cm,
+                       det_row_count=480, det_col_count=480,
+                       det_spacing=0.05, nviews=25, arc_deg=50.0,
+                       sod=65.0, odd=5.0):
+    """DBT-style cone-beam geometry.
+
+    The source arcs in the y-z plane (rotation about an x-axis-parallel
+    line through the volume centre); the detector stays fixed below the
+    breast in the x-y plane. This is the orbit Hologic-style scanners
+    use, with the compression direction (z here) aligned with the
+    average projection direction.
+
+    Convention:
+        z = compression direction (vertical; source above, detector below)
+        y = arc-sweep direction (medial-lateral in DBT terms)
+        x = chest-wall-to-nipple direction
+
+    Source positions:  S_i = (0, SOD sin theta_i, SOD cos theta_i)
+    Detector centre:   d   = (0, 0, -ODD)
+    Detector basis:    u   = (det_spacing, 0, 0)   (cols along x)
+                       v   = (0, det_spacing, 0)   (rows along y)
+
+    Per ASTRA docs for cone_vec: u is the (0,0)->(0,1) column vector
+    and v is the (0,0)->(1,0) row vector, each scaled to one pixel.
+    """
+    nz_d, ny_d, nx_d = phantom_shape
+
+    vol_geom = astra.create_vol_geom(
+        ny_d, nx_d, nz_d,
+        -nx_d * dx_cm / 2, nx_d * dx_cm / 2,
+        -ny_d * dx_cm / 2, ny_d * dx_cm / 2,
+        -nz_d * dx_cm / 2, nz_d * dx_cm / 2,
+    )
+
+    angles = np.deg2rad(np.linspace(-arc_deg / 2, arc_deg / 2, nviews))
+    vectors = np.zeros((nviews, 12), dtype=np.float64)
+    for i, theta in enumerate(angles):
+        vectors[i, 0:3]  = (0.0, sod * np.sin(theta), sod * np.cos(theta))
+        vectors[i, 3:6]  = (0.0, 0.0, -odd)
+        vectors[i, 6:9]  = (det_spacing, 0.0, 0.0)
+        vectors[i, 9:12] = (0.0, det_spacing, 0.0)
+
+    proj_geom = astra.create_proj_geom(
+        "cone_vec", det_row_count, det_col_count, vectors
+    )
+
+    nrays = nviews * det_row_count * det_col_count
+    info = {
+        "nviews": nviews, "arc_deg": arc_deg,
+        "sod": sod, "odd": odd,
+        "source_origin": sod, "origin_det": odd,  # legacy keys
+        "det_row_count": det_row_count, "det_col_count": det_col_count,
+        "det_spacing": det_spacing,
+        "nrays": nrays,
+        "orbit": "dbt",
+    }
+    print(f"DBT cone-beam: {nviews} views x {det_row_count}x{det_col_count} "
+          f"detector @ {det_spacing*10:.2f} mm, arc = {arc_deg} deg, "
+          f"SOD/ODD = {sod}/{odd} cm")
+    return vol_geom, proj_geom, info
+
+
 def make_projector(vol_geom, proj_geom):
     """Return (A, At) closures over astra GPU forward/backward projectors."""
     def A(vol):
@@ -262,40 +325,92 @@ def make_projector(vol_geom, proj_geom):
 # detector-u Fourier domain -- exactly the structure the two-channel CP
 # diagonal dual preconditioning assumes.
 
-def build_sinogram_filters(det_col_count, det_spacing, cutoffparm, cutoffparm_lo):
-    nb = det_col_count
-    db = det_spacing
-    blen = nb * db
+def _hann_axis(n, ds, c):
+    """1D sqrt-Hanning low-pass envelope of length n, sample spacing ds,
+    cutoff parameter c (matches the existing 2D-script convention)."""
+    blen = n * ds
     b00 = -blen / 2.0
-    uar = np.arange(b00 + db / 2.0, b00 + blen, db)   # length nb, symmetric
+    uar = np.arange(b00 + ds / 2.0, b00 + blen, ds)
+    uhanp = abs(b00) / c
+    h = 0.5 * (1.0 + np.cos(np.pi * uar / uhanp))
+    h[np.abs(uar) > uhanp] = 0.0
+    return np.clip(h, 0.0, 1.0)
 
-    def hanning_window(u, c):
-        uhanp = abs(b00) / c
-        h = 0.5 * (1.0 + np.cos(np.pi * u / uhanp))
-        h[np.abs(u) > uhanp] = 0.0
-        return h
 
-    han_lo = np.clip(hanning_window(uar, cutoffparm_lo), 0.0, 1.0)
-    han_hi = np.clip(1.0 - hanning_window(uar, cutoffparm), 0.0, 1.0)
+def build_sinogram_filters(det_col_count, det_spacing, cutoffparm, cutoffparm_lo,
+                           axis="u", det_row_count=None):
+    """Build sqrt-Hanning hi/lo band filters for the sinogram residual.
 
-    F_lo = np.sqrt(han_lo)
-    F_hi = np.sqrt(han_hi)
+    axis selects what the 1D/2D Hanning sees:
+      "u"  -> 1D filter along the detector u-axis (det_col, last axis of
+              the 3D sinogram). The 2D-script-compatible choice; correct
+              when the source arc is perpendicular to u (circular orbit).
+      "v"  -> 1D filter along the detector v-axis (det_row, first axis).
+      "2d" -> separable 2D filter over (v, u). This is the right choice
+              for a 3D cone-beam DBT orbit: at each view the residual
+              lives on a 2D detector, and the analogue of "in-plane LF
+              under projection" is the joint (u, v) LF lobe, not a
+              single axis.
 
-    # fftshifted so they line up with np.fft.fft output order (DC first)
-    W_lo = np.fft.fftshift(F_lo).astype(np.float32)
-    W_hi = np.fft.fftshift(F_hi).astype(np.float32)
-
-    def R_filter(sino, W):
-        # sino shape (det_row_count, nviews, det_col_count); filter last axis.
-        imft = np.fft.fft(sino, axis=-1)
-        imft *= W
-        return np.fft.ifft(imft, axis=-1).real.astype(np.float32)
+    For axis in {"v", "2d"} the caller must pass det_row_count.
+    """
+    if axis == "u":
+        F_lo = np.sqrt(_hann_axis(det_col_count, det_spacing, cutoffparm_lo))
+        F_hi = np.sqrt(np.clip(
+            1.0 - _hann_axis(det_col_count, det_spacing, cutoffparm),
+            0.0, 1.0))
+        W_lo = np.fft.fftshift(F_lo).astype(np.float32)
+        W_hi = np.fft.fftshift(F_hi).astype(np.float32)
+        fft_axes = (-1,)
+        def R_filter(sino, W):
+            imft = np.fft.fft(sino, axis=-1) * W
+            return np.fft.ifft(imft, axis=-1).real.astype(np.float32)
+    elif axis == "v":
+        if det_row_count is None:
+            raise ValueError("axis='v' requires det_row_count")
+        F_lo = np.sqrt(_hann_axis(det_row_count, det_spacing, cutoffparm_lo))
+        F_hi = np.sqrt(np.clip(
+            1.0 - _hann_axis(det_row_count, det_spacing, cutoffparm),
+            0.0, 1.0))
+        W_lo = np.fft.fftshift(F_lo).astype(np.float32).reshape(-1, 1, 1)
+        W_hi = np.fft.fftshift(F_hi).astype(np.float32).reshape(-1, 1, 1)
+        fft_axes = (0,)
+        def R_filter(sino, W):
+            imft = np.fft.fft(sino, axis=0) * W
+            return np.fft.ifft(imft, axis=0).real.astype(np.float32)
+    elif axis == "2d":
+        if det_row_count is None:
+            raise ValueError("axis='2d' requires det_row_count")
+        h_u_lo = _hann_axis(det_col_count, det_spacing, cutoffparm_lo)
+        h_v_lo = _hann_axis(det_row_count, det_spacing, cutoffparm_lo)
+        h_u_hi_lp = _hann_axis(det_col_count, det_spacing, cutoffparm)
+        h_v_hi_lp = _hann_axis(det_row_count, det_spacing, cutoffparm)
+        # Separable 2D low-pass; hi-pass is complement of the (matching) LP
+        H_lo = np.outer(h_v_lo, h_u_lo)
+        H_hi = np.clip(1.0 - np.outer(h_v_hi_lp, h_u_hi_lp), 0.0, 1.0)
+        F_lo = np.sqrt(np.clip(H_lo, 0.0, 1.0))
+        F_hi = np.sqrt(H_hi)
+        # 2D fftshift, then reshape to (det_row, 1, det_col) for broadcasting
+        W_lo = (np.fft.fftshift(F_lo)
+                  .astype(np.float32)
+                  .reshape(det_row_count, 1, det_col_count))
+        W_hi = (np.fft.fftshift(F_hi)
+                  .astype(np.float32)
+                  .reshape(det_row_count, 1, det_col_count))
+        fft_axes = (0, 2)
+        def R_filter(sino, W):
+            imft = np.fft.fft2(sino, axes=(0, 2)) * W
+            return np.fft.ifft2(imft, axes=(0, 2)).real.astype(np.float32)
+    else:
+        raise ValueError(f"axis must be 'u', 'v', or '2d', got {axis!r}")
 
     def R_hi(sino): return R_filter(sino, W_hi)
     def R_lo(sino): return R_filter(sino, W_lo)
 
-    print(f"Sinogram filters: cutoff_hi={cutoffparm}, cutoff_lo={cutoffparm_lo}, "
-          f"||F_hi||_inf={float(F_hi.max()):.3f}, ||F_lo||_inf={float(F_lo.max()):.3f}")
+    print(f"Sinogram filters (axis={axis}): cutoff_hi={cutoffparm}, "
+          f"cutoff_lo={cutoffparm_lo}, "
+          f"||F_hi||_inf={float(F_hi.max()):.3f}, "
+          f"||F_lo||_inf={float(F_lo.max()):.3f}")
     return R_hi, R_lo
 
 # ============================================================================

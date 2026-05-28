@@ -16,10 +16,11 @@
 \usetikzlibrary{positioning, arrows.meta, fit}
 \usepackage{xcolor}
 
-\graphicspath{{figs/}{../final_figures/}}
+\graphicspath{{figs/}}
 
 % Theme ---------------------------------------------------------------
 \usetheme{metropolis}
+\metroset{sectionpage=none}
 \setbeamertemplate{frame numbering}[fraction]
 \definecolor{MainAccent}{HTML}{1F4E79}
 \definecolor{SubAccent}{HTML}{C00000}
@@ -27,8 +28,19 @@
 \setbeamercolor{progress bar}{fg=MainAccent}
 \setbeamercolor{title separator}{fg=MainAccent}
 
+% Section badge: short section name shown in the top-right of every
+% frame with a frametitle. Uses an absolute TikZ overlay so it does not
+% interfere with the metropolis frametitle bar.
+\addtobeamertemplate{frametitle}{}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=north east, inner xsep=0.35cm, inner ysep=0.22cm,
+          text=white, font=\scriptsize\itshape, opacity=0.85]
+      at (current page.north east) {\insertsectionhead};
+  \end{tikzpicture}%
+}
+
 % Title ---------------------------------------------------------------
-\title{Accelerating Low-Frequency Convergence for Limited-Angle DBT}
+\title{Accelerating Low-Frequency Convergence for Limited-Angle Reconstruction (LAR)}
 \subtitle{Two-Channel Fidelity in PDHG}
 \author[Iyadomi]{%
   Taro Iyadomi\inst{1} \and
@@ -54,11 +66,6 @@
 % always fit on the slide. Optional first arg = height cap (frac of text).
 \newcommand{\deckfig}[2][0.70]{%
   \includegraphics[width=\linewidth,height=#1\textheight,keepaspectratio]{#2}}
-\newcommand{\phantomfig}[2][0.70]{%
-  \IfFileExists{figs/#2}%
-    {\includegraphics[width=\linewidth,height=#1\textheight,keepaspectratio]{#2}}%
-    {\fbox{\parbox{0.7\linewidth}{\centering\small\vspace{2em}%
-       \textit{[\detokenize{#2} -- not generated]}\vspace{2em}}}}}
 
 % Small italic "how it was generated" note pinned to each figure slide.
 \newcommand{\geomnote}[1]{\par\smallskip{\scriptsize\itshape #1}}
@@ -71,7 +78,7 @@
 \end{frame}
 
 % =========================================================================
-\section{Motivation}
+\section[Motivation]{Motivation}
 % =========================================================================
 
 \begin{frame}{What is limited-angle reconstruction?}
@@ -164,7 +171,7 @@
 \end{frame}
 
 % =========================================================================
-\section{The reconstruction setup}
+\section[Setup]{The reconstruction setup}
 % =========================================================================
 
 \begin{frame}{Reconstruction with PDHG (Chambolle--Pock)}
@@ -202,7 +209,7 @@
 \end{frame}
 
 % =========================================================================
-\section{The problem}
+\section[Bottleneck]{The problem}
 % =========================================================================
 
 \begin{frame}{What happens during a single-channel run}
@@ -238,7 +245,7 @@
 \end{frame}
 
 % =========================================================================
-\section{The idea: two-channel fidelity}
+\section[Two-channel]{The idea: two-channel fidelity}
 % =========================================================================
 
 \begin{frame}{Split the sinogram into two bands}
@@ -311,7 +318,7 @@
 \end{frame}
 
 % =========================================================================
-\section{Results}
+\section[Results]{Results}
 % =========================================================================
 
 % 2D paper breast -----------------------------------------------------
@@ -352,30 +359,30 @@
 
 \begin{frame}{3D analytic breast: iteration ladder}
   \centering
-  \phantomfig[0.68]{ct2_breast_iter_ladder_xy.png}\\[0.3em]
+  \deckfig[0.68]{ct2_breast_iter_ladder_xy.png}\\[0.3em]
   \footnotesize
   Mid-axial slice across iterations. Two-channel resolves the discrete
-  fatty-mass inserts earlier; image-RMSE reduction reaches $35\%$ at
-  iter $200$ before semi-convergence sets in.
-  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
+  fatty-mass inserts earlier; iter-$200$ image-RMSE reduction is $9\%$.
+  \geomnote{3D DBT cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $432\times432\times96$ voxels (0.5 mm)}
 \end{frame}
 
 \begin{frame}{3D analytic breast: convergence}
   \centering
-  \phantomfig[0.72]{ct2_breast_convergence.png}\\[0.3em]
+  \deckfig[0.72]{ct2_breast_convergence.png}\\[0.3em]
   \footnotesize
-  Image RMSE vs.\ iteration. Two-channel leads throughout: $34\%$
-  reduction at iter $100$, peaking near $35\%$ at iter $200$.
-  \geomnote{3D cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $144\times144\times32$ grid}
+  Image RMSE vs.\ iteration. Two-channel leads from iter $50$ through
+  iter ${\sim}250$, peaking at $9\%$ reduction near iter $200$;
+  single-channel catches up past iter $300$.
+  \geomnote{3D DBT cone-beam $\cdot$ 25 views $\cdot$ 50$^\circ$ arc $\cdot$ $432\times432\times96$ voxels (0.5 mm)}
 \end{frame}
 
 \begin{frame}{Analytic jaw phantom}
   \centering
   \begin{columns}[T,onlytextwidth]
     \column{.58\textwidth}
-    \phantomfig[0.65]{ct2_jaw_iter_ladder_xy_arc100.png}
+    \deckfig[0.65]{ct2_jaw_iter_ladder_xy_arc100.png}
     \column{.42\textwidth}
-    \phantomfig[0.62]{ct2_jaw_convergence_arc100.png}
+    \deckfig[0.62]{ct2_jaw_convergence_arc100.png}
   \end{columns}
   \vspace{0.2em}
   \footnotesize
@@ -389,9 +396,9 @@
   \centering
   \begin{columns}[T,onlytextwidth]
     \column{.58\textwidth}
-    \phantomfig[0.65]{ct2_head_iter_ladder_xy_arc100.png}
+    \deckfig[0.65]{ct2_head_iter_ladder_xy_arc100.png}
     \column{.42\textwidth}
-    \phantomfig[0.62]{ct2_head_convergence_arc100.png}
+    \deckfig[0.62]{ct2_head_convergence_arc100.png}
   \end{columns}
   \vspace{0.2em}
   \footnotesize
@@ -401,7 +408,7 @@
 \end{frame}
 
 % =========================================================================
-\section{Conclusion}
+\section[Conclusion]{Conclusion}
 % =========================================================================
 
 \begin{frame}{Summary}
@@ -415,8 +422,8 @@
           accelerates low-frequency settling without breaking stability.
     \item Confirmed at a clinical $50^\circ$ arc on the 2D breast phantom
           (iter-$100$ image-RMSE $26\%$ below single-channel) and the 3D
-          analytic breast ($34\%$ below). The gain persists at wider arcs
-          on the head and jaw phantoms.
+          analytic breast in DBT geometry ($9\%$ at iter $200$). The gain
+          persists at wider arcs on the head and jaw phantoms.
   \end{itemize}
 \end{frame}
 
@@ -448,7 +455,7 @@
 % =========================================================================
 
 % =========================================================================
-\section{Backup: per-band tolerance tuning}
+\section[Backup]{Backup: per-band tolerance tuning}
 % =========================================================================
 
 \begin{frame}{The per-band tolerance ratio}

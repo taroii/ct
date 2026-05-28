@@ -75,20 +75,27 @@ PHANTOM_CONFIGS = {
     "breast": {
         "builder_module": "breast_phantom_demo",
         "builder_func":   "build_breast_phantom",
-        "shape":  (144, 144, 32),
-        "dx_cm":  0.15,
+        # DBT orbit: source arcs in y-z, detector fixed below the breast.
+        # Volume 432x432x96 at 0.05 cm (21.6x21.6x4.8 cm @ 0.5 mm voxels)
+        # gives the under-determined regime in which the two-channel
+        # acceleration is visible (overnight sweep 2026-05-27: arc=50,
+        # cutoffparm_lo=4 yields +9% iter-200 RMSE reduction).
+        "shape":  (432, 432, 96),
+        "dx_cm":  0.05,
         "center": (3.0, 0.0, 0.0),
-        "det":    (384, 384, 0.05),     # 19.2 cm
-        "roi":    (36, 110, 50, 124),
-        # Wide display window: recons overshoot well above the phantom
-        # max (~0.53), so a GT-fitted window saturated them to white.
+        "orbit":  "dbt",
+        "det":    (240, 240, 0.10),     # 24.0 cm at 1.0 mm pitch
+        "sod":    65.0,
+        "odd":    5.0,
+        "cp_overrides": {"cutoffparm_lo": 4.0, "norm_inflate_3d": 1.5},
+        "roi":    (108, 330, 150, 372),
         "display": {"vmin": 0.0, "vmax": 0.6},
         "itermax": 500,
-        "snapshot_iters": [10, 50, 100, 200, 300, 500],
-        "ladder_iters":   [10, 50, 100, 200],
-        "intro_title": "ct-2 analytic breast phantom (144x144x32 @ 1.5 mm)",
+        "snapshot_iters": [50, 100, 200, 300, 400, 500],
+        "ladder_iters":   [50, 100, 200, 500],
+        "intro_title": "ct-2 analytic breast phantom (432x432x96 @ 0.5 mm)",
         "ladder_title": "ct-2 breast -- mid-axial slice across iterations "
-                        "(25 views / 50 deg LAR)",
+                        "(25 views / 50 deg DBT)",
         "roi_title":   "Soft-tissue ROI (lateral fatty region with mass inserts)",
         "conv_title":  "ct-2 breast phantom: image RMSE vs iteration",
     },
@@ -186,16 +193,38 @@ def build_phantom_volume(cfg):
 def run_recon(cfg, arc_deg=50.0):
     phantom = build_phantom_volume(cfg)
     det_row, det_col, det_sp = cfg["det"]
-    vol_geom, proj_geom, geom_info = vr.build_geometry(
-        phantom.shape, cfg["dx_cm"],
-        det_row_count=det_row, det_col_count=det_col, det_spacing=det_sp,
-        arc_deg=arc_deg,
-    )
+    orbit = cfg.get("orbit", "circular")
+    if orbit == "dbt":
+        vol_geom, proj_geom, geom_info = vr.build_dbt_geometry(
+            phantom.shape, cfg["dx_cm"],
+            det_row_count=det_row, det_col_count=det_col, det_spacing=det_sp,
+            arc_deg=arc_deg,
+            sod=cfg.get("sod", 65.0), odd=cfg.get("odd", 5.0),
+        )
+    else:
+        vol_geom, proj_geom, geom_info = vr.build_geometry(
+            phantom.shape, cfg["dx_cm"],
+            det_row_count=det_row, det_col_count=det_col, det_spacing=det_sp,
+            arc_deg=arc_deg,
+        )
     A, At = vr.make_projector(vol_geom, proj_geom)
 
+    # Apply per-phantom CP overrides before building filters / running CP.
+    saved_overrides = {}
+    for k, v in cfg.get("cp_overrides", {}).items():
+        saved_overrides[k] = vr.CONFIG[k]
+        vr.CONFIG[k] = v
+        print(f"  cp_override: {k} = {v} (was {saved_overrides[k]})")
+
+    # DBT geometry: at each view the residual lives on a 2D detector, so
+    # the proper analogue of Sidky's 1D LF filter is a 2D Hanning on the
+    # joint (u, v) detector plane. Circular orbit keeps the 1D u-axis
+    # filter (which matches the 2D-script convention).
+    filter_axis = "2d" if orbit == "dbt" else "u"
     R_hi, R_lo = vr.build_sinogram_filters(
         geom_info["det_col_count"], geom_info["det_spacing"],
         vr.CONFIG["cutoffparm"], vr.CONFIG["cutoffparm_lo"],
+        axis=filter_axis, det_row_count=geom_info["det_row_count"],
     )
 
     sino_shape = (geom_info["det_row_count"],
@@ -223,6 +252,8 @@ def run_recon(cfg, arc_deg=50.0):
         )
     finally:
         vr.CONFIG["itermax"] = saved_itermax
+        for k, v in saved_overrides.items():
+            vr.CONFIG[k] = v
 
     return {
         "phantom": phantom,
