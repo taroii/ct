@@ -76,10 +76,10 @@ PHANTOM_CONFIGS = {
         "builder_module": "breast_phantom_demo",
         "builder_func":   "build_breast_phantom",
         # DBT orbit: source arcs in y-z, detector fixed below the breast.
-        # Volume 432x432x96 at 0.05 cm (21.6x21.6x4.8 cm @ 0.5 mm voxels)
-        # gives the under-determined regime in which the two-channel
-        # acceleration is visible (overnight sweep 2026-05-27: arc=50,
-        # cutoffparm_lo=4 yields +9% iter-200 RMSE reduction).
+        # Volume 432x432x96 at 0.05 cm (21.6x21.6x4.8 cm @ 0.5 mm voxels).
+        # CP params from the 12h overnight sweep: at arc=15 deg this gives
+        # +26% iter-50 RMSE reduction with sustained two-channel advantage
+        # past single-channel's semi-convergence floor.
         "shape":  (432, 432, 96),
         "dx_cm":  0.05,
         "center": (3.0, 0.0, 0.0),
@@ -87,7 +87,7 @@ PHANTOM_CONFIGS = {
         "det":    (240, 240, 0.10),     # 24.0 cm at 1.0 mm pitch
         "sod":    65.0,
         "odd":    5.0,
-        "cp_overrides": {"cutoffparm_lo": 4.0, "norm_inflate_3d": 1.5},
+        "cp_overrides": {"cutoffparm_lo": 3.0, "eps_lo_ratio": 0.5},
         "roi":    (108, 330, 150, 372),
         "display": {"vmin": 0.0, "vmax": 0.6},
         "itermax": 500,
