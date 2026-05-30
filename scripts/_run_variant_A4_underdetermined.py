@@ -1,25 +1,18 @@
-"""A4: take the 2D paper-breast phantom (the same testimage used in the
-2D fan-beam slide) and extrude it along z to make a 3D phantom for DBT
-reconstruction. Every z-slice is identical -- this is the literal
-extrusion the user asked for. The phantom is the same 2D content that
-produces the 2D-paper wobble; extruding it lets us test whether 3D DBT
-exhibits the same single-channel semi-convergence on identical structure.
+"""A4_underdetermined: same extruded 2D paper-breast phantom as A4, but
+at a much finer in-plane voxel grid (1024x1024) so the effective DOF
+ratio (rays/effective-unknowns) drops to ~0.5 -- matching the 2D paper's
+under-determined regime.
 
-2D testimage recipe (from compare_methods_multiresolution.py:92-98):
-    testimage = 0.5*Adipose + 1.0*Fibroglandular + 2.0*Calcification
-This puts the testimage in range [0, ~3]. We rescale to a physical
-attenuation coefficient by multiplying by 0.6/3 so the max maps to
-0.6 cm^-1 (consistent with our breast display window).
+Compared to standard A4 (432^2x96 at 0.05 cm, 25 views, ratio 7.7) this
+config has:
+    1024x1024 x 96 voxels at dx = 0.021 cm (21.5 x 21.5 x 2.0 cm)
+    9 views x 240^2 detector = 519k rays
+    effective unknowns (z-uniform): 1024^2 = 1.049M
+    ratio = 0.49  (under-determined, like the 2D paper at 0.39)
 
-3D geometry to match the existing deck setup: 432^2 xy * 96 z voxels @
-0.05 cm. The 2D phantom is at 512^2; we downsample by zoom(0.844)
-to 432.
+Compute: ~25-30 min per recon at 432^3 -> ~50-60 min total.
 
-Recon config: same as the A1-A3 variants:
-    DBT arc=15 deg, 25 views, FDA-spec detector, itermax=50
-    cutoffparm_lo=1.5, default inflate=2
-
-Output: cache/ct2_breast_variant_A4_extruded2d_432.pkl
+CP and other params identical to A4 to keep the comparison clean.
 """
 import os
 import pickle
@@ -38,12 +31,12 @@ import victre_reconstruction as vr  # noqa: E402
 
 CACHE_DIR = ROOT / "cache"
 PHANTOM_DIR = ROOT / "data" / "phantoms_from_paper"
-PHANTOM_IDX = 0   # which of the 10 paper-breast realisations to use
+PHANTOM_IDX = 0
 
-SHAPE = (432, 432, 96)
-DX_CM = 0.05
+SHAPE = (1024, 1024, 96)
+DX_CM = 0.021       # 21.5 cm in-plane, 2.0 cm in z
 DET = (240, 240, 0.10)
-NVIEWS = 9            # Hologic low-dose narrow-arc; less over-determined
+NVIEWS = 9
 ARC_DEG = 15.0
 SOD_CM = 65.0
 ODD_CM = 5.0
@@ -52,8 +45,6 @@ ITERMAX = 50
 SNAPSHOT_ITERS = [5, 10, 15, 20, 30, 40, 50]
 
 CP_OVERRIDES = {"cutoffparm_lo": 1.5}
-
-# Map testimage (range ~[0, 3]) to physical mu range [0, 0.6 cm^-1]
 MU_SCALE = 0.6 / 3.0
 
 DEFAULTS = {
@@ -73,18 +64,13 @@ def reset_cp():
 
 
 def build_extruded_phantom():
-    """Compose the 2D testimage + extrude along z to a 3D phantom of shape
-    (NZ, NY, NX) where NX,NY come from SHAPE and NZ is the z thickness."""
     print(f"Loading 2D paper-breast phantoms (slice {PHANTOM_IDX})")
     adipose = np.load(PHANTOM_DIR / "Phantom_Adipose.npy")[PHANTOM_IDX]
     fibro   = np.load(PHANTOM_DIR / "Phantom_Fibroglandular.npy")[PHANTOM_IDX]
     calc    = np.load(PHANTOM_DIR / "Phantom_Calcification.npy")[PHANTOM_IDX]
-    print(f"  adipose {adipose.shape} {adipose.dtype}")
-
     test2d = (0.5 * adipose + 1.0 * fibro + 2.0 * calc).astype(np.float32)
-    print(f"  composed testimage range [{test2d.min():.3f}, {test2d.max():.3f}]")
-
-    # Resize to (NY, NX) using bilinear interpolation
+    print(f"  composed testimage range "
+          f"[{test2d.min():.3f}, {test2d.max():.3f}]")
     from scipy.ndimage import zoom
     NX, NY, NZ = SHAPE
     if test2d.shape != (NY, NX):
@@ -92,18 +78,21 @@ def build_extruded_phantom():
         test2d = zoom(test2d, (zy, zx), order=1).astype(np.float32)
         print(f"  zoomed to {test2d.shape}")
     test2d *= MU_SCALE
-    print(f"  scaled to mu range [{test2d.min():.4f}, {test2d.max():.4f}] cm^-1")
-
-    # Extrude along z: replicate the 2D slice NZ times
+    print(f"  scaled to mu range "
+          f"[{test2d.min():.4f}, {test2d.max():.4f}] cm^-1")
     phantom = np.broadcast_to(test2d[np.newaxis, :, :], (NZ, NY, NX))
     phantom = np.ascontiguousarray(phantom).astype(np.float32)
     print(f"  extruded to {phantom.shape}, "
           f"non-zero {100*(phantom > 1e-4).mean():.1f}%")
+    print(f"  memory: phantom {phantom.nbytes/1e6:.0f} MB")
     return phantom
 
 
 def main():
-    print(f"\n=== A4: extruded 2D paper-breast ===")
+    print(f"\n=== A4_underdetermined: 1024^2 x 96 voxels, 9 views ===")
+    print(f"Effective DOF (z-uniform): {SHAPE[0]*SHAPE[1]:,d}")
+    print(f"Rays: {NVIEWS * DET[0] * DET[1]:,d}")
+    print(f"Ratio: {NVIEWS * DET[0] * DET[1] / (SHAPE[0]*SHAPE[1]):.2f}")
     print(f"Geometry: {SHAPE} @ {DX_CM} cm, arc={ARC_DEG}, n={NVIEWS}, "
           f"det={DET}, itermax={ITERMAX}")
     print(f"CP override: {CP_OVERRIDES}\n")
@@ -130,7 +119,8 @@ def main():
             phantom, A, At, nusino, nuxgrad, nuygrad, nuzgrad,
             gi["nrays"], snapshot_iters=SNAPSHOT_ITERS,
         )
-        print(f"  single {time.time()-t0:.0f}s, RMSE@iter50 = {is_[-1]:.5f}")
+        print(f"  single {time.time()-t0:.0f}s, "
+              f"RMSE@iter50 = {is_[-1]:.5f}")
 
         reset_cp()
         for k, v in CP_OVERRIDES.items():
@@ -147,7 +137,8 @@ def main():
             nusino, nuxgrad, nuygrad, nuzgrad,
             gi["nrays"], snapshot_iters=SNAPSHOT_ITERS,
         )
-        print(f"  two    {time.time()-t0:.0f}s, RMSE@iter50 = {it_[-1]:.5f}")
+        print(f"  two    {time.time()-t0:.0f}s, "
+              f"RMSE@iter50 = {it_[-1]:.5f}")
     finally:
         vr.CONFIG["itermax"] = saved
         reset_cp()
@@ -158,7 +149,7 @@ def main():
         a = is_[it - 1]; b = it_[it - 1]
         print(f"  {it:5d}  {a:9.5f}  {b:9.5f}  {(a-b)/a*100:+7.2f}")
 
-    out_pkl = CACHE_DIR / f"ct2_breast_variant_A4_extruded2d_432_n{NVIEWS}.pkl"
+    out_pkl = CACHE_DIR / "ct2_breast_variant_A4_underdetermined.pkl"
     with open(out_pkl, "wb") as f:
         pickle.dump({
             "phantom":          phantom,
@@ -166,10 +157,10 @@ def main():
             "ierrs_single":     is_, "ierrs_two": it_,
             "snapshots_single": snaps_s, "snapshots_two": snaps_t,
             "dx_cm":            DX_CM, "geometry": gi,
-            "variant":          "A4_extruded2d",
+            "variant":          "A4_underdetermined",
             "cp_overrides":     CP_OVERRIDES,
-            "phantom_source":   "2D paper-breast (0.5*adipose + 1.0*fibro "
-                                "+ 2.0*calc) extruded along z",
+            "phantom_source":   "2D paper-breast extruded at 1024^2",
+            "underdetermined_ratio": NVIEWS * DET[0] * DET[1] / (SHAPE[0]*SHAPE[1]),
         }, f)
     print(f"\nCached {out_pkl.name}")
 
