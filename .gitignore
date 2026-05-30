@@ -37,3 +37,6 @@ data/victre_phantom/*.vti
 
 cache/
 ct-2/
+# VICTRE phantom raw data (1+ GB each)
+data/compressed_victre/
+data/compressed_legion_victre/

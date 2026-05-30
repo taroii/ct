@@ -459,7 +459,7 @@ def operator_norms(phantom_shape, A, At, npower):
 # ============================================================================
 
 def run_single_channel(phantom, A, At, nusino, nuxgrad, nuygrad, nuzgrad, nrays,
-                       snapshot_iters=None):
+                       snapshot_iters=None, presimulated_sino=None):
     nz_d, ny_d, nx_d = phantom.shape
     cfg = CONFIG
 
@@ -492,9 +492,15 @@ def run_single_channel(phantom, A, At, nusino, nuxgrad, nuygrad, nuzgrad, nrays,
 
     epssc = cfg["eps"] * sqrt(nrays)
 
-    # Ground-truth sinogram (no noise, matches 2D addnoise=0)
-    print("Forward-projecting ground-truth phantom...")
-    truesino = A(phantom)
+    # Data-fidelity sinogram. If presimulated_sino is provided (e.g. a
+    # Poisson-noisy version), use it as the data; otherwise forward
+    # project the phantom (the noise-free analytic-paper default).
+    if presimulated_sino is not None:
+        print("Using presimulated sinogram (Poisson-noisy) as data")
+        truesino = presimulated_sino
+    else:
+        print("Forward-projecting ground-truth phantom...")
+        truesino = A(phantom)
     sinodatasc = nusino * truesino
     print(f"truesino range [{truesino.min():.4f}, {truesino.max():.4f}]")
 
@@ -608,7 +614,7 @@ def run_single_channel(phantom, A, At, nusino, nuxgrad, nuygrad, nuzgrad, nrays,
 
 def run_two_channel(phantom, A, At, R_hi, R_lo,
                     nusino, nuxgrad, nuygrad, nuzgrad, nrays,
-                    snapshot_iters=None):
+                    snapshot_iters=None, presimulated_sino=None):
     nz_d, ny_d, nx_d = phantom.shape
     cfg = CONFIG
 
@@ -666,9 +672,14 @@ def run_two_channel(phantom, A, At, R_hi, R_lo,
     print(f"Total norm: {totalnorm:.4f}  (3D-eff: {totalnorm_eff:.4f})  "
           f"sig_hi={sig_hi:.6f}  sig_lo={sig_lo:.6f}  tau={tau:.6f}")
 
-    # Ground-truth sinogram split into hi/lo channels
-    print("Forward-projecting phantom and splitting into hi/lo channels...")
-    truesino = A(phantom)
+    # Data sinogram (presimulated if supplied, e.g. Poisson-noisy) split
+    # into hi/lo channels.
+    if presimulated_sino is not None:
+        print("Using presimulated sinogram (Poisson-noisy) as data")
+        truesino = presimulated_sino
+    else:
+        print("Forward-projecting phantom and splitting into hi/lo channels...")
+        truesino = A(phantom)
     sinodatasc_hi = nusino * R_hi(truesino)
     sinodatasc_lo = nusino * R_lo(truesino)
 
