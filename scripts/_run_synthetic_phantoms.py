@@ -126,40 +126,91 @@ def build_blob_phantom(shape, dx_cm, rng):
     return vol
 
 
-def build_powerlaw_phantom(shape, dx_cm, rng, alpha=2.5,
-                            glandular_fraction=0.35, calc_count=120,
-                            mu_adipose=0.10, mu_glandular=0.22,
-                            mu_calc=0.50):
-    """A: native 3D 1/f^alpha noise -> binary glandular mask + adipose
-    background + sparse calcs. The Reiser-style recipe done in 3D."""
+def _powerlaw_field(shape, alpha, rng):
+    """Generate a normalized 1/f^alpha noise field via FFT filter."""
     NZ, NY, NX = shape
-    # 1/f^alpha noise via FFT filter
-    fz = np.fft.fftfreq(NZ)
-    fy = np.fft.fftfreq(NY)
-    fx = np.fft.fftfreq(NX)
+    fz = np.fft.fftfreq(NZ); fy = np.fft.fftfreq(NY); fx = np.fft.fftfreq(NX)
     FZ, FY, FX = np.meshgrid(fz, fy, fx, indexing="ij")
     f_mag = np.sqrt(FZ * FZ + FY * FY + FX * FX)
     f_mag[0, 0, 0] = 1.0
-    spec_filter = 1.0 / (f_mag ** alpha)
-    spec_filter[0, 0, 0] = 0.0  # zero DC
-
+    filt = 1.0 / (f_mag ** alpha)
+    filt[0, 0, 0] = 0.0
     white = rng.standard_normal(shape).astype(np.float32)
-    spec = np.fft.fftn(white)
-    spec = spec * spec_filter
-    field = np.real(np.fft.ifftn(spec)).astype(np.float32)
-    field = (field - field.min()) / (field.max() - field.min())
+    field = np.real(np.fft.ifftn(np.fft.fftn(white) * filt)).astype(np.float32)
+    # Standardize
+    field = (field - field.mean()) / (field.std() + 1e-12)
+    return field
 
-    # Threshold top glandular_fraction of voxels as fibroglandular
-    threshold = float(np.quantile(field, 1 - glandular_fraction))
-    glandular = field > threshold
+
+def build_powerlaw_phantom(shape, dx_cm, rng,
+                            alpha_lf=2.0, alpha_hf=1.5,
+                            lf_weight=0.7,
+                            glandular_fraction=0.42,
+                            intra_tissue_variation=0.10,
+                            n_calc_clusters=40,
+                            calc_cluster_size_range=(4, 12),
+                            calc_cluster_radius_range=(1, 3),
+                            skin_thickness_cm=0.20, skin_radius_cm=9.0,
+                            mu_adipose=0.10, mu_glandular=0.22,
+                            mu_skin=0.18, mu_calc=0.50):
+    """A: multi-band 3D power-law phantom emulating the 2D paper-breast.
+
+    Two power-law fields (LF alpha=2.8 + HF alpha=1.8) are combined and
+    hard-thresholded to a binary glandular mask, giving irregular pocketed
+    tissue boundaries similar to the Adipose / Fibroglandular maps of
+    the Reiser 2D paper-breast phantom. A skin ring is added at the
+    outer breast edge. Calcifications are emplaced as small clusters
+    (3-9 voxels each) rather than single isolated voxels. Within-tissue
+    intensity is modulated by +-intra_tissue_variation * the LF field
+    so neither tissue type is perfectly flat.
+    """
+    NZ, NY, NX = shape
+    field_lf = _powerlaw_field(shape, alpha_lf, rng)
+    field_hf = _powerlaw_field(shape, alpha_hf, rng)
+    combined = lf_weight * field_lf + (1.0 - lf_weight) * field_hf
+
+    # Binary glandular mask (hard threshold gives pocketed irregular edges)
+    threshold = float(np.quantile(combined, 1 - glandular_fraction))
+    glandular = combined > threshold
 
     vol = np.where(glandular, mu_glandular, mu_adipose).astype(np.float32)
 
-    # Sparse calcifications (single voxels at random positions)
-    calc_zs = rng.integers(0, NZ, size=calc_count)
-    calc_ys = rng.integers(0, NY, size=calc_count)
-    calc_xs = rng.integers(0, NX, size=calc_count)
-    vol[calc_zs, calc_ys, calc_xs] = mu_calc
+    # Intra-tissue density variation (+-intra_tissue_variation of nominal mu)
+    if intra_tissue_variation > 0:
+        # Use the LF field (smooth) so the variation looks like pockets
+        # of less/more dense rather than noise
+        mod = intra_tissue_variation * (field_lf / max(np.abs(field_lf).max(), 1e-12))
+        vol = vol * (1.0 + mod).astype(np.float32)
+
+    # Outer skin ring (mu_skin) and air outside skin
+    y = (np.arange(NY) - (NY - 1) / 2) * dx_cm
+    x = (np.arange(NX) - (NX - 1) / 2) * dx_cm
+    Y, X = np.meshgrid(y, x, indexing="ij")
+    r_xy = np.sqrt(Y * Y + X * X)
+    skin_mask_xy = (r_xy >= skin_radius_cm - skin_thickness_cm) & \
+                   (r_xy <  skin_radius_cm)
+    skin_mask = np.broadcast_to(skin_mask_xy[np.newaxis, :, :], shape)
+    vol = np.where(skin_mask, mu_skin, vol).astype(np.float32)
+
+    # Calcification clusters (groups of 3-9 voxels within a small radius)
+    n_clusters = n_calc_clusters
+    cs_lo, cs_hi = calc_cluster_size_range
+    cr_lo, cr_hi = calc_cluster_radius_range
+    for _ in range(n_clusters):
+        cz = int(rng.integers(2, max(NZ - 2, 3)))
+        cy = int(rng.integers(8, max(NY - 8, 9)))
+        cx = int(rng.integers(8, max(NX - 8, 9)))
+        # Avoid placing calcs in skin/air -- only inside tissue
+        if not (mu_adipose * 0.5 <= vol[cz, cy, cx] <= mu_glandular * 1.3):
+            continue
+        size = int(rng.integers(cs_lo, cs_hi + 1))
+        rad  = int(rng.integers(cr_lo, cr_hi + 1))
+        for _ in range(size):
+            dy = int(rng.integers(-rad, rad + 1))
+            dx = int(rng.integers(-rad, rad + 1))
+            yy, xx = cy + dy, cx + dx
+            if 0 <= yy < NY and 0 <= xx < NX:
+                vol[cz, yy, xx] = mu_calc
 
     return vol
 
