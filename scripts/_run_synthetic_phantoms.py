@@ -143,9 +143,11 @@ def _powerlaw_field(shape, alpha, rng):
 
 
 def build_powerlaw_phantom(shape, dx_cm, rng,
-                            alpha_lf=2.0, alpha_hf=1.5,
-                            lf_weight=0.7,
-                            glandular_fraction=0.42,
+                            alpha_main=2.5, alpha_hf=1.8,
+                            hf_weight=0.18,
+                            center_bias_strength=2.6,
+                            center_sigma_cm=5.0,
+                            glandular_fraction=0.38,
                             intra_tissue_variation=0.10,
                             n_calc_clusters=40,
                             calc_cluster_size_range=(4, 12),
@@ -153,33 +155,45 @@ def build_powerlaw_phantom(shape, dx_cm, rng,
                             skin_thickness_cm=0.20, skin_radius_cm=9.0,
                             mu_adipose=0.10, mu_glandular=0.22,
                             mu_skin=0.18, mu_calc=0.50):
-    """A: multi-band 3D power-law phantom emulating the 2D paper-breast.
+    """A: 3D power-law phantom (single band, alpha=2.5) with a Gaussian
+    center bias so the glandular region forms a large central island
+    surrounded by adipose -- matching the spatial layout of the 2D
+    paper-breast (Reiser-style) phantom.
 
-    Two power-law fields (LF alpha=2.8 + HF alpha=1.8) are combined and
-    hard-thresholded to a binary glandular mask, giving irregular pocketed
-    tissue boundaries similar to the Adipose / Fibroglandular maps of
-    the Reiser 2D paper-breast phantom. A skin ring is added at the
-    outer breast edge. Calcifications are emplaced as small clusters
-    (3-9 voxels each) rather than single isolated voxels. Within-tissue
-    intensity is modulated by +-intra_tissue_variation * the LF field
-    so neither tissue type is perfectly flat.
+    Single-band alpha=2.5 gives smoother large-scale boundaries (less
+    fine speckle than the multi-band v1 / v2). The radial Gaussian
+    center bias is added to the noise field before thresholding so
+    voxels near the centre are more likely to be flagged glandular.
+    A skin ring is added at the outer breast edge. Calcifications are
+    emplaced as small clusters (3-12 voxels each). Within-tissue
+    intensity is modulated by the noise field for slow density drift.
     """
     NZ, NY, NX = shape
-    field_lf = _powerlaw_field(shape, alpha_lf, rng)
-    field_hf = _powerlaw_field(shape, alpha_hf, rng)
-    combined = lf_weight * field_lf + (1.0 - lf_weight) * field_hf
+    field_main = _powerlaw_field(shape, alpha_main, rng)
+    field_hf   = _powerlaw_field(shape, alpha_hf, rng)
+    field = (1.0 - hf_weight) * field_main + hf_weight * field_hf
 
-    # Binary glandular mask (hard threshold gives pocketed irregular edges)
-    threshold = float(np.quantile(combined, 1 - glandular_fraction))
-    glandular = combined > threshold
+    # Radial Gaussian centre bias (xy only -- z does not bias)
+    y = (np.arange(NY) - (NY - 1) / 2) * dx_cm
+    x = (np.arange(NX) - (NX - 1) / 2) * dx_cm
+    Y, X = np.meshgrid(y, x, indexing="ij")
+    center_bias_xy = np.exp(-(Y * Y + X * X) / (2 * center_sigma_cm ** 2))
+    center_bias = np.broadcast_to(center_bias_xy[np.newaxis, :, :],
+                                   shape).astype(np.float32)
+    # Push glandular toward the centre -- centre voxels get a bump
+    biased = field + center_bias_strength * center_bias
+
+    # Binary glandular mask (single threshold on biased field)
+    threshold = float(np.quantile(biased, 1 - glandular_fraction))
+    glandular = biased > threshold
+
+    combined = field   # used below for intra-tissue modulation
 
     vol = np.where(glandular, mu_glandular, mu_adipose).astype(np.float32)
 
     # Intra-tissue density variation (+-intra_tissue_variation of nominal mu)
     if intra_tissue_variation > 0:
-        # Use the LF field (smooth) so the variation looks like pockets
-        # of less/more dense rather than noise
-        mod = intra_tissue_variation * (field_lf / max(np.abs(field_lf).max(), 1e-12))
+        mod = intra_tissue_variation * (combined / max(np.abs(combined).max(), 1e-12))
         vol = vol * (1.0 + mod).astype(np.float32)
 
     # Outer skin ring (mu_skin) and air outside skin
