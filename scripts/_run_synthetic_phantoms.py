@@ -145,8 +145,10 @@ def _powerlaw_field(shape, alpha, rng):
 def build_powerlaw_phantom(shape, dx_cm, rng,
                             alpha_main=2.5, alpha_hf=1.8,
                             hf_weight=0.18,
-                            center_bias_strength=2.6,
-                            center_sigma_cm=5.0,
+                            n_islands=3,
+                            island_sigma_cm=1.8,
+                            island_strength=2.8,
+                            island_max_offset_cm=5.5,
                             glandular_fraction=0.38,
                             intra_tissue_variation=0.10,
                             n_calc_clusters=40,
@@ -173,15 +175,28 @@ def build_powerlaw_phantom(shape, dx_cm, rng,
     field_hf   = _powerlaw_field(shape, alpha_hf, rng)
     field = (1.0 - hf_weight) * field_main + hf_weight * field_hf
 
-    # Radial Gaussian centre bias (xy only -- z does not bias)
+    # Multi-island Gaussian bias (xy only). N Gaussian bumps at random
+    # offsets inside island_max_offset_cm of the petri centre, so the
+    # threshold gets crossed in several places -> multiple glandular
+    # islands instead of one central blob.
     y = (np.arange(NY) - (NY - 1) / 2) * dx_cm
     x = (np.arange(NX) - (NX - 1) / 2) * dx_cm
     Y, X = np.meshgrid(y, x, indexing="ij")
-    center_bias_xy = np.exp(-(Y * Y + X * X) / (2 * center_sigma_cm ** 2))
-    center_bias = np.broadcast_to(center_bias_xy[np.newaxis, :, :],
+    island_bias_xy = np.zeros_like(Y, dtype=np.float32)
+    for _ in range(n_islands):
+        # Uniform offset within a disc of radius island_max_offset_cm
+        r_off = island_max_offset_cm * np.sqrt(float(rng.uniform()))
+        th    = 2 * np.pi * float(rng.uniform())
+        cy, cx = r_off * np.sin(th), r_off * np.cos(th)
+        island_bias_xy += np.exp(
+            -((Y - cy) ** 2 + (X - cx) ** 2) / (2 * island_sigma_cm ** 2)
+        ).astype(np.float32)
+    # normalize so peak bias ~ island_strength regardless of overlap
+    peak = max(float(island_bias_xy.max()), 1e-12)
+    island_bias_xy = island_bias_xy / peak
+    island_bias = np.broadcast_to(island_bias_xy[np.newaxis, :, :],
                                    shape).astype(np.float32)
-    # Push glandular toward the centre -- centre voxels get a bump
-    biased = field + center_bias_strength * center_bias
+    biased = field + island_strength * island_bias
 
     # Binary glandular mask (single threshold on biased field)
     threshold = float(np.quantile(biased, 1 - glandular_fraction))
