@@ -145,10 +145,11 @@ def _powerlaw_field(shape, alpha, rng):
 def build_powerlaw_phantom(shape, dx_cm, rng,
                             alpha_main=2.5, alpha_hf=1.8,
                             hf_weight=0.18,
-                            n_islands=3,
+                            n_islands=6,
                             island_sigma_cm=1.8,
-                            island_strength=2.8,
+                            island_strength=2.2,
                             island_max_offset_cm=5.5,
+                            island_aspect_range=(0.4, 2.5),
                             glandular_fraction=0.38,
                             intra_tissue_variation=0.10,
                             n_calc_clusters=40,
@@ -183,13 +184,22 @@ def build_powerlaw_phantom(shape, dx_cm, rng,
     x = (np.arange(NX) - (NX - 1) / 2) * dx_cm
     Y, X = np.meshgrid(y, x, indexing="ij")
     island_bias_xy = np.zeros_like(Y, dtype=np.float32)
+    asp_lo, asp_hi = island_aspect_range
     for _ in range(n_islands):
         # Uniform offset within a disc of radius island_max_offset_cm
         r_off = island_max_offset_cm * np.sqrt(float(rng.uniform()))
-        th    = 2 * np.pi * float(rng.uniform())
-        cy, cx = r_off * np.sin(th), r_off * np.cos(th)
+        th_pos = 2 * np.pi * float(rng.uniform())
+        cy, cx = r_off * np.sin(th_pos), r_off * np.cos(th_pos)
+        # Anisotropic Gaussian: random aspect ratio + random orientation
+        aspect = float(rng.uniform(asp_lo, asp_hi))
+        sigma_u = island_sigma_cm * np.sqrt(aspect)
+        sigma_v = island_sigma_cm / np.sqrt(aspect)
+        th_rot = 2 * np.pi * float(rng.uniform())
+        cos_t, sin_t = np.cos(th_rot), np.sin(th_rot)
+        u =  cos_t * (X - cx) + sin_t * (Y - cy)
+        v = -sin_t * (X - cx) + cos_t * (Y - cy)
         island_bias_xy += np.exp(
-            -((Y - cy) ** 2 + (X - cx) ** 2) / (2 * island_sigma_cm ** 2)
+            -(u * u / (2 * sigma_u ** 2) + v * v / (2 * sigma_v ** 2))
         ).astype(np.float32)
     # normalize so peak bias ~ island_strength regardless of overlap
     peak = max(float(island_bias_xy.max()), 1e-12)
