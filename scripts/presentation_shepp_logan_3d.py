@@ -60,8 +60,18 @@ ODD_CM  = 5.0
 ITERMAX        = 500
 SNAPSHOT_ITERS = [10, 50, 100, 200, 300, 500]
 LADDER_ITERS   = [10, 50, 100, 200, 500]
+TAG            = ""   # output filename suffix (e.g. "_arc50")
 
-CP_OVERRIDES = {"cutoffparm_lo": 3.0, "eps_lo_ratio": 0.5}
+# Two-channel config tuned for Shepp-Logan: symmetric dual steps with the
+# 3D stability handicap removed (sigma_lo_scale=1 -> norm_inflate_3d=1), so
+# two-channel gets the same primal step as single. eps_hi == single's eps.
+CP_OVERRIDES = {
+    "cutoffparm_lo":   4.0,
+    "eps_hi_ratio":    1.0,
+    "eps_lo_ratio":    1.0,
+    "sigma_lo_scale":  1.0,
+    "norm_inflate_3d": 1.0,
+}
 
 PETRI_RADIUS_CM = 9.5
 
@@ -350,7 +360,7 @@ def run():
         a = is_[it - 1]; b = it_[it - 1]
         print(f"  {it:5d}  {a:9.5f}  {b:9.5f}  {(a-b)/a*100:+7.2f}")
 
-    out_pkl = CACHE_DIR / "shepp_logan_3d_recon.pkl"
+    out_pkl = CACHE_DIR / f"shepp_logan_3d{TAG}_recon.pkl"
     with open(out_pkl, "wb") as f:
         pickle.dump({
             "phantom":          phantom,
@@ -363,27 +373,42 @@ def run():
         }, f)
     print(f"  cached {out_pkl.name}")
 
-    fig_phantom_intro(phantom, FIG_DIR / "shepp_logan_3d_phantom_intro.png")
+    fig_phantom_intro(phantom, FIG_DIR / f"shepp_logan_3d{TAG}_phantom_intro.png")
     fig_iter_ladder(phantom, snaps_s, snaps_t, LADDER_ITERS,
-                    FIG_DIR / "shepp_logan_3d_iter_ladder.png")
+                    FIG_DIR / f"shepp_logan_3d{TAG}_iter_ladder.png")
     fig_error_ladder(phantom, snaps_s, snaps_t, LADDER_ITERS,
-                     FIG_DIR / "shepp_logan_3d_error_ladder.png")
-    fig_convergence(is_, it_, FIG_DIR / "shepp_logan_3d_convergence.png",
-                    f"3D Shepp-Logan -- DBT arc=15, 25v, 432^2x96, "
-                    f"cutLo=3 eps_lo=0.5 itermax={ITERMAX}")
+                     FIG_DIR / f"shepp_logan_3d{TAG}_error_ladder.png")
+    fig_convergence(is_, it_, FIG_DIR / f"shepp_logan_3d{TAG}_convergence.png")
 
 
 def main():
+    global ARC_DEG, ITERMAX, SNAPSHOT_ITERS, LADDER_ITERS, TAG
     ap = argparse.ArgumentParser()
     ap.add_argument("--preview", action="store_true",
                     help="Build phantom and save intro fig only (no recon)")
+    ap.add_argument("--arc", type=float, default=ARC_DEG)
+    ap.add_argument("--itermax", type=int, default=ITERMAX)
+    ap.add_argument("--snaps", type=str, default=None,
+                    help="comma-separated checkpoint iters, e.g. 25,50,75,100")
+    ap.add_argument("--tag", type=str, default="",
+                    help="output filename suffix, e.g. _arc50")
     args = ap.parse_args()
+
+    ARC_DEG = args.arc
+    ITERMAX = args.itermax
+    TAG = args.tag
+    if args.snaps:
+        SNAPSHOT_ITERS = [int(x) for x in args.snaps.split(",")]
+        LADDER_ITERS = list(SNAPSHOT_ITERS)
+
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     FIG_DIR.mkdir(parents=True, exist_ok=True)
 
+    print(f"arc={ARC_DEG}, itermax={ITERMAX}, snaps={SNAPSHOT_ITERS}, tag='{TAG}'")
     if args.preview:
         phantom = build_phantom()
-        fig_phantom_intro(phantom, FIG_DIR / "shepp_logan_3d_phantom_intro.png")
+        fig_phantom_intro(phantom,
+                          FIG_DIR / f"shepp_logan_3d{TAG}_phantom_intro.png")
         return
     run()
 

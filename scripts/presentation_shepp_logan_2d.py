@@ -120,17 +120,21 @@ def load_or_run(force=False):
 
     sl = build_phantom()
 
-    # Paper-breast config (identical to the 2D breast slide):
-    cm.cutoffparm    = 4.0
-    cm.cutoffparm_lo = 8.0
-    cm.eps           = 0.001
-    cm.eps_hi        = cm.eps
-    cm.eps_lo        = 1.25 * cm.eps
+    # Two-channel config tuned for Shepp-Logan: stronger LF dual step
+    # (sigma_lo_scale = 8) accelerates low-frequency convergence on this
+    # phantom. eps_hi == single's eps for a fair high-frequency channel.
+    cm.cutoffparm     = 4.0
+    cm.cutoffparm_lo  = 8.0
+    cm.eps            = 0.001
+    cm.eps_hi         = cm.eps
+    cm.eps_lo         = 1.25 * cm.eps
+    cm.sigma_lo_scale = 8.0
     cm.RESOLUTION_PARAMS[256]["itermax"] = ITERMAX
 
-    print(f"\nRunning 256x256 Shepp-Logan with paper-breast hyperparameters")
+    print(f"\nRunning 256x256 Shepp-Logan two-channel")
     print(f"  cutoffparm_hi = {cm.cutoffparm}, cutoffparm_lo = {cm.cutoffparm_lo}")
-    print(f"  eps_hi = {cm.eps_hi}, eps_lo = {cm.eps_lo}")
+    print(f"  eps_hi = {cm.eps_hi}, eps_lo = {cm.eps_lo}, "
+          f"sigma_lo_scale = {cm.sigma_lo_scale}")
     print(f"  itermax = {ITERMAX}, snapshots at {SNAPSHOT_ITERS}")
 
     t0 = time.time()
