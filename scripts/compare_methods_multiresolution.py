@@ -68,12 +68,18 @@ MFACT_VALUES = [1, 2, 4]
 # ============================================================================
 
 
-def run_reconstruction_for_mfact(mfact, snapshot_iters=None):
+def run_reconstruction_for_mfact(mfact, snapshot_iters=None,
+                                  phantom_override=None):
     """Run both single and two-channel reconstruction for a given mfact.
 
     If snapshot_iters is a list/set of iteration numbers, the result dict
     will include 'snapshots_single' and 'snapshots_two' dicts mapping
     each requested iteration to a copy of xbarim at that point.
+
+    phantom_override: optional 2D float64 array of shape (nx, ny) where
+    nx = ny = 512/mfact. When provided, the breast paper-phantom is
+    skipped and the override is used directly. Useful for swapping in
+    Shepp-Logan or other diagnostic phantoms on the same fan-beam recon.
     """
 
     snapshot_iters = set(snapshot_iters) if snapshot_iters else set()
@@ -89,14 +95,23 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None):
     print(f"alpha={alpha}, beta={beta}, itermax={itermax}")
     print('='*60)
 
-    # Load phantom data
-    print("Loading phantom data...")
-    phantom1 = load("data/phantoms_from_paper/Phantom_Adipose.npy")[imagenumber]
-    phantom2 = load("data/phantoms_from_paper/Phantom_Fibroglandular.npy")[imagenumber]
-    phantom3 = load("data/phantoms_from_paper/Phantom_Calcification.npy")[imagenumber]
+    if phantom_override is not None:
+        if phantom_override.shape != (resolution, resolution):
+            raise ValueError(
+                f"phantom_override shape {phantom_override.shape} != "
+                f"({resolution}, {resolution})"
+            )
+        print("Using phantom_override (skipping paper-breast load)")
+        testimage = phantom_override.astype("float64")
+    else:
+        # Load phantom data
+        print("Loading phantom data...")
+        phantom1 = load("data/phantoms_from_paper/Phantom_Adipose.npy")[imagenumber]
+        phantom2 = load("data/phantoms_from_paper/Phantom_Fibroglandular.npy")[imagenumber]
+        phantom3 = load("data/phantoms_from_paper/Phantom_Calcification.npy")[imagenumber]
 
-    testimage = (0.5*phantom1 + 1.0*phantom2 + 2.0*phantom3).astype("float64")
-    testimage = testimage[::mfact, ::mfact]*1.
+        testimage = (0.5*phantom1 + 1.0*phantom2 + 2.0*phantom3).astype("float64")
+        testimage = testimage[::mfact, ::mfact]*1.
     phimage = testimage*1.
 
     # Image parameters
