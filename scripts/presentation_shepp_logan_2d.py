@@ -218,32 +218,18 @@ def fig_error_ladder(result, iters, out_path, err_range=0.5):
 
 
 def fig_convergence(result, out_path):
+    # Single 0-500 panel, no titles (slide captions carry the details).
     ierrs_s = np.asarray(result["ierrs_single"])
     ierrs_t = np.asarray(result["ierrs_two"])
     iters = np.arange(1, len(ierrs_s) + 1)
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
-
-    axes[0].plot(iters, ierrs_s, "r-", linewidth=1.4, label="single-channel")
-    axes[0].plot(iters, ierrs_t, "b-", linewidth=1.4, label="two-channel")
-    axes[0].set_xlabel("iteration")
-    axes[0].set_ylabel("image RMSE")
-    axes[0].set_title("linear-y, full")
-    axes[0].grid(True, alpha=0.3)
-    axes[0].legend(fontsize=10)
-
-    zlo, zhi = 5, 100
-    axes[1].plot(iters[zlo - 1:zhi], ierrs_s[zlo - 1:zhi], "r-", linewidth=1.4,
-                 label="single-channel")
-    axes[1].plot(iters[zlo - 1:zhi], ierrs_t[zlo - 1:zhi], "b-", linewidth=1.4,
-                 label="two-channel")
-    axes[1].set_xlabel("iteration")
-    axes[1].set_ylabel("image RMSE")
-    axes[1].set_title(f"zoom: iter {zlo}-{zhi}")
-    axes[1].grid(True, alpha=0.3)
-    axes[1].legend(fontsize=10)
-
-    fig.suptitle("Shepp-Logan 2D fan-beam (25 views / 50 deg arc, 500 iter)",
-                  fontsize=11)
+    fig, ax = plt.subplots(figsize=(6.4, 4.4))
+    ax.plot(iters, ierrs_s, "r-", linewidth=1.8, label="single")
+    ax.plot(iters, ierrs_t, "b-", linewidth=1.8, label="two-channel")
+    ax.set_xlim(0, len(ierrs_s))
+    ax.set_xlabel("iteration")
+    ax.set_ylabel("image RMSE")
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=11)
     plt.tight_layout()
     plt.savefig(out_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
