@@ -1,7 +1,0 @@
-\beamer@sectionintoc {1}{Motivation}{2}{0}{1}
-\beamer@sectionintoc {2}{The reconstruction setup}{5}{0}{2}
-\beamer@sectionintoc {3}{The problem}{7}{0}{3}
-\beamer@sectionintoc {4}{The idea: two-channel fidelity}{9}{0}{4}
-\beamer@sectionintoc {5}{Results}{11}{0}{5}
-\beamer@sectionintoc {6}{Conclusion}{18}{0}{6}
-\beamer@sectionintoc {7}{Backup: per-band tolerance tuning}{21}{1}{7}

@@ -1,8 +1,4 @@
-matplotlib
 numpy
-linalg
-numba
 scipy
-argparse
-scikit-image
-plotly
+matplotlib
+numba

@@ -12,6 +12,19 @@ __pycache__/
 .vscode/
 .idea/
 
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.synctex.gz
+*.bbl
+*.blg
+
 # Generated results
 # results/current/*.png
 # results/current/*.pkl
@@ -40,3 +53,5 @@ ct-2/
 # VICTRE phantom raw data (1+ GB each)
 data/compressed_victre/
 data/compressed_legion_victre/
+
+logs/
