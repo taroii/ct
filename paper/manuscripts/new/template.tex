@@ -392,6 +392,116 @@ As the constant $\widetilde D$ in \eqref{eq:rate} shows, block $j$ contributes t
 Increasing $r_{\mathrm{lo}}$ raises $\ell$ and hence shrinks the common scale, so there is an optimal $r_{\mathrm{lo}}$ at which the gain from a stronger low-band step is offset by the forced reduction of $\tau\sigma_{\mathrm{hi}}$. Band-complementarity (Remark~\ref{rmk:tight}) makes $\ell$ grow slowly in $r_{\mathrm{lo}}$, which is why moderately large ratios $r_{\mathrm{lo}}\approx4$ remain near-optimal.
 \end{remark}
 
+\section{Experiments}
+\label{sec:experiments}
+
+We evaluate the two-channel formulation on 2D limited-angle fan-beam reconstruction with two aims: to examine, on the actual DBT operator, the band separation that Remark~\ref{rmk:tight} relies on, and to assess whether amplifying the low-frequency dual step accelerates the convergence of low-frequency image content.
+
+\subsection{Setup}
+
+All reconstructions use a $256\times256$ image on a $10\,\mathrm{cm}$ field of view and a circular fan-beam scan of $25$ views over a $50^\circ$ arc with $1024$ detector bins (source-to-origin $50\,\mathrm{cm}$, source-to-detector $100\,\mathrm{cm}$), with He--Yuan relaxation $\rho=1.75$. The fidelity filters are square-root Hanning windows with cutoff $c=4$ for the high channel and $c_{\mathrm{lo}}=8$ for the low channel, and tolerances $\varepsilon_{\mathrm{hi}}=\varepsilon$, $\varepsilon_{\mathrm{lo}}=1.25\,\varepsilon$. The single-channel baseline uses scalar steps saturating $\tau\sigma\|K\|^2=1$. The two-channel runs place $\tau$ and $\sigma_{\mathrm{hi}}$ at the same operator-norm boundary and scale only the low-frequency dual, $\sigma_{\mathrm{lo}}=s\,\sigma_{\mathrm{hi}}$, with $s\in\{1,4,8\}$; here $s=1$ is the matched-tolerance split with no step amplification. We use five phantoms: the breast phantom of the abstract, a modified Shepp--Logan phantom~\citep{shepp1974fourier}, and three analytic anthropomorphic phantoms---a head, a jaw, and a Defrise-type stack of disks---each taken as a 2D slice and peak-normalized so that the sinogram magnitude is comparable across phantoms. Image error is reported as the RMSE against the ground-truth phantom.
+
+\subsection{Stability diagnostic}
+
+The condition $\tau\lambda_{\max}(M)<1$ and the band separation of Remark~\ref{rmk:tight} depend only on the operator and filters, not on the phantom; Table~\ref{tab:stability} summarizes both. The two data-channel normal operators differ in leading eigenvalue by about a factor of five, and their dominant eigenvectors are numerically orthogonal, which is consistent with the disjoint dominant subspaces assumed in Remark~\ref{rmk:tight}. Writing the certified margin as $\tau\lambda_{\max}(M)=\lambda_{\max}(\widetilde M(s))/\lambda_{\max}(\widetilde M(1))$, where $\widetilde M(s)$ weights the low channel by $s$, the margin stays at the single-channel boundary ($\approx 1$) for $s$ up to roughly $6$, and over this range the low channel contributes essentially no energy to the limiting eigenmode; beyond the crossover, at $s=8$, the low channel governs $\lambda_{\max}(M)$ and the margin exceeds one. Within the certified range the low-frequency step can thus be amplified without reducing $\tau$.
+
+\begin{table}[t]
+\centering
+\caption{Operator-level stability diagnostic (geometry and filters only). Left: leading eigenvalues of the two data-channel normal operators and the magnitude of the inner product of their dominant eigenvectors. Right: certified margin $\tau\lambda_{\max}(M)$ and the low-channel share of the limiting eigenmode as the low-frequency step scale $s$ varies. $s=1$ coincides with the single-channel step-size boundary.}
+\label{tab:stability}
+\begin{tabular}{lc}
+\toprule
+$\lambda_{\max}(X^\top F_{\mathrm{hi}}^2 X)$ & $4.51$\\
+$\lambda_{\max}(X^\top F_{\mathrm{lo}}^2 X)$ & $0.92$\\
+$|\langle v_{\mathrm{hi}},v_{\mathrm{lo}}\rangle|$ & $0.00$\\
+\bottomrule
+\end{tabular}
+\qquad
+\begin{tabular}{lccc}
+\toprule
+$s$ & $1$ & $4$ & $8$\\
+\midrule
+$\tau\lambda_{\max}(M)$ & $1.000$ & $1.000$ & $1.183$\\
+low-band energy share & $0.00$ & $0.00$ & $0.61$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Convergence}
+
+Table~\ref{tab:rmse} reports the image RMSE at iteration $500$ for the single-channel baseline together with the relative reduction of each two-channel setting. The matched-tolerance split without amplification ($s=1$) stays within a few percent of the baseline on all phantoms. The certified setting $s=4$ lowers the RMSE on every phantom at this iteration count, by $9$ to $36\%$, while the uncertified setting $s=8$ adds at most a few further percentage points.
+
+Figure~\ref{fig:conv} indicates that these reductions are not confined to the final iterate: the $s=4$ and $s=8$ curves separate from the single-channel and $s=1$ curves within the first tens of iterations and remain below them, apart from a short interval near iteration $50$ in the oscillatory phase where the curves cross. The size of the reduction varies across phantoms; it is larger for the head and Defrise phantoms than for the more textured jaw, which may reflect their greater low-frequency content, though we do not investigate this further. Figures~\ref{fig:ladder-breast}--\ref{fig:ladder-defrise} show the corresponding iteration ladders for all five phantoms. For the Defrise phantom (Figure~\ref{fig:ladder-defrise}) the single-channel iterate retains a low-frequency shading across the disk stack over several hundred iterations, whereas the $s=4$ iterate resolves the stacked disks earlier.
+
+We emphasize that the step sizes affect the iterate trajectory and not the saddle point, so the observed differences are differences in convergence speed at a fixed iteration budget rather than in the reconstruction reached at convergence.
+
+\begin{table}[t]
+\centering
+\caption{Image RMSE at iteration $500$ for the single-channel baseline, and the relative RMSE reduction of the two-channel method at low-frequency step scales $s\in\{1,4,8\}$ (positive values indicate lower RMSE than single-channel). $s=4$ satisfies the certified condition $\tau\lambda_{\max}(M)\approx1$; $s=8$ exceeds it.}
+\label{tab:rmse}
+\begin{tabular}{lrrrr}
+\toprule
+ & & \multicolumn{3}{c}{RMSE reduction (\%)}\\
+\cmidrule(l){3-5}
+Phantom & Single RMSE & $s{=}1$ & $s{=}4$ & $s{=}8$\\
+\midrule
+Breast       & $0.098$ & $+3.5$ & $+22.0$ & $+23.8$\\
+Shepp--Logan & $0.086$ & $-1.6$ & $+9.1$  & $+10.7$\\
+Head         & $0.157$ & $+3.7$ & $+35.9$ & $+39.2$\\
+Jaw          & $0.083$ & $-7.7$ & $+16.4$ & $+18.6$\\
+Defrise      & $0.070$ & $-1.0$ & $+30.6$ & $+33.2$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\begin{minipage}{0.32\linewidth}\centering\includegraphics[width=\linewidth]{figs/breast_convergence.png}\\{\small (a) Breast}\end{minipage}\hfill
+\begin{minipage}{0.32\linewidth}\centering\includegraphics[width=\linewidth]{figs/shepp_logan_convergence.png}\\{\small (b) Shepp--Logan}\end{minipage}\hfill
+\begin{minipage}{0.32\linewidth}\centering\includegraphics[width=\linewidth]{figs/head_convergence.png}\\{\small (c) Head}\end{minipage}
+
+\medskip
+\begin{minipage}{0.32\linewidth}\centering\includegraphics[width=\linewidth]{figs/jaw_convergence.png}\\{\small (d) Jaw}\end{minipage}\hspace{0.03\linewidth}
+\begin{minipage}{0.32\linewidth}\centering\includegraphics[width=\linewidth]{figs/defrise_convergence.png}\\{\small (e) Defrise}\end{minipage}
+\caption{Image RMSE versus iteration for all five phantoms, comparing single-channel reconstruction with the two-channel method at $s\in\{1,4,8\}$.}
+\label{fig:conv}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/breast_iter_ladder.png}
+\caption{Breast reconstruction at selected iterations: single-channel (top) and two-channel with $s=4$ (bottom). RMSE against the ground truth is annotated for each iterate.}
+\label{fig:ladder-breast}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/shepp_logan_iter_ladder.png}
+\caption{Shepp--Logan reconstruction at selected iterations: single-channel (top) and two-channel with $s=4$ (bottom), with RMSE annotated.}
+\label{fig:ladder-shepp}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/head_iter_ladder.png}
+\caption{Head reconstruction at selected iterations: single-channel (top) and two-channel with $s=4$ (bottom), with RMSE annotated.}
+\label{fig:ladder-head}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/jaw_iter_ladder.png}
+\caption{Jaw reconstruction at selected iterations: single-channel (top) and two-channel with $s=4$ (bottom), with RMSE annotated.}
+\label{fig:ladder-jaw}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/defrise_iter_ladder.png}
+\caption{Defrise reconstruction at selected iterations: single-channel (top) and two-channel with $s=4$ (bottom), with RMSE annotated.}
+\label{fig:ladder-defrise}
+\end{figure}
+
 \bibliography{references}
 \bibliographystyle{abbrvnat}
 
