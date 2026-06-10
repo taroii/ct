@@ -849,54 +849,39 @@ def _operator_norm_two(
     sqrt_lo: float, sqrt_tv: float, sqrt_l1: float,
     g: FanbeamGeometry, n_iter: int = 200,
 ) -> float:
-    """Power iteration for the *full* weighted operator
-    [ sqrt(sig_hi) R_hi X ; sqrt(sig_lo) R_lo X ; sqrt(sig_tv) grad_x ;
-      sqrt(sig_tv) grad_y ; sqrt(sig_l1) I ]
-    with sig_hi factored out. Returns ||Sigma^(1/2) K|| / sqrt(sig_hi).
+    """Returns ||Sigma^(1/2) K|| / sqrt(sig_hi) = sqrt(lambda_max(Mtilde)),
+    where Mtilde = K_hi^T K_hi + r_lo K_lo^T K_lo + r_tv (gx^T gx + gy^T gy)
+    + r_l1 I is the sig_hi-factored weighted normal operator (r_* = sig_*/sig_hi).
+
+    Computed as a symmetric power iteration on Mtilde. The data term needs the
+    squared band filter F^2 = X^T R^2 X, so each filter is applied TWICE
+    (forward and adjoint) -- consistent with _operator_norm_single. Applying it
+    once (as a previous version did) computes X^T R X and overestimates the
+    norm, throttling the step sizes.
     """
+    r_lo, r_tv, r_l1 = sqrt_lo ** 2, sqrt_tv ** 2, sqrt_l1 ** 2
+    nus2, nux2, nuy2, l1sq = nusino ** 2, nuxgrad ** 2, nuygrad ** 2, l1_weight ** 2
     rng = np.random.default_rng(SEED)
-    xim = rng.standard_normal((g.nx, g.ny)) * mask
+    v = rng.standard_normal((g.nx, g.ny)) * mask
+    v /= np.sqrt((v ** 2).sum()) + 1e-12
     worksino = np.zeros((g.nviews, g.nbins))
-    xim1 = np.zeros_like(xim)
-    imtmp = np.zeros_like(xim)
-    mag1 = mag2 = 0.0
-
+    bp = np.zeros_like(v)
+    lam = 0.0
     for _ in range(n_iter):
-        project(xim, worksino)
-        s_hi = filt_hi(worksino) * nusino
-        s_lo = filt_lo(worksino) * (nusino * sqrt_lo)
-        xg = gradx(xim) * (nuxgrad * sqrt_tv)
-        yg = grady(xim) * (nuygrad * sqrt_tv)
-        yim_l1 = (l1_weight * sqrt_l1) * xim
-        mag1 = float(np.sqrt(
-            (yim_l1 ** 2).sum() + (yg ** 2).sum() + (xg ** 2).sum()
-            + (s_hi ** 2).sum() + (s_lo ** 2).sum()
-        ))
-        if mag1 > 0:
-            yim_l1 /= mag1
-            yg /= mag1
-            xg /= mag1
-            s_hi /= mag1
-            s_lo /= mag1
-
-        xim1.fill(0.0)
-        imtmp.fill(0.0)
-        backproject(s_hi, imtmp)
-        xim1 += imtmp
-        imtmp.fill(0.0)
-        backproject(s_lo * sqrt_lo, imtmp)
-        xim1 += imtmp
-        xim = (
-            xim1 * (nusino * mask)
-            + mdivx(xg * sqrt_tv) * (nuxgrad * mask)
-            + mdivy(yg * sqrt_tv) * (nuygrad * mask)
-            + (l1_weight * sqrt_l1) * yim_l1
-        )
-        mag2 = float(np.sqrt((xim ** 2).sum()))
-        if mag2 > 0:
-            xim /= mag2
-
-    return _norm_pair(mag1, mag2)
+        project(np.ascontiguousarray(v), worksino)
+        data_sino = filt_hi(filt_hi(worksino)) + r_lo * filt_lo(filt_lo(worksino))
+        bp.fill(0.0)
+        backproject(data_sino, bp)
+        Mv = nus2 * (bp * mask)
+        Mv += (nux2 * r_tv) * (mdivx(gradx(v)) * mask)
+        Mv += (nuy2 * r_tv) * (mdivy(grady(v)) * mask)
+        Mv += (l1sq * r_l1) * v
+        lam = float((v * Mv).sum())          # Rayleigh quotient
+        nv = np.sqrt((Mv ** 2).sum())
+        if nv < 1e-300:
+            break
+        v = Mv / nv
+    return float(np.sqrt(max(lam, 0.0)))
 
 
 def solve_two_channel(
@@ -1081,56 +1066,41 @@ def _operator_norm_multi(
     sqrt_tv: float, sqrt_l1: float,
     g: FanbeamGeometry, n_iter: int = 200,
 ) -> float:
-    """Power iteration on the full weighted multichannel operator
+    """Returns ||Sigma^(1/2) K|| / sqrt(sigma_0) = sqrt(lambda_max(Mtilde)),
+    where Mtilde = sum_i r_i K_i^T K_i + r_tv (gx^T gx + gy^T gy) + r_l1 I is the
+    sigma_0-factored weighted normal operator (r_i = sigma_i/sigma_0 =
+    sqrt_sigma_ratios[i]^2).
 
-        K = [ sqrt(s_0) R_0 X; ... sqrt(s_{k-1}) R_{k-1} X;
-              sqrt(s_tv) grad_x; sqrt(s_tv) grad_y;
-              sqrt(s_l1) I ]
-
-    with sigma_0 factored out so sqrt_sigma_ratios[i] = sqrt(sigma_i/sigma_0).
-    Returns ||Sigma^(1/2) K|| / sqrt(sigma_0).
+    Symmetric power iteration on Mtilde; each band filter is applied TWICE so the
+    data term is the true X^T R_i^2 X (see _operator_norm_two).
     """
-    rng = np.random.default_rng(SEED)
-    xim = rng.standard_normal((g.nx, g.ny)) * mask
-    worksino = np.zeros((g.nviews, g.nbins))
-    xim1 = np.zeros_like(xim)
-    imtmp = np.zeros_like(xim)
-    mag1 = mag2 = 0.0
+    r_data = [s ** 2 for s in sqrt_sigma_ratios]
+    r_tv, r_l1 = sqrt_tv ** 2, sqrt_l1 ** 2
+    nus2, nux2, nuy2, l1sq = nusino ** 2, nuxgrad ** 2, nuygrad ** 2, l1_weight ** 2
     k = len(filt_bands)
-
+    rng = np.random.default_rng(SEED)
+    v = rng.standard_normal((g.nx, g.ny)) * mask
+    v /= np.sqrt((v ** 2).sum()) + 1e-12
+    worksino = np.zeros((g.nviews, g.nbins))
+    bp = np.zeros_like(v)
+    lam = 0.0
     for _ in range(n_iter):
-        project(xim, worksino)
-        sino_bands = [filt_bands[i](worksino) * (nusino * sqrt_sigma_ratios[i])
-                      for i in range(k)]
-        xg = gradx(xim) * (nuxgrad * sqrt_tv)
-        yg = grady(xim) * (nuygrad * sqrt_tv)
-        yim_l1 = (l1_weight * sqrt_l1) * xim
-        sq_acc = (yim_l1 ** 2).sum() + (yg ** 2).sum() + (xg ** 2).sum()
-        for s in sino_bands:
-            sq_acc += (s ** 2).sum()
-        mag1 = float(np.sqrt(sq_acc))
-        if mag1 > 0:
-            yim_l1 /= mag1
-            yg /= mag1
-            xg /= mag1
-            sino_bands = [s / mag1 for s in sino_bands]
-
-        xim1.fill(0.0)
+        project(np.ascontiguousarray(v), worksino)
+        data_sino = np.zeros_like(worksino)
         for i in range(k):
-            imtmp.fill(0.0)
-            backproject(sino_bands[i] * sqrt_sigma_ratios[i], imtmp)
-            xim1 += imtmp
-        xim = (
-            xim1 * (nusino * mask)
-            + mdivx(xg * sqrt_tv) * (nuxgrad * mask)
-            + mdivy(yg * sqrt_tv) * (nuygrad * mask)
-            + (l1_weight * sqrt_l1) * yim_l1
-        )
-        mag2 = float(np.sqrt((xim ** 2).sum()))
-        if mag2 > 0:
-            xim /= mag2
-
-    return _norm_pair(mag1, mag2)
+            data_sino += r_data[i] * filt_bands[i](filt_bands[i](worksino))
+        bp.fill(0.0)
+        backproject(data_sino, bp)
+        Mv = nus2 * (bp * mask)
+        Mv += (nux2 * r_tv) * (mdivx(gradx(v)) * mask)
+        Mv += (nuy2 * r_tv) * (mdivy(grady(v)) * mask)
+        Mv += (l1sq * r_l1) * v
+        lam = float((v * Mv).sum())          # Rayleigh quotient
+        nv = np.sqrt((Mv ** 2).sum())
+        if nv < 1e-300:
+            break
+        v = Mv / nv
+    return float(np.sqrt(max(lam, 0.0)))
 
 
 def solve_multi_channel(

@@ -403,7 +403,7 @@ All reconstructions use a $256\times256$ image on a $10\,\mathrm{cm}$ field of v
 
 \subsection{Stability diagnostic}
 
-The condition $\tau\lambda_{\max}(M)<1$ and the band separation of Remark~\ref{rmk:tight} depend only on the operator and filters, not on the phantom; Table~\ref{tab:stability} summarizes both. The two data-channel normal operators differ in leading eigenvalue by about a factor of five, and their dominant eigenvectors are numerically orthogonal, which is consistent with the disjoint dominant subspaces assumed in Remark~\ref{rmk:tight}. Writing the certified margin as $\tau\lambda_{\max}(M)=\lambda_{\max}(\widetilde M(s))/\lambda_{\max}(\widetilde M(1))$, where $\widetilde M(s)$ weights the low channel by $s$, the margin stays at the single-channel boundary ($\approx 1$) for $s$ up to roughly $6$, and over this range the low channel contributes essentially no energy to the limiting eigenmode; beyond the crossover, at $s=8$, the low channel governs $\lambda_{\max}(M)$ and the margin exceeds one. Within the certified range the low-frequency step can thus be amplified without reducing $\tau$.
+The condition $\tau\lambda_{\max}(M)<1$ and the band separation of Remark~\ref{rmk:tight} depend only on the operator and filters, not on the phantom; Table~\ref{tab:stability} summarizes both. The two data-channel normal operators differ in leading eigenvalue by about a factor of five, and their dominant eigenvectors are numerically orthogonal, which is consistent with the disjoint dominant subspaces assumed in Remark~\ref{rmk:tight}. Writing the certified margin as $\tau\lambda_{\max}(M)=\lambda_{\max}(\widetilde M(s))/\lambda_{\max}(\widetilde M(1))$, where $\widetilde M(s)$ weights the low channel by $s$, the margin stays at the single-channel boundary ($\approx 1$) for $s$ up to roughly $6$, and over this range the low channel contributes essentially no energy to the limiting eigenmode; beyond the crossover, at $s=8$, the low channel governs $\lambda_{\max}(M)$ and the margin exceeds one. Within the certified range the low-frequency step can thus be amplified without reducing $\tau$. We therefore operate at $s=4$, the largest amplification that holds $\tau\lambda_{\max}(M)$ at the single-channel boundary, so that the primal step is taken at its maximal certified value; setting the steps from the conservative worst-channel surrogate of Remark~\ref{rmk:tight} would instead throttle $\tau$ and forfeit much of the gain.
 
 \begin{table}[t]
 \centering
@@ -501,6 +501,26 @@ Defrise      & $0.070$ & $-1.0$ & $+30.6$ & $+33.2$\\
 \caption{Defrise reconstruction at selected iterations: single-channel (top) and two-channel with $s=4$ (bottom), with RMSE annotated.}
 \label{fig:ladder-defrise}
 \end{figure}
+
+\subsection{Sensitivity to the data tolerance}
+
+The tolerances $\varepsilon_c$ enter the model only through the data-constraint set, not through the step-size condition $\tau\lambda_{\max}(M)<1$, which depends on $K$ and the step sizes alone. Changing $\varepsilon$ therefore moves the saddle point but does not affect convergence, provided the constraints remain feasible. Table~\ref{tab:eps} reports a preliminary check on the breast phantom with the step sizes fixed at the maximal certified amplification $s=4$. Loosening the global tolerance for single-channel reconstruction ($\varepsilon:1.0\to1.25$, in units of the nominal $\varepsilon$) and loosening the low-band tolerance for the two-channel method ($\varepsilon_{\mathrm{lo}}:1.0\to1.25$) each change the iteration-$500$ RMSE by at most about one percentage point, against the $\sim\!20\%$ reduction obtained from the step amplification itself. In the range tested the reconstruction is thus insensitive to $\varepsilon$, and the acceleration is attributable to the certified low-frequency step amplification rather than to the tolerance. A wider $\varepsilon$ sweep is left to future work.
+
+\begin{table}[t]
+\centering
+\caption{Sensitivity to the data tolerance (breast, $256\times256$, step sizes fixed at $s=4$). Image RMSE at two iteration counts, with reduction relative to single-channel at $\varepsilon=1.0$. Tolerances are in units of the nominal $\varepsilon$.}
+\label{tab:eps}
+\begin{tabular}{llrr}
+\toprule
+Method & tolerance & RMSE @\,200 & RMSE @\,500\\
+\midrule
+Single & $\varepsilon=1.0$ & $0.183$ & $0.0985$\\
+Single & $\varepsilon=1.25$ & $0.181$ ($+1.0\%$) & $0.0976$ ($+0.9\%$)\\
+Two-channel & $\varepsilon_{\mathrm{lo}}=1.0$ & $0.123$ ($+32.7\%$) & $0.0793$ ($+19.5\%$)\\
+Two-channel & $\varepsilon_{\mathrm{lo}}=1.25$ & $0.122$ ($+33.3\%$) & $0.0780$ ($+20.8\%$)\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \bibliography{references}
 \bibliographystyle{abbrvnat}
