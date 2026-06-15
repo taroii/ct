@@ -158,7 +158,7 @@ The single-channel model of \citet{sidky2025accurate} minimizes a sparsity-regul
 \quad\text{s.t.}\quad
 \big\|R[c]\,(g-Xf)\big\|_2\le\varepsilon\sqrt{m},
 \end{equation}
-where $R[c]$ is a Hann$^{1/2}$ filter along detector channels with cutoff $c$. The weighting $R[c]$ de-emphasizes low-frequency inconsistencies but, as noted above, slows the convergence of the near-DC image content.
+where $R[c]=\Lambda^{1/2}\,\mathrm{Hann}^{1/2}(c)$ acts along detector channels: $\Lambda^{1/2}$ is the square-root ramp (the Fourier multiplier $|u|^{1/2}$) and $\mathrm{Hann}^{1/2}(c)$ a square-root Hanning window of cutoff $c$. The ramp preconditions the fidelity by flattening the $1/|u|$ spectral decay of $X^\top X$, and both factors vanish at DC, so $R[c]^\top R[c]=X^\top\big(|u|\,\mathrm{Hann}(c)\big)X$ has strongly suppressed low-frequency singular values. This de-emphasis slows the convergence of the near-DC image content, but---as we exploit below---it is also what makes the near-DC band spectrally well separated from the high-frequency band.
 
 To retain this robustness while feeding a stronger correction to the low band, we split the data constraint into two complementary spectral channels:
 \begin{equation}
@@ -171,7 +171,7 @@ To retain this robustness while feeding a stronger correction to the low band, w
 \|R_{\mathrm{lo}}(g-Xf)\|_2\le\varepsilon_{\mathrm{lo}}\sqrt{m}.
 \end{cases}
 \end{equation}
-Both filters are drawn from the square-root Hanning family: $R_{\mathrm{hi}}=\mathrm{Hann}^{1/2}(c)$ preserves the original cutoff, while $R_{\mathrm{lo}}=\mathrm{Hann}^{1/2}(c_{\mathrm{lo}})$ with $c_{\mathrm{lo}}\ll c$ is narrow and supported near DC, the pair being complementary so that $R_{\mathrm{hi}}^2+R_{\mathrm{lo}}^2\approx I$ over the inversion-relevant passband. The low-frequency tolerance is chosen slightly looser, $\varepsilon_{\mathrm{lo}}>\varepsilon_{\mathrm{hi}}$, to permit mild model mismatch at DC while still driving large-scale bias down.
+Both filters carry the same square-root ramp as the single-channel fidelity and differ only in their Hanning window: $R_{\mathrm{hi}}=\Lambda^{1/2}\mathrm{Hann}^{1/2}(c)$ preserves the original cutoff, while $R_{\mathrm{lo}}=\Lambda^{1/2}\mathrm{Hann}^{1/2}(c_{\mathrm{lo}})$ with $c_{\mathrm{lo}}\ll c$ is narrow and supported near DC, the pair being complementary so that $R_{\mathrm{hi}}^2+R_{\mathrm{lo}}^2\approx R[c]^2$ over the inversion-relevant passband. The shared ramp is essential to the construction: by suppressing the near-DC singular values it keeps the low band's contribution to the weighted operator norm small, which is exactly the band separation that Remark~\ref{rmk:tight} relies on; without it the low and high bands overlap, the separation is lost, and the certified low-frequency amplification no longer pays off. The low-frequency tolerance is chosen slightly looser, $\varepsilon_{\mathrm{lo}}>\varepsilon_{\mathrm{hi}}$, to permit mild model mismatch at DC while still driving large-scale bias down.
 
 \subsection{Saddle-point form and the PDHG algorithm}
 
