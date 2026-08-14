@@ -15,7 +15,6 @@ import time
 
 import numpy as np
 from numpy import maximum, sqrt
-from numpy.random import randn
 import astra
 
 DEFAULTS = dict(
@@ -24,8 +23,84 @@ DEFAULTS = dict(
     cutoffparm=4.0, cutoffparm_lo=8.0,
     sigma_lo_scale=4.0, eps_hi_ratio=1.0, eps_lo_ratio=1.25,
     itermax=300, npower=100, cvg_slack=1e-3,
+    # Power-iteration inits. Left unseeded, every run drew different start
+    # vectors, converged to slightly different operator norms, and therefore ran
+    # with different tau/sigma -- which made 3D results irreproducible
+    # run-to-run. Seeded per solver call via _rng below.
+    seed=42,
+    # Poisson transmission noise. i0 = incident photons per ray; 0 disables
+    # noise entirely (the historical behaviour). noise_seed indexes the noise
+    # REALIZATION and is deliberately independent of `seed`: statistics are
+    # gathered by varying noise_seed at fixed seed, so that spread across runs
+    # reflects measurement noise and not step-size jitter. Conflating the two
+    # would make every error bar uninterpretable.
+    i0=0.0,
+    noise_seed=0,
+    # With noisy data the truth is no longer exactly consistent, so the data
+    # tolerance must admit it. "noise" sets eps from an independent calibration
+    # draw; "fixed" keeps cfg["eps"] as given. See calibrate_eps.
+    eps_mode="fixed",
+    eps_factor=1.1,
 )
+
+
+def _rng(cfg, stream):
+    """Independent generator per power iteration.
+
+    Deliberately NOT one shared generator: a shared stream would make each
+    norm estimate depend on how many draws happened before it, so adding or
+    reordering a power iteration would silently change every later result.
+    Keying on a stream name makes each estimate independent of the others.
+    """
+    seed = cfg.get("seed", 42)
+    if seed is None:                       # explicit opt-out, non-reproducible
+        return np.random.default_rng()
+    mix = int.from_bytes(stream.encode(), "little") % (2 ** 31)
+    return np.random.default_rng((int(seed) * 1_000_003 + mix) % (2 ** 63))
 ISTOPS = (1, 2, 5, 10, 20, 50, 100, 200, 300, 400, 500)
+
+
+# --------------------------------------------------------------------------
+# Poisson transmission noise
+# --------------------------------------------------------------------------
+def poisson_sinogram(clean, i0, rng):
+    """Monoenergetic transmission noise on line integrals.
+
+        N ~ Poisson(i0 * exp(-p)),   p_hat = -log(N / i0)
+
+    `clean` holds the ideal line integrals p; the return is p_hat. Zero counts
+    are clamped to 1 photon before the log -- exact zeros would give p_hat=inf
+    and poison the whole sinogram. The clamp biases the very few most-attenuated
+    rays slightly low; at sane i0 for breast DBT it fires on a negligible
+    fraction, and `reconstruct` reports that fraction so the choice of i0 can be
+    sanity-checked rather than assumed.
+    """
+    expected = i0 * np.exp(-np.asarray(clean, dtype=np.float64))
+    counts = rng.poisson(expected)
+    n_zero = int((counts == 0).sum())
+    counts = np.maximum(counts, 1)
+    noisy = -np.log(counts / i0)
+    return noisy.astype(np.float32), n_zero
+
+
+def calibrate_eps(clean, i0, R_single, nrays, rng, factor=1.1):
+    """Data tolerance matched to the noise level, from an INDEPENDENT draw.
+
+    With noisy data the true image no longer satisfies ||F(Af - g)|| = 0; it
+    satisfies it only to about the filtered noise norm. If eps stays at its
+    noiseless value the constraint set excludes the truth, the solver is pushed
+    somewhere else entirely, and the single-vs-two comparison stops meaning
+    anything. So eps has to track the noise.
+
+    The calibration draw is independent of the data draw on purpose. Setting eps
+    from the realized noise would leak knowledge of the actual realization into
+    the reconstruction -- a small inverse crime, and one that would make the
+    constraint suspiciously well-matched on every run. `factor` > 1 buys margin
+    so the truth is comfortably inside the set rather than on its boundary.
+    """
+    cal, _ = poisson_sinogram(clean, i0, rng)
+    resid = R_single(cal - clean)
+    return factor * float(sqrt((resid * resid).sum())) / sqrt(nrays)
 
 
 # --------------------------------------------------------------------------
@@ -191,20 +266,21 @@ def block_norms(shape, A, At, R_single_sq, cfg):
     npw = cfg["npower"]
     # nusino normalizes the ramp-filtered projector: 1/||R_single A|| via
     # power iteration on A^T R_single^2 A.
-    x = randn(*shape).astype(np.float32)
+    x = _rng(cfg, "nusino").standard_normal(shape, dtype=np.float32)
     xn = 1.0
     for _ in range(npw):
         x = At(R_single_sq(A(x))); xn = sqrt((x * x).sum()) + 1e-12; x /= xn
     nusino = 1.0 / sqrt(xn)
 
-    def axis_norm(grad, div):
-        x = randn(*shape).astype(np.float32); n = 1.0
+    def axis_norm(grad, div, name):
+        x = _rng(cfg, f"axis_{name}").standard_normal(shape, dtype=np.float32)
+        n = 1.0
         for _ in range(max(npw // 4, 10)):
             x = div(grad(x)); n = sqrt((x * x).sum()) + 1e-12; x /= n
         return sqrt(n)
-    nux = cfg["nuxfact"] / axis_norm(gradx, mdivx)
-    nuy = cfg["nuyfact"] / axis_norm(grady, mdivy)
-    nuz = cfg["nuzfact"] / axis_norm(gradz, mdivz)
+    nux = cfg["nuxfact"] / axis_norm(gradx, mdivx, "x")
+    nuy = cfg["nuyfact"] / axis_norm(grady, mdivy, "y")
+    nuz = cfg["nuzfact"] / axis_norm(gradz, mdivz, "z")
     print(f"||R_single A||={1/nusino:.4f}  nusino={nusino:.6f}  "
           f"nux={nux:.6f} nuy={nuy:.6f} nuz={nuz:.6f}")
     return nusino, nux, nuy, nuz
@@ -213,7 +289,8 @@ def block_norms(shape, A, At, R_single_sq, cfg):
 def single_norm(shape, A, At, R_single, nusino, nux, nuy, nuz, cfg):
     """||K|| for the single-channel stacked operator [R_single A; dx; dy; dz; l1]."""
     l1f = cfg["l1f"]
-    x = randn(*shape).astype(np.float32); x /= sqrt((x * x).sum()) + 1e-12
+    x = _rng(cfg, "single_norm").standard_normal(shape, dtype=np.float32)
+    x /= sqrt((x * x).sum()) + 1e-12
     mag1 = mag2 = 0.0
     for _ in range(cfg["npower"]):
         s = R_single(A(x)) * nusino
@@ -238,15 +315,58 @@ def certified_norm_two(shape, A, At, R_data_sq, nusino, nux, nuy, nuz, cfg):
     r_lo = cfg["sigma_lo_scale"]
     l1sq = cfg["l1f"] ** 2
     nus2, nux2, nuy2, nuz2 = nusino**2, nux**2, nuy**2, nuz**2
-    v = randn(*shape).astype(np.float32); v /= sqrt((v * v).sum()) + 1e-12
-    lam = 0.0
-    for _ in range(cfg["npower"]):
+    v = _rng(cfg, "certified_norm_two").standard_normal(shape, dtype=np.float32)
+    v /= sqrt((v * v).sum()) + 1e-12
+    # Run to a tolerance rather than a fixed count. This estimate is what the
+    # certificate rests on, and the Rayleigh quotient converges from BELOW --
+    # it underestimates lambda_max, which is the unsafe direction: too few
+    # iterations and tau*lambda_max(M) silently exceeds 1. Since lambda = norm^2,
+    # a relative error d in the returned norm is 2d in lambda, so the tolerance
+    # has to be comfortably tighter than cvg_slack/2 for the margin to hold.
+    # CAUTION: this tolerance is on the per-iteration CHANGE, which is not the
+    # error. Power iteration converges linearly at rate (lam2/lam1)^k, so with a
+    # small spectral gap the increment can look tiny while the estimate is still
+    # far off -- measured here at 1e-5 increment but 0.3% disagreement between
+    # seeds. The tolerance is therefore set tight and acts as a plateau guard,
+    # not as a convergence proof. The authoritative check is the seed-spread
+    # diagnostic in check_power_convergence.py; use it to pick npower per
+    # geometry, and treat that npower as the real setting.
+    tol = cfg.get("npower_tol", 1e-7)
+    nmax = max(int(cfg["npower"]), 40)
+    lam = lam_prev = 0.0
+    rel = float("inf")            # tracked INSIDE the loop: a run that exhausts
+    it = 0                        # nmax must report its last real change, not 0
+    converged = False
+    for it in range(1, nmax + 1):
         Mv = nus2 * At(R_data_sq(A(v), r_lo))
         Mv = Mv + nux2 * mdivx(gradx(v)) + nuy2 * mdivy(grady(v)) \
             + nuz2 * mdivz(gradz(v)) + l1sq * v
         lam = float((v * Mv).sum())
         nv = sqrt((Mv * Mv).sum()) + 1e-12
         v = (Mv / nv).astype(np.float32)
+        if lam > 0:
+            rel = abs(lam - lam_prev) / lam
+        lam_prev = lam
+        if it > 10 and rel < tol:
+            converged = True
+            break
+    slack = cfg.get("cvg_slack", 1e-3)
+    print(f"[two] power iteration: {it} its, lam={lam:.6f}, rel. change={rel:.2e} "
+          f"(tol {tol:.1e}, {'converged' if converged else 'ran to cap'})")
+    # lambda enters the certificate directly, and a relative error d in lambda
+    # eats d of the cvg_slack safety margin. Rayleigh quotients converge from
+    # below, so an unconverged estimate UNDERstates lambda_max -- the unsafe
+    # direction, since tau is then set too large.
+    #
+    # Key on `rel`, NOT on whether the early exit fired. Running to the cap with
+    # a tiny per-iteration change is fine (it plateaued); it is a LARGE change
+    # that is dangerous. Keying on the flag made this warn spuriously whenever a
+    # caller disabled the early exit by passing npower_tol=0.
+    if rel > slack / 2:
+        print(f"  WARNING: lambda_max uncertain to {rel:.2e} against "
+              f"cvg_slack={slack:.1e}. tau*lambda_max(M)<1 may not actually "
+              f"hold -- power iteration underestimates lambda_max, so tau is "
+              f"set too large. Raise npower (cap is {nmax}) or cvg_slack.")
     return sqrt(max(lam, 0.0))
 
 
@@ -394,8 +514,43 @@ def reconstruct(phantom, dx_cm, cfg=None, geom=None, snapshot_iters=None):
         cfg["cutoffparm_lo"], axis=filter_axis, det_rows=info["det_rows"],
         ramp=cfg.get("ramp", True))
     norms = block_norms(phantom.shape, A, At, R_single_sq, cfg)
+
+    # Build the measured sinogram ONCE and hand the same array to both arms.
+    # Previously each arm called A(phantom) for itself, which is harmless when
+    # the data is noiseless but would give the two arms DIFFERENT noise
+    # realizations -- destroying the paired comparison that makes the statistics
+    # tight, and adding a spurious between-arm difference that has nothing to do
+    # with the method.
+    clean = A(phantom)
+    i0 = float(cfg.get("i0", 0.0) or 0.0)
+    noise_info = dict(i0=i0, noise_seed=cfg.get("noise_seed", 0))
+    if i0 > 0:
+        nrng = np.random.default_rng(
+            (int(cfg.get("noise_seed", 0)) * 2_654_435_761 + 12345) % (2 ** 63))
+        sinodata, n_zero = poisson_sinogram(clean, i0, nrng)
+        frac_zero = n_zero / clean.size
+        resid = R_single(sinodata - clean)
+        noise_info.update(zero_count_frac=frac_zero,
+                          filtered_noise_norm=float(sqrt((resid * resid).sum())))
+        print(f"Poisson noise: i0={i0:.3g}, realization seed="
+              f"{cfg.get('noise_seed', 0)}, zero-count rays {frac_zero:.2e}")
+        if frac_zero > 1e-3:
+            print(f"  WARNING: {frac_zero:.2%} of rays recorded zero photons and "
+                  f"were clamped to 1. i0 is too low for this object; the "
+                  f"clamp biases those line integrals low.")
+        if cfg.get("eps_mode", "fixed") == "noise":
+            # Independent stream from the data draw -- see calibrate_eps.
+            crng = np.random.default_rng(
+                (int(cfg.get("noise_seed", 0)) * 40_503 + 777) % (2 ** 63))
+            cfg["eps"] = calibrate_eps(clean, i0, R_single, info["nrays"], crng,
+                                       factor=cfg.get("eps_factor", 1.1))
+            print(f"  eps calibrated to noise: {cfg['eps']:.6g}")
+        noise_info["eps"] = cfg["eps"]
+    else:
+        sinodata = clean
+
     single = solve_single(phantom, A, At, R_single, norms, cfg,
-                          snapshot_iters=snapshot_iters)
+                          sinodata=sinodata, snapshot_iters=snapshot_iters)
     two = solve_two(phantom, A, At, R_hi, R_lo, R_data_sq, norms, cfg,
-                    snapshot_iters=snapshot_iters)
-    return dict(single=single, two=two, info=info)
+                    sinodata=sinodata, snapshot_iters=snapshot_iters)
+    return dict(single=single, two=two, info=info, noise=noise_info)

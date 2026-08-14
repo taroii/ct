@@ -74,7 +74,10 @@ MFACT_VALUES = [1, 2, 4]
 
 
 def run_reconstruction_for_mfact(mfact, snapshot_iters=None,
-                                  phantom_override=None):
+                                  phantom_override=None, seed=42,
+                                  itermax_override=None, i0=None,
+                                  noise_seed=0, eps_mode='fixed',
+                                  eps_factor=1.1):
     """Run both single and two-channel reconstruction for a given mfact.
 
     If snapshot_iters is a list/set of iteration numbers, the result dict
@@ -85,15 +88,54 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None,
     nx = ny = 512/mfact. When provided, the breast paper-phantom is
     skipped and the override is used directly. Useful for swapping in
     Shepp-Logan or other diagnostic phantoms on the same fan-beam recon.
+
+    seed: re-seeds the global RNG at entry. The module-level seed(42) is set
+    once at import, but the randn() calls below are power-iteration inits that
+    consume the global stream sequentially -- so repeated calls in one process
+    (e.g. a sigma_lo_scale sweep) would otherwise draw different vectors and
+    land on slightly different operator norms, hence different step sizes.
+    Re-seeding per call makes each (phantom, s) run independently reproducible.
+    Pass seed=None to keep the legacy stream-consuming behaviour.
+
+    itermax_override: run this many iterations instead of the resolution
+    default (used by the long-run convergence study).
+
+    i0: incident photons per ray for Poisson transmission noise. None falls
+    back to the legacy module globals (addnoise/nph); 0 forces noiseless.
+
+    noise_seed: indexes the noise REALIZATION, independent of `seed`. Gather
+    statistics by varying noise_seed at fixed seed, so that spread across runs
+    reflects measurement noise rather than power-iteration jitter. Both arms
+    share the realization, so single vs two-channel is a paired comparison.
+
+    eps_mode: 'noise' recalibrates the data tolerance to the noise level from
+    an independent draw (see the data-generation block); 'fixed' keeps the
+    module values. With noisy data 'fixed' at the noiseless eps excludes the
+    truth from the feasible set, so 'noise' is the meaningful setting whenever
+    i0 > 0.
     """
 
     snapshot_iters = set(snapshot_iters) if snapshot_iters else set()
+    if seed is not None:
+        np.random.seed(seed)
+
+    # Local copies of the tolerance globals, bound HERE at function entry.
+    # Two reasons, both load-bearing:
+    #  1. The noise calibration below may reassign eps/eps_hi/eps_lo. In Python
+    #     that makes them locals for the whole function body, so without this
+    #     binding the earlier read at `epssc = eps*sqrt(nrays)` would raise
+    #     UnboundLocalError on every call -- noise or not.
+    #  2. Rebinding locals leaves the module globals untouched, so a calibrated
+    #     eps cannot leak from one run into the next during a sweep.
+    eps = globals()['eps']
+    eps_hi = globals()['eps_hi']
+    eps_lo = globals()['eps_lo']
 
     resolution = int(512/mfact)
     params = RESOLUTION_PARAMS[resolution]
     alpha = params['alpha']
     beta = params['beta']
-    itermax = params['itermax']
+    itermax = params['itermax'] if itermax_override is None else int(itermax_override)
 
     print(f"\n{'='*60}")
     print(f"RUNNING RECONSTRUCTION FOR {resolution}x{resolution} (mfact={mfact})")
@@ -146,7 +188,12 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None,
     nviews = ns0
     nbins = nu0
     nrays = nbins*nviews
-    epssc = eps*sqrt(nrays)
+    # NOTE: epssc is deliberately NOT computed here. The noise calibration in
+    # the data-generation block below may rewrite eps, and the two-channel
+    # tolerances (epssc_hi/epssc_lo) are computed after that block. Fixing
+    # single-channel's tolerance here would leave it on the pre-calibration eps
+    # while two-channel used the calibrated one -- a ~137x tighter constraint
+    # for single-channel, i.e. a rigged comparison. It is set after calibration.
 
     fanangle2 = arcsin((ximageside/2.)/radius)
     detectorlength = 2.*tan(fanangle2)*source_to_detector
@@ -412,10 +459,51 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None,
     truesino = sinogram*0.
     circularFanbeamProjection(phimage, truesino)
 
-    if addnoise:
-        sinodata = -log(poisson(nph*exp(-truesino))/nph)
+    # Poisson transmission noise. i0 (photons/ray) overrides the legacy module
+    # globals addnoise/nph when given. Both arms below consume this one
+    # `sinodata`, so the single- vs two-channel comparison is paired on the same
+    # realization -- essential for tight statistics, and it is what makes a
+    # per-realization difference meaningful rather than noise-on-noise.
+    _i0 = float(i0) if i0 is not None else (float(nph) if addnoise else 0.0)
+    noise_stats = {'i0': _i0, 'noise_seed': noise_seed}
+    if _i0 > 0:
+        # Independent of the power-iteration seed on purpose: statistics come
+        # from varying noise_seed at fixed seed, so spread reflects measurement
+        # noise rather than step-size jitter.
+        nrng = np.random.default_rng(
+            (int(noise_seed)*2_654_435_761 + 12345) % (2**63))
+        counts = nrng.poisson(_i0*exp(-truesino))
+        nzero = int((counts == 0).sum())
+        sinodata = -log(maximum(counts, 1)/_i0)     # clamp: log(0) would be inf
+        noise_stats['zero_count_frac'] = nzero/counts.size
+        print(f"Poisson noise: i0={_i0:.3g}, seed={noise_seed}, "
+              f"zero-count rays {nzero/counts.size:.2e}")
+        if nzero/counts.size > 1e-3:
+            print(f"  WARNING: {nzero/counts.size:.2%} of rays recorded zero "
+                  f"photons and were clamped to 1; i0 is too low for this "
+                  f"object and those line integrals are biased low.")
+        if eps_mode == 'noise':
+            # Calibrate eps from an INDEPENDENT draw, not the data draw: using
+            # the realized noise would leak it into the reconstruction. With
+            # noisy data the truth satisfies the constraint only to about the
+            # filtered noise norm, so leaving eps at its noiseless value would
+            # exclude the truth from the feasible set entirely.
+            crng = np.random.default_rng(
+                (int(noise_seed)*40_503 + 777) % (2**63))
+            cal = -log(maximum(crng.poisson(_i0*exp(-truesino)), 1)/_i0)
+            rn = sqrt((fo(cal - truesino)**2).sum())
+            eps = eps_factor*rn/sqrt(nrays)
+            eps_hi, eps_lo = eps, 1.25*eps
+            print(f"  eps calibrated to noise: {eps:.6g}")
+        noise_stats['eps'] = eps
     else:
         sinodata = truesino*1.
+
+    # Scaled tolerances, set AFTER any noise calibration so that both arms are
+    # constrained by the same eps. epssc feeds single-channel; epssc_hi/lo are
+    # derived from eps_hi/eps_lo further down.
+    epssc = eps*sqrt(nrays)
+    print(f"Tolerances: eps={eps:.6g}, eps_hi={eps_hi:.6g}, eps_lo={eps_lo:.6g}")
 
     xgrad_t, ygrad_t = gradim(phimage)
     gim = sqrt(xgrad_t**2 + ygrad_t**2)
@@ -534,6 +622,9 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None,
     tvs_single = []
     snapshots_single = {}
     istops = [1, 2, 5, 10, 20, 50, 100, 200, 300, 400, 500]
+    # Long runs (the 5000-iteration collapse study) would otherwise print
+    # nothing after iteration 500.
+    istops += list(range(1000, itermax + 1, 500))
     theta = 1.0
     start_time = time.time()
 
@@ -813,6 +904,25 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None,
         'truetv': truetv,
         'snapshots_single': snapshots_single,
         'snapshots_two': snapshots_two,
+        # Convergence certificates: data-constraint residual and TV per
+        # iteration. Computed by the loops above; previously discarded.
+        'derrs_single': derrs_single,
+        'derrs_two': derrs_two,
+        'tvs_single': tvs_single,
+        'tvs_two': tvs_two,
+        # Step sizes / operator norms actually used, so a run can be audited
+        # (and reproducibility of the norms checked) without re-deriving them.
+        'itermax': itermax,
+        'seed': seed,
+        'sigma_lo_scale': sigma_lo_scale,
+        'eps': eps, 'eps_hi': eps_hi, 'eps_lo': eps_lo,
+        'noise': noise_stats,
+        'cutoffparm': cutoffparm, 'cutoffparm_lo': cutoffparm_lo,
+        'totalnorm_single': totalnorm_single,
+        'totalnorm_two': totalnorm_two,
+        'sig_single': sig_single, 'tau_single': tau_single,
+        'sig_hi': sig_hi, 'sig_lo': sig_lo, 'tau_two': tau_two,
+        'nusino': nusino,
     }
 
 

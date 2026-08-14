@@ -57,3 +57,10 @@ data/compressed_legion_victre/
 logs/
 
 .claude/
+
+# Local working notes
+STATUS.md
+
+# Persisted experiment results (runstore). Large .npz volumes; regenerate via
+# the runners. Figures and tables under experiments/{figs,tables} stay tracked.
+paper/experiments/results/

@@ -53,6 +53,7 @@ def defrise_phantom(nz, ny, nx):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--full", action="store_true")
+    ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
     if args.full:
@@ -66,7 +67,7 @@ def main():
     print(f"phantom {phantom.shape} range [{phantom.min():.2f},{phantom.max():.2f}]")
 
     cfg = dict(itermax=itermax, npower=npower, sigma_lo_scale=4.0,
-               eps_hi_ratio=1.0, eps_lo_ratio=1.25)
+               eps_hi_ratio=1.0, eps_lo_ratio=1.25, seed=args.seed)
     geom = dict(det_rows=det[0], det_cols=det[1], nviews=25, arc_deg=50.0)
     res = recon3d.reconstruct(phantom, dx_cm, cfg=cfg, geom=geom,
                               snapshot_iters=snaps)

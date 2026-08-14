@@ -45,6 +45,7 @@ def main():
     ap.add_argument("--itermax", type=int, default=200)
     ap.add_argument("--eps", type=float, default=0.001)
     ap.add_argument("--slo", type=float, default=4.0)
+    ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
     phantom = breast_volume()
@@ -52,8 +53,9 @@ def main():
           f"{phantom.max():.2f}]  frac>0={np.mean(phantom>0):.3f}")
 
     snaps = [10, 50, args.itermax]
-    cfg = dict(itermax=args.itermax, npower=80, eps=args.eps,
-               sigma_lo_scale=args.slo, eps_hi_ratio=1.0, eps_lo_ratio=1.25)
+    cfg = dict(itermax=args.itermax, npower=200, eps=args.eps,
+               sigma_lo_scale=args.slo, eps_hi_ratio=1.0, eps_lo_ratio=1.25,
+               seed=args.seed)
     geom = dict(orbit="dbt", det_rows=256, det_cols=256, det_spacing=0.06,
                 nviews=25, arc_deg=50.0, sod=65.0, odd=5.0)
     res = recon3d.reconstruct(phantom, DX_CM, cfg=cfg, geom=geom,
