@@ -56,6 +56,7 @@ sys.path.insert(0, str(HERE))
 import reconstruction as cm            # noqa: E402
 from runstore import RunStore          # noqa: E402
 from run_2d_convergence import PHANTOMS, MFACT  # noqa: E402
+from pairedstats import paired_stats            # noqa: E402
 
 FIG = HERE / "figs"
 TAB = HERE / "tables"
@@ -147,38 +148,6 @@ def run(name, reps, i0, itermax, force):
 # --------------------------------------------------------------------------
 # Statistics
 # --------------------------------------------------------------------------
-def paired_stats(runs, it):
-    """Paired difference at iteration `it`, positive = two-channel better."""
-    s = np.array([r["ierrs_single"][it - 1] for r in runs])
-    t = np.array([r["ierrs_two"][it - 1] for r in runs])
-    d = s - t
-    n = len(d)
-    mean = d.mean()
-    # t interval on the paired difference; ddof=1 since sigma is estimated.
-    se = d.std(ddof=1) / np.sqrt(n) if n > 1 else np.nan
-    # Separate try blocks on purpose. Sharing one meant a Wilcoxon failure
-    # (it raises when all differences are zero, and warns for tiny n) silently
-    # downgraded tcrit to the normal-approximation 1.96, quietly narrowing every
-    # confidence interval in the table.
-    tcrit = 1.96
-    if n > 1:
-        try:
-            from scipy import stats
-            tcrit = float(stats.t.ppf(0.975, n - 1))
-        except Exception:
-            pass                      # normal approximation; conservative enough
-    p = np.nan
-    if n >= 6:
-        try:
-            from scipy import stats
-            p = float(stats.wilcoxon(s, t).pvalue)
-        except Exception:
-            pass
-    lo, hi = mean - tcrit * se, mean + tcrit * se
-    return dict(n=n, single=s.mean(), two=t.mean(), mean=mean, lo=lo, hi=hi,
-                median=np.median(d), q1=np.percentile(d, 25),
-                q3=np.percentile(d, 75), p=p, win=(d > 0).mean(),
-                rel=100 * mean / s.mean() if s.mean() else np.nan)
 
 
 def write_table(name, runs, i0, itermax):

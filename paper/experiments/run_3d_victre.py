@@ -43,6 +43,13 @@ def parse_mhd(path):
     return dim, spacing
 
 
+# DBT acquisition geometry for every VICTRE run. A module constant so the
+# noise-statistics runner reconstructs under exactly this geometry instead of a
+# copy that can drift. reconstruct() pops "orbit" and forwards the rest to the
+# geometry builder, so pass a copy -- it mutates what it is given.
+VICTRE_GEOM = dict(orbit="dbt", det_rows=480, det_cols=480, det_spacing=0.04,
+                   nviews=25, arc_deg=50.0, sod=65.0, odd=5.0)
+
 CACHE = PAPER.parent / "data" / "victre_cache"
 
 
@@ -130,8 +137,7 @@ def main():
     cfg = dict(itermax=args.itermax, npower=200, sigma_lo_scale=args.slo,
                eps_hi_ratio=1.0, eps_lo_ratio=1.25,        # ramp on by default
                seed=args.seed)
-    geom = dict(orbit="dbt", det_rows=480, det_cols=480, det_spacing=0.04,
-                nviews=25, arc_deg=50.0, sod=65.0, odd=5.0)
+    geom = dict(VICTRE_GEOM)
     res = recon3d.reconstruct(phantom, dx_cm, cfg=cfg, geom=geom,
                               snapshot_iters=snaps)
 

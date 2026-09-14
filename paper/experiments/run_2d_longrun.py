@@ -258,9 +258,10 @@ def fig_collapse(name, res, itermax):
 
 def fig_distance(name, res, ref):
     d = distance_to_limit(res, ref)
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
+    # Single panel: the wall-clock companion it used to sit beside was dropped
+    # (see write_table) because the timings measure server contention.
+    fig, ax = plt.subplots(figsize=(5.8, 4.2))
 
-    ax = axes[0]
     for s in SCALES:
         its, dist = d[("two", s)]
         ax.loglog(its, np.maximum(dist, 1e-12), "o-", color=SCALE_COLOR[s],
@@ -271,24 +272,6 @@ def fig_distance(name, res, ref):
     ax.set_xlabel("iteration"); ax.set_ylabel(r"$\|f^n - f^*\|$ (RMS)")
     ax.grid(True, alpha=0.3, which="both"); ax.legend(fontsize=8)
     ax.set_title(f"{name}: distance to shared limit", fontsize=10)
-
-    # Wall-clock axis: two-channel pays two filter applications per iteration,
-    # so the iteration axis alone overstates the gain.
-    ax = axes[1]
-    for s in SCALES:
-        its, dist = d[("two", s)]
-        n = len(res[s]["ierrs_two"])
-        spi = float(res[s]["two_time"]) / max(n, 1)
-        ax.loglog(its * spi, np.maximum(dist, 1e-12), "o-",
-                  color=SCALE_COLOR[s], lw=1.8, ms=4, label=f"two-channel s={s:g}")
-    its, dist = d[("single", None)]
-    spi = float(res[SCALES[0]]["single_time"]) / max(
-        len(res[SCALES[0]]["ierrs_single"]), 1)
-    ax.loglog(its * spi, np.maximum(dist, 1e-12), "ks--", lw=1.5, ms=4,
-              label="single-channel")
-    ax.set_xlabel("wall-clock (s)"); ax.set_ylabel(r"$\|f^n - f^*\|$ (RMS)")
-    ax.grid(True, alpha=0.3, which="both"); ax.legend(fontsize=8)
-    ax.set_title("same, on a wall-clock axis", fontsize=10)
 
     fig.tight_layout()
     p = FIG / f"longrun_{name}_distance.png"
@@ -334,15 +317,13 @@ def write_table(name, res, ref, itermax, ref_iters):
                  + " | ".join(str(c) if c else ">max" for c in cells)
                  + f" | {sing if sing else '>max'} | {sp} |")
 
-    L += ["", "## Cost per iteration\n",
-          "| arm | wall-clock (s) | s/iter |", "|---|---|---|"]
-    n = len(res[SCALES[0]]["ierrs_single"])
-    L.append(f"| single | {float(res[SCALES[0]]['single_time']):.1f} | "
-             f"{float(res[SCALES[0]]['single_time'])/max(n,1):.4f} |")
-    for s in SCALES:
-        n = len(res[s]["ierrs_two"])
-        L.append(f"| two s={s:g} | {float(res[s]['two_time']):.1f} | "
-                 f"{float(res[s]['two_time'])/max(n,1):.4f} |")
+    # No cost-per-iteration table. These runs share a compute server with other
+    # jobs, and the measured per-iteration cost of the SAME single-channel arm
+    # varied roughly 2x across phantoms (0.1223 / 0.1365 / 0.2428 s/iter) whose
+    # geometry, size and operator count are identical -- phantom content cannot
+    # change the FLOPs, so that spread is contention, not algorithm. Any speedup
+    # built on it would be measuring machine load. Speedup is reported in
+    # ITERATIONS only; a wall-clock claim needs a quiet machine.
 
     p = TAB / f"longrun_{name}.md"
     p.write_text("\n".join(L) + "\n")

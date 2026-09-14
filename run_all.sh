@@ -16,7 +16,8 @@
 #   STAGES="2d 3d"   which stage groups to run (default: all)
 #   ITERS=5000       2D long-run length
 #   SEEDS="1 2 3"    seeds for the multi-seed stability checks
-#   REPS=30          Poisson noise realizations for the statistics stage
+#   REPS=30          Poisson noise realizations for the 2D statistics stage
+#   REPS3D=10        Poisson noise realizations for the 3D statistics stage
 #   PY=python        interpreter
 #   SKIP_SLOW=1      skip the 20000-iteration reference runs and 3D sweeps
 
@@ -27,6 +28,9 @@ PY="${PY:-python}"
 ITERS="${ITERS:-5000}"
 SEEDS="${SEEDS:-1 2 3 4 5}"
 REPS="${REPS:-30}"
+# 3D realizations are separately tunable: each is a full single+two GPU solve of
+# roughly 16 minutes, so the 2D count of 30 would be an 8-hour stage on its own.
+REPS3D="${REPS3D:-10}"
 STAGES="${STAGES:-diag 2d 3d}"
 SKIP_SLOW="${SKIP_SLOW:-0}"
 mkdir -p logs
@@ -153,6 +157,17 @@ fi
 # resumable, so if the night runs short the cheap resumable work is already done.
 # --------------------------------------------------------------------------
 if has_stage 3d; then
+    # THE 3D statistics run. Until now every 3D number in the paper came from a
+    # single realization, and the 3D seed sweep below measures step-size jitter,
+    # NOT measurement noise -- the same distinction the 2D stages draw. This is
+    # the 3D counterpart of the 2D Poisson stage: solver seed fixed, only the
+    # noise seed varying, arms paired within each realization. It runs first in
+    # the 3D block because it is the only 3D stage on runstore and so the only
+    # one that resumes rather than restarting if the night runs short.
+    stage "3D VICTRE Poisson noise statistics (${REPS3D} realizations)" \
+        $PY paper/experiments/run_3d_noise_stats.py --down 4 \
+            --reps "$REPS3D" --itermax 300
+
     stage "3D analytic defrise" \
         $PY paper/experiments/run_3d_analytic.py --full
 
