@@ -23,6 +23,12 @@ MHD = VICTRE / "p_-72912147.mhd"
 RAW = VICTRE / "p_-72912147.raw"
 FIG = PAPER / "experiments" / "figs"
 TAB = PAPER / "experiments" / "tables"
+# figs/ and tables/ are gitignored, so a fresh clone has neither. Create them
+# here rather than trusting an earlier stage to have done it: the 3D scripts
+# are not on runstore, so a missing folder would throw away a full GPU solve
+# at the very last step.
+FIG.mkdir(parents=True, exist_ok=True)
+TAB.mkdir(parents=True, exist_ok=True)
 
 # VICTRE tissue label -> mu (cm^-1, ~30 keV); codes not listed -> air.
 MU_TABLE = {0: 0.0, 1: 0.275, 2: 0.375, 29: 0.368, 33: 0.368, 40: 0.375,

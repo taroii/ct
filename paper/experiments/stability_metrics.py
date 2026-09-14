@@ -101,9 +101,44 @@ def load_runs(results_dir: Path) -> dict[str, list[dict]]:
                 "two": np.asarray(d["ierrs_two"], dtype=float),
                 "noise_seed": cfg.get("noise_seed"),
                 "s": cfg.get("s"),
+                "i0": cfg.get("i0"),
+                "itermax": cfg.get("itermax"),
                 "label": meta.get("label", jp.stem),
             }
         by_phantom.setdefault(cfg["phantom"], []).append(run)
+    _sort_runs(by_phantom)
+    return by_phantom
+
+
+def select_config(name: str, runs: list[dict], args) -> list[dict]:
+    """Keep only runs from ONE configuration of a phantom.
+
+    The store keys on the full config, so it can hold several experiments for
+    the same phantom -- e.g. the default auto-i0 run AND a documented fixed-i0
+    run. Pooling them would treat two doses as one sample: n inflates and every
+    confidence interval comes out too narrow, silently. Runs of different
+    lengths would also crash the figure code. So configurations are never
+    pooled; if more than one survives the filters, stop and say which exist.
+    """
+    keep = [r for r in runs
+            if (args.s is None or r["s"] == args.s)
+            and (args.itermax is None or r["itermax"] == args.itermax)
+            and (args.i0 is None or (r["i0"] is not None
+                                     and abs(r["i0"] - args.i0) <= 1e-6 * abs(args.i0)))]
+    configs = sorted({(r["i0"], r["itermax"], r["s"]) for r in keep},
+                     key=lambda c: tuple(-1 if v is None else v for v in c))
+    if len(configs) > 1:
+        listing = "\n".join(f"    i0={c[0]:.6g}  itermax={c[1]}  s={c[2]}"
+                             f"  ({sum((r['i0'], r['itermax'], r['s']) == c for r in keep)} runs)"
+                             for c in configs)
+        raise SystemExit(
+            f"{name}: the store holds {len(configs)} different configurations, "
+            f"which must not be pooled:\n{listing}\n"
+            f"Pick one with --i0 / --itermax / --s.")
+    return keep
+
+
+def _sort_runs(by_phantom):
     for runs in by_phantom.values():
         runs.sort(key=lambda r: (r["noise_seed"] is None, r["noise_seed"]))
     return by_phantom
@@ -487,6 +522,12 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--phantom", default="all",
                     help="phantom name, or 'all' (default)")
+    ap.add_argument("--i0", type=float, default=None,
+                    help="use only runs at this i0 (needed if the store holds several)")
+    ap.add_argument("--itermax", type=int, default=None,
+                    help="use only runs of this length")
+    ap.add_argument("--s", type=float, default=None,
+                    help="use only runs at this sigma_lo scale")
     ap.add_argument("--results", type=Path, default=RESULTS,
                     help="runstore directory holding the 2d_noise_stats runs")
     ap.add_argument("--window", type=int, default=25,
@@ -528,7 +569,10 @@ def main():
 
     rows = []
     for name in names:
-        runs = by_phantom[name]
+        runs = select_config(name, by_phantom[name], args)
+        if not runs:
+            print(f"\n{name}: no runs match the filters -- skipped")
+            continue
         print(f"\n{name}: {len(runs)} realizations, "
               f"{len(runs[0]['single'])} iterations")
         per = collect(runs, args.window, args.fit_lo, args.fit_hi,

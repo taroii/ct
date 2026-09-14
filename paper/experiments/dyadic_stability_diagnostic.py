@@ -223,6 +223,7 @@ def main():
               "|" + "---|" * (k_auto + 3)]
     lines.append("| " + " | ".join(f"{e_band[i]/tot:.3f}" for i in range(k_auto))
                  + f" | {e_tvx/tot:.3f} | {e_tvy/tot:.3f} | {e_l1/tot:.3f} |")
+    out.parent.mkdir(parents=True, exist_ok=True)   # tables/ is gitignored
     out.write_text("\n".join(lines) + "\n")
     print(f"\nWrote {out}")
 

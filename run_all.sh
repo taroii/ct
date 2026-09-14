@@ -33,7 +33,8 @@ REPS="${REPS:-30}"
 REPS3D="${REPS3D:-10}"
 STAGES="${STAGES:-diag 2d 3d}"
 SKIP_SLOW="${SKIP_SLOW:-0}"
-mkdir -p logs
+# figs/ and tables/ are gitignored, so a fresh clone has neither.
+mkdir -p logs paper/experiments/figs paper/experiments/tables
 
 START=$(date +%s)
 FAILED=()

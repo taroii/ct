@@ -34,6 +34,12 @@ K = 4
 REPORT_ITERS = (10, 50, 100, 200, 300, 500)
 FIG = PAPER / "experiments" / "figs"
 TAB = PAPER / "experiments" / "tables"
+# figs/ and tables/ are gitignored, so a fresh clone has neither. Create them
+# here rather than trusting an earlier stage to have done it: the 3D scripts
+# are not on runstore, so a missing folder would throw away a full GPU solve
+# at the very last step.
+FIG.mkdir(parents=True, exist_ok=True)
+TAB.mkdir(parents=True, exist_ok=True)
 
 
 def band_lambdas(g, project, backproject, dyf, mask, nusino, n_iter=120):
