@@ -41,6 +41,10 @@ DEFAULTS = dict(
     # draw; "fixed" keeps cfg["eps"] as given. See calibrate_eps.
     eps_mode="fixed",
     eps_factor=1.1,
+    # "noise_per_band" only: draws and margin for the per-band calibration.
+    # See calibrate_eps_per_band.
+    eps_cal_draws=20,
+    eps_cal_k=4.0,
 )
 
 
@@ -102,6 +106,44 @@ def calibrate_eps(clean, i0, R_single, nrays, rng, factor=1.1):
     resid = R_single(cal - clean)
     return factor * float(sqrt((resid * resid).sum())) / sqrt(nrays)
 
+
+
+def calibrate_eps_per_band(clean, i0, ops, nrays, rng, draws=20, k=4.0):
+    """A tolerance per band, each sized by the noise THAT band sees.
+
+    calibrate_eps above sizes one ball from the single-channel filtered noise,
+    and solve_two then reuses it for both channels (eps_hi = 1.0*eps,
+    eps_lo = 1.25*eps). But ramp-filtered noise is overwhelmingly high-band:
+    under the separable 2D DBT window the low band holds ~0.03% of it, so that
+    low ball lands at ~80x the low-band noise -- about three quarters of the
+    low-band SIGNAL. The low channel is then free to discard large-scale
+    contrast, which is exactly what it does. Noiselessly eps is 1e-3 and the
+    same ball is ~0.006 of the signal, which is why this only bites under noise.
+
+    The margin is derived rather than chosen: each ball is mean + k*sd of its
+    own noise norm over `draws` independent calibration draws, so a band with
+    few effective degrees of freedom earns a wider margin by itself. Over 5
+    phantoms x 400 held-out realizations, draws=20 and k=4 leave the truth
+    infeasible in at most 0.50% of realizations (Defrise; 0.00% elsewhere, and
+    0.00% in the low band everywhere), with the ball redrawn per realization as
+    the runners do. That equals the flat-1.1 rule's own rate. Note this makes
+    the single and high balls TIGHTER than 1.1 (implied margins ~1.02-1.09).
+
+    `ops` maps a name to its filter; returns the same names mapped to
+    per-ray tolerances.
+    """
+    if int(draws) < 2:
+        raise ValueError("draws must be >= 2: the margin is a sample sd, "
+                         "undefined for a single draw")
+    acc = {b: [] for b in ops}
+    for _ in range(int(draws)):
+        cal, _ = poisson_sinogram(clean, i0, rng)
+        d = cal - clean
+        for b, op in ops.items():
+            v = op(d)
+            acc[b].append(float(sqrt((v * v).sum())))
+    return {b: (float(np.mean(v)) + k * float(np.std(v, ddof=1))) / sqrt(nrays)
+            for b, v in acc.items()}
 
 # --------------------------------------------------------------------------
 # Geometry and projector (circular cone-beam)
@@ -538,13 +580,35 @@ def reconstruct(phantom, dx_cm, cfg=None, geom=None, snapshot_iters=None):
             print(f"  WARNING: {frac_zero:.2%} of rays recorded zero photons and "
                   f"were clamped to 1. i0 is too low for this object; the "
                   f"clamp biases those line integrals low.")
-        if cfg.get("eps_mode", "fixed") == "noise":
+        mode = cfg.get("eps_mode", "fixed")
+        if mode == "noise":
             # Independent stream from the data draw -- see calibrate_eps.
             crng = np.random.default_rng(
                 (int(cfg.get("noise_seed", 0)) * 40_503 + 777) % (2 ** 63))
             cfg["eps"] = calibrate_eps(clean, i0, R_single, info["nrays"], crng,
                                        factor=cfg.get("eps_factor", 1.1))
             print(f"  eps calibrated to noise: {cfg['eps']:.6g}")
+        elif mode == "noise_per_band":
+            # Same stream and same draw offsets as the 2D solver, so the two
+            # implement one rule rather than two that differ by an offset.
+            crng = np.random.default_rng(
+                (int(cfg.get("noise_seed", 0)) * 40_503 + 777) % (2 ** 63))
+            ball = calibrate_eps_per_band(
+                clean, i0, {"single": R_single, "hi": R_hi, "lo": R_lo},
+                info["nrays"], crng, draws=cfg.get("eps_cal_draws", 20),
+                k=cfg.get("eps_cal_k", 4.0))
+            # solve_* multiply eps by these ratios, so express the per-band
+            # balls that way rather than reaching into the solvers.
+            cfg["eps"] = ball["single"]
+            cfg["eps_hi_ratio"] = ball["hi"] / ball["single"]
+            cfg["eps_lo_ratio"] = ball["lo"] / ball["single"]
+            noise_info.update(eps_hi=ball["hi"], eps_lo=ball["lo"],
+                              eps_cal_draws=cfg.get("eps_cal_draws", 20),
+                              eps_cal_k=cfg.get("eps_cal_k", 4.0))
+            print(f"  eps per-band ({cfg.get('eps_cal_draws', 20)} draws, "
+                  f"k={cfg.get('eps_cal_k', 4.0)}): single={ball['single']:.6g} "
+                  f"hi={ball['hi']:.6g} lo={ball['lo']:.6g} "
+                  f"(lo/single={cfg['eps_lo_ratio']:.5f})")
         noise_info["eps"] = cfg["eps"]
     else:
         sinodata = clean

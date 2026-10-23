@@ -1,0 +1,1588 @@
+\documentclass{article}
+\usepackage{arxiv}
+%\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{lipsum}		% Can be removed after putting your text content
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{doi}
+\usepackage{amsmath}
+\usepackage{physics}
+\usepackage{wrapfig}
+\usepackage{bm}
+\usepackage{algorithm,algpseudocode}
+\usepackage{xcolor}
+\usepackage{forest}
+\usepackage{tcolorbox}
+\usepackage{tikz-cd}
+\usepackage{enumitem}
+
+
+\newenvironment{proof}{\paragraph{Proof:}}{\hfill$\square$}
+\newenvironment{solution}{\paragraph{Solution:}}{\hfill$\square$}
+
+
+%—– Blackboard‐bold sets —–
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+%—– Probability & expectation —–
+\newcommand{\Prb}{\mathbb{P}}        % probability
+\newcommand{\E}{\mathbb{E}}           % expectation
+\newcommand{\Var}{\mathrm{Var}}       % variance
+\newcommand{\Cov}{\mathrm{Cov}}       % covariance
+
+%—– Common math operators —–
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\argmax}{\operatorname*{arg\,max}}
+\newcommand{\argmin}{\operatorname*{arg\,min}}
+\newcommand{\ind}{\mathbf{1}}         % indicator
+
+%—– Norms, inner products, absolute value —–
+
+\newcommand{\inner}[2]{\left\langle #1, #2 \right\rangle}
+
+%—– Calligraphic sets —–
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cT}{\mathcal{T}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cE}{\mathcal{E}}
+
+%—– RL / MDP notation —–
+\newcommand{\SSS}{\mathcal{S}}        % state space
+\newcommand{\AAA}{\mathcal{A}}        % action space
+\newcommand{\PP}{\mathcal{P}}         % transition kernel
+\newcommand{\RRR}{\mathcal{R}}        % reward function
+\newcommand{\gammaRL}{\gamma}         % discount factor
+
+%—– Confidence bounds —–
+\newcommand{\olQ}{\overline{Q}}
+\newcommand{\ulQ}{\underline{Q}}
+\newcommand{\olV}{\overline{V}}
+\newcommand{\ulV}{\underline{V}}
+
+%—– Miscellaneous —–
+\newcommand{\eps}{\varepsilon}
+\newcommand{\dt}{\mathrm{d}t}
+\newcommand{\given}{\,\bigl\vert\,}    % conditioning bar
+
+%—– Shorthand for frequently used fractions —–
+\newcommand{\half}{\tfrac12}
+\newcommand{\thalf}{\tfrac32}
+
+%—– Styling —–
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+
+\newcommand{\note}[1]{\begin{tcolorbox}
+\textbf{Note:} #1\end{tcolorbox}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{conjecture}[theorem]{Conjecture}
+
+\title{Channel-Preconditioned PDHG for Accelerating Low-Frequency Convergence in Limited-Angle Tomosynthesis}
+\date{}
+
+% NOTE: author block still lists one author. The companion abstract and the
+% repository README list six (Taro Iyadomi, Ricardo Parada, Anna Kim, Lily
+% Jiang, Emil Sidky, William Chang). Add the remaining authors with \And
+% separators and their affiliations before circulating; left as-is here rather
+% than guessing affiliations. The trailing \And was removed because arxiv.sty
+% renders it as an empty author column.
+\author{ \href{https://orcid.org/0000-0003-1700-756X}{William Chang} \\
+	Department of Applied Mathematics\\
+	University of California, Los Angeles\\
+	Los Angeles, CA \\
+	\url{https://williamc.me/}
+}
+
+\renewcommand{\headeright}{}
+\renewcommand{\undertitle}{}
+
+\hypersetup{
+pdftitle={Channel-Preconditioned PDHG for Limited-Angle Tomosynthesis},
+pdfauthor={William Chang},
+}
+
+\DeclareMathOperator{\sign}{sign}
+\DeclareMathOperator{\ri}{ri}
+\DeclareMathOperator{\dist}{dist}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+In limited-angle tomographic reconstruction, weighted data-fidelity terms cause low spatial-frequency image components to converge slowly. The square-root Hanning weighting that de-emphasizes near-DC data inconsistencies for noise robustness also collapses the corresponding singular values of the forward operator, while the global Chambolle--Pock step-size constraint $\tau\sigma\|K\|^2<1$ forces the step sizes to be dictated by the well-conditioned high-frequency band; the modes needing the strongest correction receive the weakest. Splitting the sinogram residual into complementary low- and high-pass channels, each with its own $\ell_2$ constraint and its own dual step size, allows the near-DC band to be corrected independently of the rest of the spectrum. Across five phantoms in limited-angle fan-beam geometry, amplifying the low-frequency dual step by a factor of four lowers the image RMSE at a fixed iteration budget by $9$ to $36\%$ relative to a single-channel baseline, with the largest gains on the phantoms carrying the most low-frequency content. Treating the channel step sizes as a diagonal preconditioner reduces the stability condition to a single bound, $\tau\,\lambda_{\max}(\sum_j\sigma_jK_j^\top K_j)<1$, which is evaluated by one power iteration and gives an explicit ceiling on the low-frequency dual step. This bound is strictly sharper than the worst-channel surrogate, and the spectral separation it exploits is measurable on the reconstruction operator itself. To explain the acceleration, we analyze a two-level iteration on a quadratic surrogate of the reconstruction model, in which the near-DC band is corrected exactly on a coarse space and the rest of the spectrum by a gradient step: the contraction factor is then governed by $\lambda_n/\lambda_{r+1}$ rather than $\lambda_n/\lambda_1$, and degrades gracefully when the coarse space captures the slow modes only approximately. The same analysis extends to a \emph{dyadic} multi-band fidelity bank in which the residual is partitioned into octave-localized channels; with a geometric dual-step schedule of base $2$, the stability bound is independent of the number of bands, so the near-DC dual can be amplified across many octaves at no cost in the primal step.
+\end{abstract}
+
+\section{Introduction}
+
+Limited angular range (LAR) acquisition arises whenever the source cannot traverse a full arc around the object, either because the geometry forbids it or because dose and acquisition time are constrained. Digital breast tomosynthesis (DBT) is the canonical clinical instance, with the source restricted to an arc of typically $15^\circ$ to $50^\circ$, but the same regime occurs in dental and intraoral tomosynthesis, chest tomosynthesis, image-guided intervention, and non-destructive testing. In each case the resulting linear system is severely ill-conditioned and, at useful isotropic discretizations, underdetermined. Stable inversion at these arcs became possible only once discrete-to-discrete image models were paired with sparsity-promoting convex regularization. Building on the observation that sparsity of directional derivative magnitudes improves LAR recovery, \citet{zhang2021directional} introduced a globally convex framework based on directional total variation (DTV), and \citet{sidky2025accurate} developed a data-discrepancy-constrained, DTV- and pixel-sparsity-regularized model for DBT that is solved with a primal--dual hybrid gradient (PDHG / Chambolle--Pock) method~\citep{chambolle2011first} accelerated by He--Yuan relaxation~\citep{he2012convergence}.
+
+Low spatial-frequency components converge slowly in this setting. The model of \citet{sidky2025accurate} measures data discrepancy through a square-root Hanning (Hann$^{1/2}$) filter applied along detector channels; the filter de-emphasizes low-frequency inconsistencies for noise robustness. In the detector-frequency domain this weighting attenuates near-DC modes, shrinking the already-small low-frequency singular values of the limited-angle forward operator. Because the largest singular values lie in the mid- and high-frequency bands, the global PDHG stability condition $\tau\sigma\|K\|^2<1$ from \cite{chambolle2011first} ties the admissible step sizes to those bands, and the near-DC modes receive only weak per-iteration correction. High- and mid-band components converge quickly, while the low-band error decays slowly and dominates the tail of the iteration.
+
+A natural remedy is to split the data-consistency term into two complementary spectral channels, a high/band-pass channel that preserves the original weighting and a low-pass channel supported near DC~\citep{iyadomi2026accelerating}, each enforced by its own $\ell_2$ constraint and each driven by its own dual step size. Assigning a larger step to the low-pass channel supplies a stronger correction to the near-DC band. The scalar theory does not govern this construction: the Chambolle--Pock theorem assumes a \emph{single} dual step size $\sigma$, and the condition $\tau\sigma\|K\|^2<1$ does not accommodate distinct $\sigma_{\mathrm{hi}}$ and $\sigma_{\mathrm{lo}}$. It therefore neither certifies the two-channel iteration nor bounds the admissible low-frequency step, and the amplification factor is left as a tuning parameter.
+
+
+General convergence theory for this situation is available: \citet{pock2011diagonal} prove that the primal--dual iteration converges for symmetric positive definite preconditioners $T$ and $\Sigma$ under the weighted condition $\|\Sigma^{1/2}KT^{1/2}\|<1$, and the per-channel step sizes are exactly a diagonal $\Sigma$. What that condition does not supply is a way to evaluate it or a rule for setting the steps. Our contribution is to make it operational for the split-fidelity operator. Section~\ref{sec:main} first collapses the weighted operator norm, for $T=\tau I$ and block-diagonal $\Sigma$, to the single computable bound $\tau\,\lambda_{\max}(\sum_j\sigma_jK_j^\top K_j)<1$, evaluated by one power iteration on a weighted normal operator that is never assembled. It shows that this bound is strictly sharper than the conservative worst-channel rule, by an amount governed by the spectral separation of the bands, and isolates the low-frequency step in it to obtain an exact ceiling. The main result, Theorem~\ref{thm:two-level}, explains why separating the near-DC band accelerates convergence. On a quadratic surrogate of the reconstruction model, a two-level iteration that corrects the slow (near-DC) subspace exactly and the remaining spectrum by a gradient step contracts at the rate $(\lambda_n-\lambda_{r+1})/(\lambda_n+\lambda_{r+1})$, so the slowest $r$ modes no longer limit the rate. Corollary~\ref{cor:leakage} quantifies the loss when the coarse space captures those modes only approximately. Section~\ref{sec:experiments} evaluates the resulting method on five phantoms. Finally, we generalize the two-channel split to a \emph{dyadic} multi-band fidelity bank (Section~\ref{sec:dyadic}) and show that, under a geometric dual-step schedule of base $2$ matched to the per-octave energy decay, the stability bound is independent of the number of bands. The two-level result extends to the dyadic bank (Theorem~\ref{thm:dyadic-level}): band coarse spaces that are $\mathcal H$-orthogonal decouple into independent per-octave solves, and leakage into each octave is charged only that octave's spectral gap.
+
+\section{Preliminaries}
+\label{sec:prelim}
+\paragraph{Imaging model and directional total variation.}
+We consider LAR DBT in a discrete-to-discrete setting. Let $f\in\R^{n}$ denote the discretized (nonnegative) attenuation image, $g\in\R^{m}$ the measured sinogram, and $X\in\R^{m\times n}$ the system matrix encoding the fan-beam projection. The idealized data model is
+\begin{equation}
+\label{eq:fwd}
+g = X f .
+\end{equation}
+Let $\partial_x,\partial_y,\partial_z$ be finite-difference operators approximating the partial derivatives along the corresponding axes, with associated DTV seminorms $\|\partial_x f\|_1,\|\partial_y f\|_1,\|\partial_z f\|_1$ (in 2D the $\partial_y$ term is omitted). Distinguishing in-plane from depth derivatives is important in LAR/DBT because data support and conditioning are direction-dependent.
+
+\paragraph{Two-channel constrained reconstruction.}
+The single-channel model of \citet{sidky2025accurate} minimizes a sparsity-regularized objective subject to a filtered data-discrepancy constraint,
+\begin{equation}
+\label{eq:single}
+\min_{f\ge 0}\;
+\alpha_x\|\partial_x f\|_1+\alpha_y\|\partial_y f\|_1+\alpha_z\|\partial_z f\|_1+\beta\|f\|_1
+\quad\text{s.t.}\quad
+\big\|R[c]\,(g-Xf)\big\|_2\le\varepsilon\sqrt{m},
+\end{equation}
+where $R[c]=\Lambda^{1/2}\,\mathrm{Hann}^{1/2}(c)$ acts along detector channels: $\Lambda^{1/2}$ is the square-root ramp (the Fourier multiplier $|u|^{1/2}$) and $\mathrm{Hann}^{1/2}(c)$ a square-root Hanning window of cutoff parameter $c$. We use throughout the convention that $c$ sets the reciprocal half-width of the window, so that $\mathrm{Hann}(c)$ is supported on $|u|\le\Omega/c$ with $\Omega$ the largest detector frequency; \emph{larger} $c$ therefore means a \emph{narrower} window concentrated closer to DC. The ramp preconditions the fidelity by flattening the $1/|u|$ spectral decay of $X^\top X$, and both factors vanish at DC, so $R[c]^\top R[c]=X^\top\big(|u|\,\mathrm{Hann}(c)\big)X$ suppresses the low-frequency singular values. This de-emphasis slows the convergence of near-DC image content, but it also separates the near-DC band spectrally from the high-frequency band, the property the band-separation argument of Section~\ref{sec:main} rests on.
+
+To retain this robustness while applying a stronger correction to the low band, we split the data constraint into two complementary spectral channels:
+\begin{equation}
+\label{eq:two}
+\min_{f\ge 0}\;
+\alpha_x\|\partial_x f\|_1+\alpha_y\|\partial_y f\|_1+\alpha_z\|\partial_z f\|_1+\beta\|f\|_1
+\quad\text{s.t.}\quad
+\begin{cases}
+\|R_{\mathrm{hi}}(g-Xf)\|_2\le\varepsilon_{\mathrm{hi}}\sqrt{m},\\[0.25em]
+\|R_{\mathrm{lo}}(g-Xf)\|_2\le\varepsilon_{\mathrm{lo}}\sqrt{m}.
+\end{cases}
+\end{equation}
+Both filters carry the same square-root ramp as the single-channel fidelity and differ only in their Hanning window. The low channel is the narrow near-DC window
+\begin{equation}
+\label{eq:Rlo}
+R_{\mathrm{lo}}:=\Lambda^{1/2}\mathrm{Hann}^{1/2}(c_{\mathrm{lo}}),
+\qquad c_{\mathrm{lo}}\gg c,
+\end{equation}
+and the high channel is defined as its complement within the original weighting,
+\begin{equation}
+\label{eq:Rhi}
+R_{\mathrm{hi}}^\top R_{\mathrm{hi}}
+:=|u|\big(\mathrm{Hann}(c)-\mathrm{Hann}(c_{\mathrm{lo}})\big),
+\end{equation}
+which is nonnegative because $\mathrm{Hann}(c_{\mathrm{lo}})\le\mathrm{Hann}(c)$ pointwise for $c_{\mathrm{lo}}\ge c$. The two channels then partition the single-channel weighting exactly,
+\begin{equation}
+\label{eq:two-channel-partition}
+R_{\mathrm{hi}}^\top R_{\mathrm{hi}}+R_{\mathrm{lo}}^\top R_{\mathrm{lo}}=R[c]^\top R[c],
+\end{equation}
+so the split changes only the preconditioning of the iteration, not the data-fidelity content. This is the depth-$2$ instance of the dyadic bank constructed in Section~\ref{sec:dyadic}; defining $R_{\mathrm{hi}}$ instead as the full window $\Lambda^{1/2}\mathrm{Hann}^{1/2}(c)$ would leave the two channels overlapping near DC and \eqref{eq:two-channel-partition} would fail. The shared ramp is essential to the construction: by suppressing the near-DC singular values, it keeps the low band's contribution to the weighted operator norm small. This is the band separation that Section~\ref{sec:main} relies on; without it the low and high bands overlap, the separation is lost, and the certified low-frequency amplification no longer provides a benefit. The low-frequency tolerance is chosen slightly looser, $\varepsilon_{\mathrm{lo}}>\varepsilon_{\mathrm{hi}}$, to permit mild model mismatch at DC while still reducing large-scale bias.
+
+\paragraph{Saddle-point form and the PDHG algorithm.}
+We now recast the constrained problem \eqref{eq:two} as a convex--concave saddle-point problem, the form to which the primal--dual machinery of \citet{chambolle2011first} applies, and records the two structural properties of that form on which the convergence analysis of Section~\ref{sec:main} depends.
+
+Stack the regularization and forward operators into a single linear map and collect the dual variables blockwise:
+\begin{equation}
+\label{eq:K}
+K=\begin{bmatrix} R_{\mathrm{hi}}X\\ R_{\mathrm{lo}}X\\ \partial_x\\ \partial_y\\ \partial_z\end{bmatrix},
+\qquad
+y=\big(y_{\mathrm{hi}},\,y_{\mathrm{lo}},\,p_x,\,p_y,\,p_z\big).
+\end{equation}
+Then \eqref{eq:two} is an instance of the convex--concave saddle problem
+\begin{equation}
+\label{eq:saddle}
+\min_{x}\;\max_{y}\;\; \Phi(x,y):=\langle Kx,y\rangle+G(x)-F^\ast(y),
+\end{equation}
+where $G(x)=\beta\|x\|_1+\iota_{\{x\ge0\}}(x)$ gathers pixel sparsity and nonnegativity, and $F^\ast(y)=\sum_j F_j^\ast(y_j)$ is \emph{separable across blocks}: for each data channel $c\in\{\mathrm{hi},\mathrm{lo}\}$, $F_c^\ast(y_c)=\langle y_c,R_c g\rangle+\varepsilon_c\sqrt{m}\,\|y_c\|_2$ is the support function of the $\ell_2$ ball (so its resolvent is a shift by the data followed by projection onto $\{\|u\|_2\le\varepsilon_c\sqrt m\}$), and for each TV channel $d\in\{x,y,z\}$, $F_d^\ast(p_d)=\iota_{\{\|\cdot\|_\infty\le\alpha_d\}}(p_d)$ (so its resolvent is projection onto the $\ell_\infty$ ball). The two structural facts that the convergence analysis uses are that $K$ is block-stacked and $F^\ast$ is block-separable.
+
+Preconditioned PDHG assigns each block its own dual step size through a diagonal dual preconditioner $\Sigma$ and a primal preconditioner $T$:
+\begin{equation}
+\label{eq:precond-def}
+T=\tau I_n,\qquad
+\Sigma=\diag\!\big(\sigma_{\mathrm{hi}}I,\;\sigma_{\mathrm{lo}}I,\;\sigma_x I,\;\sigma_y I,\;\sigma_z I\big).
+\end{equation}
+Because $\Sigma$ is block-diagonal and $F^\ast$ separable, the dual update decouples into one proximal step per block, each at its own rate, while the scalar $T=\tau I$ keeps the primal proximal step (soft-thresholding plus nonnegativity clamp) separable. Algorithm~\ref{alg:two} states the iteration; it is exactly the two-channel method, with the data duals projected onto their $\ell_2$ balls at rates $\sigma_{\mathrm{hi}},\sigma_{\mathrm{lo}}$ and the TV duals onto their $\ell_\infty$ balls.
+
+\begin{algorithm}[t]
+\caption{Preconditioned PDHG with split low/high fidelity channels}
+\label{alg:two}
+\begin{algorithmic}[1]
+\State \textbf{Input:} $g,X,R_{\mathrm{hi}},R_{\mathrm{lo}},\alpha_{x,y,z},\beta,\varepsilon_{\mathrm{hi}},\varepsilon_{\mathrm{lo}}$; steps $\tau,\sigma_{\mathrm{hi}},\sigma_{\mathrm{lo}},\sigma_{x,y,z}>0$ with $\tau\lambda_{\max}(M)<1$ (eq.~\eqref{eq:cond}); extrapolation $\theta=1$.
+\State \textbf{Initialize:} $f^{-1}=f^{0}=0$, all duals $=0$.
+\For{$n=0,1,2,\dots,N-1$}
+  \State $\bar f^{\,n}\gets f^{n}+\theta\,(f^{n}-f^{n-1})$ \Comment{predictor; $\theta=1\Rightarrow\bar f^{\,n}=2f^n-f^{n-1}$}
+  \State $y_{c}^{n+1}\gets \Pi_{\{\|u\|_2\le\varepsilon_c\sqrt m\}}\!\big(y_{c}^{n}+\sigma_{c}\,R_{c}(X\bar f^{\,n}-g)\big)$,\quad $c\in\{\mathrm{hi},\mathrm{lo}\}$
+  \State $p_{d}^{n+1}\gets \Pi_{\{\|\cdot\|_\infty\le\alpha_d\}}\!\big(p_{d}^{n}+\sigma_{d}\,\partial_d\bar f^{\,n}\big)$,\quad $d\in\{x,y,z\}$
+  \State $\tilde f^{\,n+1}\gets f^{n}-\tau\big(X^\top(R_{\mathrm{hi}}^\top y_{\mathrm{hi}}^{n+1}+R_{\mathrm{lo}}^\top y_{\mathrm{lo}}^{n+1})+\sum_d\partial_d^\top p_d^{n+1}\big)$
+  \State $f^{n+1}\gets \max\!\big(0,\ \operatorname{shrink}(\tilde f^{\,n+1},\tau\beta)\big)$
+\EndFor
+\State \textbf{Output:} $f^{N}$.
+\end{algorithmic}
+\end{algorithm}
+
+The scalar Chambolle--Pock theorem~\citep{chambolle2011first} guarantees convergence of \eqref{eq:saddle} when a single step pair satisfies $\tau\sigma\|K\|^2<1$. Algorithm~\ref{alg:two} uses \emph{distinct} step sizes $\sigma_{\mathrm{hi}},\sigma_{\mathrm{lo}},\sigma_{x,y,z}$, a case this condition does not address. In practice the implementation also replaces the $\theta=1$ extrapolation by the He--Yuan over-relaxation $\bar f^{\,n}=f^n+\rho(f^n-f^{n-1})$ with $\rho\approx1.75$ as an accelerator, which converges for $\rho\in(0,2)$ under the same step-size condition~\citep{he2012convergence}; the stability condition we derive below is what is imposed on the step sizes in either case. The results of Section~\ref{sec:main} are stated for $\theta=1$. Section~\ref{sec:main} establishes convergence for distinct step sizes.
+
+\section{Main Result}
+\label{sec:main}
+
+\paragraph{Stability of the two-channel iteration.}
+Algorithm~\ref{alg:two} is preconditioned PDHG with $T=\tau I$ and the block-diagonal $\Sigma$ of \eqref{eq:precond-def}. By \citet{pock2011diagonal}, which extends the scalar analysis of \citet{chambolle2011first}, it converges to a saddle point of \eqref{eq:saddle} whenever $\|\Sigma^{1/2}KT^{1/2}\|<1$. For the block-stacked $K$ of \eqref{eq:K}, the vector $\Sigma^{1/2}KT^{1/2}x$ has blocks $\sqrt{\sigma_j\tau}\,K_jx$, so $\|\Sigma^{1/2}KT^{1/2}x\|^2=\tau\langle x,Mx\rangle$ with the step-weighted normal operator
+\begin{equation}
+\label{eq:M}
+M:=\sum_{j}\sigma_j\,K_j^\top K_j ,
+\end{equation}
+and the condition becomes
+\begin{equation}
+\label{eq:cond}
+\tau\,\lambda_{\max}(M)<1 .
+\end{equation}
+The quantity $\lambda_{\max}(M)$ is obtained by one power iteration on $u\mapsto Mu$, using only the existing forward and adjoint operators. Condition \eqref{eq:cond} is sharper than the worst-channel surrogate
+\begin{equation}
+\label{eq:worst-channel}
+\tau\,\sigma_{\max}\|K\|^2<1,\qquad \sigma_{\max}:=\max_j\sigma_j,
+\end{equation}
+because it keeps the individual terms $\sigma_jK_j^\top K_j$ before taking the largest eigenvalue. The gap between the two is set by band separation. Write $A_{\mathrm{hi}}:=X^\top R_{\mathrm{hi}}^\top R_{\mathrm{hi}}X$ and $A_{\mathrm{lo}}:=X^\top R_{\mathrm{lo}}^\top R_{\mathrm{lo}}X$. The shared ramp suppresses $A_{\mathrm{lo}}$ near DC, while $A_{\mathrm{hi}}$ attains its largest eigenvalue in the mid-band. Their dominant eigenvectors are therefore nearly orthogonal, and $\lambda_{\max}(M)$ stays close to $\max_j\sigma_j\lambda_{\max}(K_j^\top K_j)$ rather than to $\sigma_{\max}\sum_j\lambda_{\max}(K_j^\top K_j)$. Table~\ref{tab:stability} reports this separation for the operator used in the experiments.
+
+Isolating $\sigma_{\mathrm{lo}}$ in \eqref{eq:cond} gives the exact ceiling on the low-frequency step. Let $B:=\sum_d\sigma_d\partial_d^\top\partial_d$, so that $M=B+\sigma_{\mathrm{hi}}A_{\mathrm{hi}}+\sigma_{\mathrm{lo}}A_{\mathrm{lo}}$, and let
+\begin{equation}
+\label{eq:Qhi}
+Q_{\mathrm{hi}}:=\tau^{-1}I-B-\sigma_{\mathrm{hi}}A_{\mathrm{hi}}\succ0 .
+\end{equation}
+Then \eqref{eq:cond} is the Loewner inequality $\sigma_{\mathrm{lo}}A_{\mathrm{lo}}\prec Q_{\mathrm{hi}}$, which congruence by $Q_{\mathrm{hi}}^{-1/2}$ turns into
+\begin{equation}
+\label{eq:sigma-lo-max}
+\sigma_{\mathrm{lo}}<\sigma_{\mathrm{lo}}^{\max}
+:=\frac{1}{\lambda_{\max}\big(Q_{\mathrm{hi}}^{-1/2}A_{\mathrm{lo}}Q_{\mathrm{hi}}^{-1/2}\big)}
+=\inf_{u^\top A_{\mathrm{lo}}u>0}\frac{\tau^{-1}\|u\|^2-u^\top Bu-\sigma_{\mathrm{hi}}u^\top A_{\mathrm{hi}}u}{u^\top A_{\mathrm{lo}}u}.
+\end{equation}
+In practice we write $\sigma_{\mathrm{hi}}=s$, $\sigma_{\mathrm{lo}}=r_{\mathrm{lo}}s$, and $\sigma_d=r_ds$, so that $M=s\widehat M$ with $\widehat M:=A_{\mathrm{hi}}+r_{\mathrm{lo}}A_{\mathrm{lo}}+\sum_dr_d\partial_d^\top\partial_d$. We then saturate \eqref{eq:cond} at $\tau s=(1-\delta)/\lambda_{\max}(\widehat M)$ for a small margin $\delta$. Band separation makes $\lambda_{\max}(\widehat M)$ grow slowly in $r_{\mathrm{lo}}$ until $A_{\mathrm{lo}}$ starts to determine it. Table~\ref{tab:stability} locates this crossover, and \eqref{eq:sigma-lo-max} gives the exact ceiling.
+
+\paragraph{Two-level spectral acceleration.}
+Condition \eqref{eq:cond} says which steps are stable. It does not explain why giving the near-DC band its own correction speeds up convergence. To isolate that mechanism we study a smooth quadratic surrogate of the reconstruction problem,
+\begin{equation}
+\label{eq:surrogate}
+\min_{f\in\R^n}\;J(f)=\tfrac12 f^\top\mathcal H f-b^\top f,
+\qquad
+\mathcal H=X^\top R^\top RX+\sum_d\gamma_d\,\partial_d^\top\partial_d+\mu I,
+\qquad
+b=X^\top R^\top Rg,
+\end{equation}
+with $\gamma_d\ge0$, $\mu>0$, and $R=R[c]$, so that $\mathcal H$ is symmetric positive definite and $f^\star=\mathcal H^{-1}b$. By \eqref{eq:two-channel-partition}, $X^\top R^\top RX=A_{\mathrm{hi}}+A_{\mathrm{lo}}$, so the surrogate carries the same two-channel structure as \eqref{eq:two}. Equation \eqref{eq:surrogate} is not the Hessian of the nonsmooth DTV objective. It is a different, smooth model, and the results below do not establish convergence or acceleration for Algorithm~\ref{alg:two}.
+
+We idealize the split as a two-level iteration. The low band is corrected exactly on a coarse space, and the rest of the spectrum by a fine gradient step. Let $U\in\R^{n\times r}$ have full column rank, $1\le r<n$; the natural choice is a basis for the near-DC directions seen by the low channel, such as leading eigenvectors of $A_{\mathrm{lo}}$. Define the exact coarse correction
+\begin{equation}
+\label{eq:coarse}
+C_U(f)=f+U(U^\top\mathcal HU)^{-1}U^\top(b-\mathcal Hf),
+\end{equation}
+which is well defined because $U^\top\mathcal HU$ is symmetric positive definite. Given $f_{\mathrm{init}}$, set
+\begin{equation}
+\label{eq:two-level}
+f^0=C_U(f_{\mathrm{init}}),
+\qquad
+f^{n+1}=C_U\big(f^n+\nu(b-\mathcal Hf^n)\big),\quad n\ge0.
+\end{equation}
+This is a fine-scale Richardson (gradient) step followed by a coarse-space energy correction. We use the $\mathcal H$-inner product $\langle u,v\rangle_{\mathcal H}=u^\top\mathcal Hv$ and norm $\|v\|_{\mathcal H}=(v^\top\mathcal Hv)^{1/2}$, and write
+\begin{equation}
+\label{eq:WU}
+\mathcal W_U=\{v\in\R^n:\ U^\top\mathcal Hv=0\},
+\qquad
+\lambda_U^-=\min_{v\in\mathcal W_U\setminus\{0\}}\frac{v^\top\mathcal H^2v}{v^\top\mathcal Hv},
+\qquad
+\lambda_U^+=\max_{v\in\mathcal W_U\setminus\{0\}}\frac{v^\top\mathcal H^2v}{v^\top\mathcal Hv}.
+\end{equation}
+Let $\mathcal Hv_i=\lambda_iv_i$ for an orthonormal eigenbasis $\{v_i\}_{i=1}^n$, ordered so that $0<\lambda_1\le\dots\le\lambda_n$.
+
+\begin{theorem}[Two-level spectral contraction]
+\label{thm:two-level}
+Suppose $\mathcal H$ is symmetric positive definite and $U$ has full column rank, with $1\le r<n$. Then $0<\lambda_U^-\le\lambda_U^+$, and iteration \eqref{eq:two-level} with
+\begin{equation}
+\label{eq:nu-star}
+\nu^\star=\frac{2}{\lambda_U^-+\lambda_U^+}
+\end{equation}
+satisfies, for every integer $n\ge0$,
+\begin{equation}
+\label{eq:two-level-rate}
+\|f^n-f^\star\|_{\mathcal H}\le\Big(\frac{\lambda_U^+-\lambda_U^-}{\lambda_U^++\lambda_U^-}\Big)^{n}\|f^0-f^\star\|_{\mathcal H}.
+\end{equation}
+In particular, if $\operatorname{range}(U)=\operatorname{span}\{v_1,\dots,v_r\}$, then
+\begin{equation}
+\label{eq:two-level-exact}
+\|f^n-f^\star\|_{\mathcal H}\le\Big(\frac{\lambda_n-\lambda_{r+1}}{\lambda_n+\lambda_{r+1}}\Big)^{n}\|f^0-f^\star\|_{\mathcal H}.
+\end{equation}
+Thus the rate is governed by $\lambda_n/\lambda_{r+1}$, not $\lambda_n/\lambda_1$.
+\end{theorem}
+
+\begin{proof}
+\emph{Step 1: the coarse correction is an $\mathcal H$-orthogonal projector.} Set $e=f-f^\star$. Since $\mathcal Hf^\star=b$, \eqref{eq:coarse} gives
+\begin{equation}
+\label{eq:PU}
+C_U(f)-f^\star=\mathcal P_Ue,
+\qquad
+\mathcal P_U=I-U(U^\top\mathcal HU)^{-1}U^\top\mathcal H.
+\end{equation}
+Direct multiplication gives $U^\top\mathcal H\mathcal P_U=0$, $\mathcal P_Uv=v$ for $v\in\mathcal W_U$, and $\mathcal P_U^2=\mathcal P_U$. Also $\mathcal P_U^\top\mathcal H=\mathcal H\mathcal P_U$. Therefore $\mathcal P_U$ is the $\mathcal H$-orthogonal projector onto $\mathcal W_U$, and in particular $\|\mathcal P_Uv\|_{\mathcal H}\le\|v\|_{\mathcal H}$ for all $v$.
+
+\emph{Step 2: the iterates remain in the complementary space.} Let $e^n=f^n-f^\star$. By \eqref{eq:two-level} and \eqref{eq:PU},
+\[
+e^0=\mathcal P_U(f_{\mathrm{init}}-f^\star)\in\mathcal W_U,
+\qquad
+e^{n+1}=\mathcal P_U(I-\nu\mathcal H)e^n .
+\]
+Hence $e^n\in\mathcal W_U$ for all $n$. Define the restricted map $\mathcal A_U:\mathcal W_U\to\mathcal W_U$, $\mathcal A_Uv=\mathcal P_U\mathcal Hv$. Using $\mathcal P_Ue^n=e^n$,
+\begin{equation}
+\label{eq:restricted}
+e^{n+1}=(I_{\mathcal W_U}-\nu\mathcal A_U)e^n .
+\end{equation}
+
+\emph{Step 3: $\mathcal A_U$ is self-adjoint and positive definite in the $\mathcal H$ metric.} For $v,w\in\mathcal W_U$, the identity $\mathcal P_U^\top\mathcal H=\mathcal H\mathcal P_U$ and $\mathcal P_Uv=v$ give
+\[
+\langle v,\mathcal A_Uw\rangle_{\mathcal H}=v^\top\mathcal H\mathcal P_U\mathcal Hw=v^\top\mathcal H^2w=\langle\mathcal A_Uv,w\rangle_{\mathcal H},
+\]
+and for $v\neq0$, $\langle v,\mathcal A_Uv\rangle_{\mathcal H}/\|v\|_{\mathcal H}^2=v^\top\mathcal H^2v/v^\top\mathcal Hv>0$. The spectral theorem in $(\mathcal W_U,\langle\cdot,\cdot\rangle_{\mathcal H})$ therefore applies, and the smallest and largest eigenvalues of $\mathcal A_U$ are exactly $\lambda_U^-$ and $\lambda_U^+$. This proves $0<\lambda_U^-\le\lambda_U^+$.
+
+\emph{Step 4: minimax selection of the step.} By \eqref{eq:restricted} and the spectral theorem,
+\[
+\|e^{n+1}\|_{\mathcal H}\le\max_{\lambda\in\operatorname{spec}(\mathcal A_U)}|1-\nu\lambda|\,\|e^n\|_{\mathcal H}\le\max\{|1-\nu\lambda_U^-|,\,|1-\nu\lambda_U^+|\}\,\|e^n\|_{\mathcal H}.
+\]
+The constant step that equalizes the two endpoint magnitudes is \eqref{eq:nu-star}, and the resulting factor is $(\lambda_U^+-\lambda_U^-)/(\lambda_U^++\lambda_U^-)\in[0,1)$. Iterating proves \eqref{eq:two-level-rate}.
+
+\emph{Step 5: exact slow eigenspace.} If $\operatorname{range}(U)=\operatorname{span}\{v_1,\dots,v_r\}$, then $\mathcal W_U=\operatorname{span}\{v_{r+1},\dots,v_n\}$. This space is invariant under $\mathcal H$, and $\mathcal P_U$ acts as the identity on it, so $\mathcal A_Uv_i=\lambda_iv_i$ for $i=r+1,\dots,n$. Consequently $\lambda_U^-=\lambda_{r+1}$ and $\lambda_U^+=\lambda_n$, and \eqref{eq:two-level-exact} follows from \eqref{eq:two-level-rate}.
+\end{proof}
+
+The exact slow eigenspace may be too costly to compute. The next result quantifies the effect of capturing it only approximately, without assuming that the columns of $U$ are eigenvectors. Let $E_r=\operatorname{span}\{v_1,\dots,v_r\}$. Its spectral projector $\Pi_{E_r}$ is orthogonal in both the Euclidean and the $\mathcal H$ inner products. Define the leakage
+\begin{equation}
+\label{eq:leakage}
+\zeta_U=\sup_{v\in\mathcal W_U\setminus\{0\}}\frac{\|\Pi_{E_r}v\|_{\mathcal H}}{\|v\|_{\mathcal H}}\in[0,1].
+\end{equation}
+
+\begin{corollary}[Rate with imperfect slow-mode capture]
+\label{cor:leakage}
+Under the assumptions of Theorem~\ref{thm:two-level}, let $\underline\lambda_U=\lambda_{r+1}-(\lambda_{r+1}-\lambda_1)\zeta_U^2$. Then $\lambda_U^-\ge\underline\lambda_U\ge\lambda_1>0$ and $\lambda_U^+\le\lambda_n$. With the guaranteed step $\nu=2/(\lambda_n+\underline\lambda_U)$, iteration \eqref{eq:two-level} obeys
+\begin{equation}
+\label{eq:leakage-rate}
+\|f^n-f^\star\|_{\mathcal H}\le\Big(\frac{\lambda_n-\underline\lambda_U}{\lambda_n+\underline\lambda_U}\Big)^n\|f^0-f^\star\|_{\mathcal H}.
+\end{equation}
+If $\lambda_{r+1}>\lambda_1$ and $\zeta_U<1$, this factor is strictly better than the optimal worst-case factor $(\lambda_n-\lambda_1)/(\lambda_n+\lambda_1)$ of constant-step gradient descent.
+\end{corollary}
+
+\begin{proof}
+Fix $v\in\mathcal W_U\setminus\{0\}$ and expand $v=\sum_ic_iv_i$. Then
+\[
+\frac{v^\top\mathcal H^2v}{v^\top\mathcal Hv}=\frac{\sum_i\lambda_i^2c_i^2}{\sum_i\lambda_ic_i^2},
+\qquad
+t:=\frac{\sum_{i\le r}\lambda_ic_i^2}{\sum_i\lambda_ic_i^2}=\frac{\|\Pi_{E_r}v\|_{\mathcal H}^2}{\|v\|_{\mathcal H}^2}\le\zeta_U^2 .
+\]
+Splitting the weighted average into $i\le r$ and $i>r$, and using $\lambda_i^2c_i^2\ge\lambda_1\lambda_ic_i^2$ for $i\le r$ and $\lambda_i^2c_i^2\ge\lambda_{r+1}\lambda_ic_i^2$ for $i>r$,
+\[
+\frac{v^\top\mathcal H^2v}{v^\top\mathcal Hv}\ge\lambda_1t+\lambda_{r+1}(1-t)=\lambda_{r+1}-(\lambda_{r+1}-\lambda_1)t\ge\underline\lambda_U .
+\]
+Taking the infimum over $\mathcal W_U\setminus\{0\}$ gives $\lambda_U^-\ge\underline\lambda_U$. Likewise $\mathcal H^2\preceq\lambda_n\mathcal H$ gives $\lambda_U^+\le\lambda_n$. By Theorem~\ref{thm:two-level} the spectrum of $\mathcal A_U$ lies in $[\underline\lambda_U,\lambda_n]$, so with $\nu=2/(\lambda_n+\underline\lambda_U)$ we have $\max_{\lambda\in\operatorname{spec}(\mathcal A_U)}|1-\nu\lambda|\le(\lambda_n-\underline\lambda_U)/(\lambda_n+\underline\lambda_U)$, and iterating yields \eqref{eq:leakage-rate}. Finally, $\zeta_U<1$ and $\lambda_{r+1}>\lambda_1$ imply $\underline\lambda_U>\lambda_1$, and $a\mapsto(\lambda_n-a)/(\lambda_n+a)$ is strictly decreasing for $a>0$.
+\end{proof}
+
+Two consequences follow. Since $J(f)-J(f^\star)=\tfrac12\|f-f^\star\|_{\mathcal H}^2$, any bound $\|e^n\|_{\mathcal H}\le q^n\|e^0\|_{\mathcal H}$ gives $J(f^n)-J(f^\star)\le q^{2n}(J(f^0)-J(f^\star))$; and the projection identity gives $\|f^0-f^\star\|_{\mathcal H}\le\|f_{\mathrm{init}}-f^\star\|_{\mathcal H}$. The scope of the result is limited in three ways. The rates count outer iterations with an exact $r\times r$ coarse solve, not wall-clock time. They require a fixed symmetric positive definite $\mathcal H$, a linear residual and an exact coarse energy projection, so the nonsmooth DTV terms, nonnegativity and the hard discrepancy constraints of \eqref{eq:two} are not covered. And the smallest eigenvalues of $\mathcal H$, which define the slow directions, need not coincide with the low Fourier frequencies of the image. Whether a low-frequency coarse space captures them, that is, whether $\zeta_U$ is small, must be checked against the spectrum of the weighted reconstruction operator.
+
+% ============================================================
+\section{Dyadic Multi-Channel Fidelity}
+\label{sec:dyadic}
+
+In the previous section we proposed the two-channel method, which splits the data fidelity into a low-pass and a high-pass channel and gives each its own dual step, and we derived its stability bound and the two-level contraction rate (Theorem~\ref{thm:two-level}). In this section we extend the split to a \emph{dyadic} bank of $k$ channels. The idea is to replace the single low/high partition with octave-localized bands: channel $i$ covers detector frequencies in $[\Omega/2^{i+1},\Omega/2^{i}]$, the last channel covers the remaining near-DC tail, and each channel has its own dual step. The low-frequency correction can then be strengthened octave by octave across the whole low-frequency tail rather than in one near-DC band, at only a small reduction of the primal step. The two-channel method is the case $k=2$. The stability analysis of Section~\ref{sec:main} carries over unchanged, since the condition \eqref{eq:cond} uses only a block-stacked $K$ and a block-separable $F^\ast$; only the operator $M$ and its spectrum change. The two-level result extends with one coarse space per octave (Theorem~\ref{thm:dyadic-level}).
+
+\paragraph{The dyadic filter bank.}
+
+Let $\omega$ index the detector frequency along the channel direction and let $\Omega:=|b_{00}|$ denote the largest detector-frequency magnitude (half the detector extent), so that the single-channel fidelity weight is the square-root ramp $R_{\mathrm{full}}=\sqrt{|\omega|}$ applied per view by an FFT along the detector. For a target depth $k$, define square-root Hanning windows of geometrically shrinking half-width,
+\begin{equation}
+    H_{i}(\omega)=\tfrac12\bigl(1+\cos(\pi\,\omega\,2^{i}/\Omega)\bigr)\,\ind_{\{|\omega|\le \Omega/2^{i}\}},\qquad i=0,1,\dots,k-1,
+    \label{eq:dyadic-hann}
+\end{equation}
+so $H_{0}$ covers the full band, $H_{1}$ the lower half, and $H_{i}$ the near-DC core of half-width $\Omega/2^{i}$. The band-pass windows are the telescoping differences
+\begin{equation}
+    P_{0}=1-H_{1},\qquad P_{i}=H_{i}-H_{i+1}\ (0<i<k-1),\qquad P_{k-1}=H_{k-1},
+    \label{eq:dyadic-bands}
+\end{equation}
+which form a partition of unity: $\sum_{i=0}^{k-1}P_{i}(\omega)\equiv1$. Channel $0$ is the top octave $|\omega|\in[\Omega/2,\Omega]$, channel $i$ the dyadic shell $[\Omega/2^{i+1},\Omega/2^{i}]$, and channel $k-1$ the closed low-frequency tail $[0,\Omega/2^{k-1}]$. Each band filter is the ramp-weighted square root of its window, acting as a detector-domain multiplier,
+\begin{equation}
+    R_{i}:=\sqrt{|\omega|\,P_{i}(\omega)},\qquad\text{so that}\qquad
+    \sum_{i=0}^{k-1}R_{i}^\top R_{i}=|\omega|\sum_{i}P_{i}=|\omega|=R_{\mathrm{full}}^\top R_{\mathrm{full}}.
+    \label{eq:dyadic-partition}
+\end{equation}
+The split is therefore \emph{lossless}: the stacked data term reproduces the single-channel ramp weighting exactly (to machine precision), so it changes only the iteration's preconditioning, not the data-fidelity content. The $k$-channel constrained problem replaces the two data constraints of \eqref{eq:two} by
+\begin{equation}
+    \|R_{i}(Xf-g)\|_{2}\le\varepsilon_{i}\sqrt{m},\qquad i=0,\dots,k-1,
+    \label{eq:dyadic-constraints}
+\end{equation}
+and the stacked operator and dual preconditioner become
+\begin{equation}
+    K=\begin{bmatrix}R_{0}X\\ \vdots\\ R_{k-1}X\\ \partial_x\\ \partial_y\\ \partial_z\end{bmatrix},\qquad
+    \Sigma=\diag\!\bigl(\sigma_{0}I,\dots,\sigma_{k-1}I,\ \sigma_x I,\ \sigma_y I,\ \sigma_z I\bigr).
+    \label{eq:dyadic-K}
+\end{equation}
+Algorithm~\ref{alg:dyadic} states the resulting iteration (with the He--Yuan over-relaxation used in the implementation); it is Algorithm~\ref{alg:two} with the two data blocks replaced by $k$ band blocks, each projected onto its own $\ell_2$ ball at its own rate $\sigma_i$.
+
+\begin{algorithm}[t]
+\caption{Dyadic $k$-channel PDHG (He--Yuan relaxed)}
+\label{alg:dyadic}
+\begin{algorithmic}[1]
+\State \textbf{Input:} $g,X,\{R_i\}_{i=0}^{k-1}$, regularization $\alpha_{x,y,z},\beta$, tolerances $\{\varepsilon_i\}$, steps $\tau,\{\sigma_i\},\sigma_{x,y,z}$ with $\tau\,\lambda_{\max}(M)<1$ (eq.~\eqref{eq:dyadic-M}), relaxation $\rho\in(1,2)$.
+\State \textbf{Initialize:} $f^{0}=0$; all duals $=0$; $\bar f^{0}=f^{0}$.
+\For{$n=0,1,2,\dots$}
+  \State $w\gets X^\top\!\sum_{i}R_{i}^\top y_{i}^{n}+\sum_d\partial_d^\top p_d^{n}$
+  \State $\tilde f\gets \max\!\bigl(0,\ \operatorname{shrink}(f^{n}-\tau w,\ \tau\beta)\bigr)$;\quad $\bar f\gets 2\tilde f-f^{n}$ \Comment{predictor ($\theta=1$)}
+  \State $y_{i}^{+}\gets \Pi_{\{\|u\|_2\le\varepsilon_i\sqrt m\}}\!\bigl(y_{i}^{n}+\sigma_{i}R_{i}(X\bar f-g)\bigr),\quad i=0,\dots,k-1$
+  \State $p_{d}^{+}\gets \Pi_{\{\|\cdot\|_\infty\le\alpha_d\}}\!\bigl(p_{d}^{n}+\sigma_{d}\,\partial_d\bar f\bigr),\ d\in\{x,y,z\}$
+  \State $v^{n+1}\gets v^{n}-\rho\,(v^{n}-v^{+})$ for every variable $v\in\{f,\,y_i,\,p_d\}$ \Comment{He--Yuan over-relaxation}
+\EndFor
+\State \textbf{Output:} $f^{N}$.
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Convergence and the dyadic stability bound.}
+
+For the dyadic bank, define the channel normal operators
+\[
+A_i
+:=
+X^\top R_i^\top R_iX,
+\qquad
+i=0,\ldots,k-1,
+\]
+and collect the fixed regularization contribution into
+\[
+B
+:=
+\sum_{d\in\{x,y,z\}}
+\sigma_d\partial_d^\top\partial_d.
+\]
+The step-weighted normal operator governing the PDHG stability
+condition is therefore
+\begin{equation}
+\label{eq:dyadic-M}
+M_k
+=
+B+M_{\mathrm{data},k},
+\qquad
+M_{\mathrm{data},k}
+:=
+\sum_{i=0}^{k-1}\sigma_iA_i.
+\end{equation}
+Applying \eqref{eq:cond} to the stacked operator \eqref{eq:dyadic-K}, the $\theta=1$ iteration converges whenever
+\begin{equation}
+\label{eq:dyadic-cond}
+\tau\lambda_{\max}(M_k)<1.
+\end{equation}
+As in the two-channel case, this condition retains the individual
+positive-semidefinite channel operators before taking the largest
+eigenvalue.  It is therefore sharper than replacing all dual steps
+by $\sigma_{\max}:=\max_i\sigma_i$, which would give the
+worst-channel surrogate
+\[
+\tau\sigma_{\max}
+\lambda_{\max}
+\left(
+\sum_{i=0}^{k-1}A_i
++
+\sum_d\partial_d^\top\partial_d
+\right)<1.
+\]
+
+The dyadic structure permits a stronger conclusion.  Rather than
+bounding $\lambda_{\max}(M_{\mathrm{data},k})$ by the sum of the
+individual channel norms, we evaluate the weighted sum of the
+dyadic windows before maximizing over frequency.  This preserves
+the spectral complementarity built into the filter bank.
+
+\begin{proposition}[Exact stability budget for adding one dyadic channel]
+\label{prop:dyadic-budget}
+Suppose channels $0,\ldots,q-1$ have already been assigned steps
+$\sigma_0,\ldots,\sigma_{q-1}$, and define the remaining stability
+budget
+\begin{equation}
+\label{eq:Qq}
+Q_q
+:=
+\tau^{-1}I
+-
+B
+-
+\sum_{i=0}^{q-1}\sigma_iA_i.
+\end{equation}
+If $Q_q\succ0$, then adding channel $q$ preserves the stability
+condition \eqref{eq:dyadic-cond} if and only if
+\begin{equation}
+\label{eq:dyadic-generalized-eig}
+\sigma_q
+\lambda_{\max}
+\left(
+Q_q^{-1/2}A_qQ_q^{-1/2}
+\right)
+<1.
+\end{equation}
+Consequently, the supremal admissible step for channel $q$ is
+\begin{equation}
+\label{eq:dyadic-sigma-max}
+\sigma_q^{\max}
+=
+\frac{1}{
+\lambda_{\max}
+\left(
+Q_q^{-1/2}A_qQ_q^{-1/2}
+\right)
+}.
+\end{equation}
+Equivalently,
+\begin{equation}
+\label{eq:dyadic-rayleigh}
+\sigma_q^{\max}
+=
+\inf_{\substack{u\neq0\\u^\top A_qu>0}}
+\frac{u^\top Q_qu}{u^\top A_qu}.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+After channels $0,\ldots,q-1$ have been included, adding channel
+$q$ gives
+\[
+B+\sum_{i=0}^{q-1}\sigma_iA_i+\sigma_qA_q
+\prec
+\tau^{-1}I.
+\]
+By the definition of $Q_q$, this is equivalent to
+\[
+\sigma_qA_q\prec Q_q.
+\]
+Since $Q_q\succ0$, congruence by $Q_q^{-1/2}$ preserves the
+Loewner ordering and gives
+\[
+\sigma_q
+Q_q^{-1/2}A_qQ_q^{-1/2}
+\prec I.
+\]
+The matrix $Q_q^{-1/2}A_qQ_q^{-1/2}$ is symmetric positive
+semidefinite, so the preceding inequality holds if and only if
+\[
+\sigma_q
+\lambda_{\max}
+\left(
+Q_q^{-1/2}A_qQ_q^{-1/2}
+\right)<1.
+\]
+This proves \eqref{eq:dyadic-generalized-eig} and
+\eqref{eq:dyadic-sigma-max}.  The Rayleigh-quotient form
+\eqref{eq:dyadic-rayleigh} follows from the standard generalized
+eigenvalue characterization.
+\end{proof}
+
+\begin{assumption}[Fourier-slice diagonalization]
+\label{assu:fourier_slice}
+There exist orthonormal systems
+$\{u_{\theta,\omega}\}$ spanning $\operatorname{range}(X^\top)\subseteq\R^n$ and
+$\{e_{\theta,\omega}\}$ spanning $\operatorname{range}(X)\subseteq\R^m$, indexed by sampled angle
+$\theta$ and detector frequency $\omega$, such that
+\begin{equation}
+\label{eq:fourier_slice}
+Xu_{\theta,\omega}
+=
+s_X(\theta,\omega)e_{\theta,\omega},
+\qquad
+R_ie_{\theta,\omega}
+=
+W_i(\omega)e_{\theta,\omega}.
+\end{equation}
+For the dyadic filters,
+\[
+|W_i(\omega)|^2
+=
+|\omega|P_i(\omega).
+\]
+We further write
+\[
+s_*^2
+:=
+\max_{\theta,\omega}
+s_X(\theta,\omega)^2,
+\]
+which is finite for the fixed discrete imaging system. On $\ker X$ every channel normal operator $A_i=X^\top R_i^\top R_iX$ vanishes, so the eigenvalue computations below are unaffected by the complement of $\operatorname{range}(X^\top)$; in particular the system $\{u_{\theta,\omega}\}$ need not span $\R^n$, and indeed cannot when the number of sampled $(\theta,\omega)$ pairs is smaller than $n$, as in the limited-angle setting of Section~\ref{sec:experiments}.
+
+Assumption~\ref{assu:fourier_slice} is an idealization. It holds exactly for a parallel-beam operator sampled over the full angular range, where the Fourier slice theorem makes the per-view detector Fourier modes singular vectors of $X$. For the fan-beam and cone-beam operators of interest it is an approximation, in which the divergent geometry and the limited arc perturb the singular vectors away from the per-view Fourier basis. It is used only in Proposition~\ref{prop:dyadic-depth}, to sum the dyadic windows before maximizing over frequency; the stability condition \eqref{eq:dyadic-cond} and the exact budget of Proposition~\ref{prop:dyadic-budget} do not rely on it.
+\end{assumption}
+
+\begin{proposition}[Critical geometric schedule for the dyadic bank]
+\label{prop:dyadic-depth}
+Let
+\[
+\sigma_i=\sigma_0\rho_\sigma^i,
+\qquad
+\rho_\sigma\ge1,
+\]
+and let
+\[
+M_{\mathrm{data},k}
+=
+\sum_{i=0}^{k-1}
+\sigma_iX^\top R_i^\top R_iX.
+\]
+Under Assumption~\ref{assu:fourier_slice},
+\begin{equation}
+\label{eq:dyadic-spectrum-exact}
+\lambda_{\max}(M_{\mathrm{data},k})
+=
+\sigma_0
+\max_{\theta,\omega}
+\left\{
+s_X(\theta,\omega)^2
+|\omega|
+\sum_{i=0}^{k-1}
+\rho_\sigma^iP_i(\omega)
+\right\}.
+\end{equation}
+
+For the nested Hanning partition \eqref{eq:dyadic-hann}--%
+\eqref{eq:dyadic-partition}, the weighted window sum satisfies
+\begin{equation}
+\label{eq:weighted-window-bound}
+|\omega|
+\sum_{i=0}^{k-1}\rho_\sigma^iP_i(\omega)
+\le
+\begin{cases}
+\Omega,
+& 1\le\rho_\sigma\le2,
+\\[0.4em]
+\Omega
+\left(\dfrac{\rho_\sigma}{2}\right)^{k-1},
+& \rho_\sigma>2.
+\end{cases}
+\end{equation}
+Consequently,
+\begin{equation}
+\label{eq:dyadic-depth-bound}
+\lambda_{\max}(M_{\mathrm{data},k})
+\le
+\begin{cases}
+\sigma_0\Omega s_*^2,
+& 1\le\rho_\sigma\le2,
+\\[0.4em]
+\sigma_0\Omega s_*^2
+\left(\dfrac{\rho_\sigma}{2}\right)^{k-1},
+& \rho_\sigma>2.
+\end{cases}
+\end{equation}
+
+In particular, for the matched schedule
+\[
+\boxed{\rho_\sigma=2}
+\]
+the data-channel stability cost is bounded independently of the
+number of dyadic bands:
+\begin{equation}
+\label{eq:dyadic-k-independent}
+\lambda_{\max}(M_{\mathrm{data},k})
+\le
+\sigma_0\Omega s_*^2
+\qquad
+\text{for every }k.
+\end{equation}
+Thus, with the regularization steps fixed,
+\begin{equation}
+\label{eq:dyadic-total-bound}
+\lambda_{\max}(M_k)
+\le
+\lambda_{\max}(B)
++
+\sigma_0\Omega s_*^2,
+\end{equation}
+so the certified primal step need not decrease with the filter-bank
+depth $k$.
+\end{proposition}
+
+\begin{proof}
+Under Assumption~\ref{assu:fourier_slice},
+\[
+A_i
+=
+X^\top R_i^\top R_iX
+\]
+is diagonal in the basis $\{u_{\theta,\omega}\}$, with eigenvalue
+\[
+s_X(\theta,\omega)^2
+|W_i(\omega)|^2
+=
+s_X(\theta,\omega)^2
+|\omega|P_i(\omega).
+\]
+Therefore all of the data-channel normal operators are
+simultaneously diagonal in this basis, and
+\[
+M_{\mathrm{data},k}
+=
+\sum_{i=0}^{k-1}\sigma_iA_i
+\]
+has eigenvalue
+\[
+\sigma_0
+s_X(\theta,\omega)^2
+|\omega|
+\sum_{i=0}^{k-1}
+\rho_\sigma^iP_i(\omega)
+\]
+on $u_{\theta,\omega}$.  Taking the largest such eigenvalue gives
+\eqref{eq:dyadic-spectrum-exact}.
+
+It remains to bound the weighted dyadic partition
+\[
+S_k(\omega)
+:=
+\sum_{i=0}^{k-1}
+\rho_\sigma^iP_i(\omega).
+\]
+Recall that
+\[
+P_0=1-H_1,
+\qquad
+P_i=H_i-H_{i+1},
+\quad
+1\le i<k-1,
+\qquad
+P_{k-1}=H_{k-1}.
+\]
+Substitution gives
+\begin{align}
+S_k(\omega)
+&=
+1-H_1
++
+\sum_{i=1}^{k-2}
+\rho_\sigma^i(H_i-H_{i+1})
++
+\rho_\sigma^{k-1}H_{k-1}
+\nonumber\\
+&=
+1
++
+(\rho_\sigma-1)
+\sum_{j=1}^{k-1}
+\rho_\sigma^{j-1}H_j(\omega).
+\label{eq:dyadic-telescope}
+\end{align}
+This identity is the point at which the nested dyadic structure
+gives a sharper result than a Weyl bound on the individual channel
+operators.
+
+Set
+\[
+r:=\frac{|\omega|}{\Omega}\in[0,1].
+\]
+For $\omega\neq0$, let
+\[
+J(\omega)
+:=
+\min
+\left\{
+k-1,
+\left\lfloor
+\log_2\frac{1}{r}
+\right\rfloor
+\right\}.
+\]
+Because $H_j$ is supported on
+\[
+|\omega|\le\frac{\Omega}{2^j},
+\]
+we have $H_j(\omega)=0$ for $j>J(\omega)$, while
+$0\le H_j(\omega)\le1$.  Hence \eqref{eq:dyadic-telescope} gives
+\begin{align}
+S_k(\omega)
+&\le
+1+
+(\rho_\sigma-1)
+\sum_{j=1}^{J(\omega)}
+\rho_\sigma^{j-1}
+\nonumber\\
+&=
+\rho_\sigma^{J(\omega)}.
+\label{eq:S-bound}
+\end{align}
+By the definition of $J(\omega)$ we have
+$J(\omega)\le\log_2(1/r)$ in both branches of the minimum, hence
+\[
+r\le 2^{-J(\omega)} .
+\]
+Therefore
+\begin{equation}
+\label{eq:rS-bound}
+rS_k(\omega)
+\le
+\left(\frac{\rho_\sigma}{2}\right)^{J(\omega)}.
+\end{equation}
+
+If $1\le\rho_\sigma\le2$, the right-hand side of
+\eqref{eq:rS-bound} is at most one.  Hence
+\[
+|\omega|S_k(\omega)
+=
+\Omega rS_k(\omega)
+\le\Omega,
+\]
+independently of $k$.
+
+If $\rho_\sigma>2$, then
+$J(\omega)\le k-1$, so
+\[
+rS_k(\omega)
+\le
+\left(\frac{\rho_\sigma}{2}\right)^{k-1},
+\]
+which yields the second line of
+\eqref{eq:weighted-window-bound}.
+
+At $\omega=0$, every data-channel multiplier contains the ramp
+factor $|\omega|$, so the left-hand side of
+\eqref{eq:weighted-window-bound} is zero and the same bound holds.
+
+Combining \eqref{eq:dyadic-spectrum-exact} with
+\eqref{eq:weighted-window-bound} and
+$s_X(\theta,\omega)^2\le s_*^2$ proves
+\eqref{eq:dyadic-depth-bound}.  Finally, since
+\[
+M_k=B+M_{\mathrm{data},k}
+\]
+with both terms positive semidefinite,
+\[
+\lambda_{\max}(M_k)
+\le
+\lambda_{\max}(B)
++
+\lambda_{\max}(M_{\mathrm{data},k}),
+\]
+which gives \eqref{eq:dyadic-total-bound}.
+\end{proof}
+
+
+
+\begin{remark}[Why the dyadic bound is sharper than Weyl]
+\label{rmk:dyadic-tight}
+A channel-by-channel norm bound gives
+\[
+\lambda_{\max}(M_{\mathrm{data},k})
+\le
+\sum_{i=0}^{k-1}
+\sigma_i\|R_iX\|_2^2.
+\]
+If one additionally assumes
+$\|R_iX\|_2^2\approx2^{-i}\|R_0X\|_2^2$, then the choice
+$\sigma_i=2^i\sigma_0$ makes every summand approximately equal and
+produces an $O(k)$ upper bound.  This is the Weyl estimate used in
+a channelwise analysis.
+
+Proposition~\ref{prop:dyadic-depth} is sharper because it does not
+maximize each dyadic band separately before summing them.  Under
+Assumption~\ref{assu:fourier_slice}, the channel normal operators
+are simultaneously diagonalized, so the correct quantity is
+instead
+\[
+\max_{\theta,\omega}
+s_X(\theta,\omega)^2|\omega|
+\sum_i\sigma_iP_i(\omega).
+\]
+The dyadic windows can therefore be summed first.  Their nested
+telescoping structure yields
+\[
+|\omega|
+\sum_i2^iP_i(\omega)
+\le\Omega,
+\]
+which removes the factor $k$ entirely.
+
+Thus three levels of stability estimate can be distinguished:
+\[
+\underbrace{
+\tau\sigma_{\max}\|K\|^2<1
+}_{\text{worst-channel scalar surrogate}},
+\]
+\[
+\underbrace{
+\lambda_{\max}(M_{\mathrm{data},k})
+\le
+\sum_i\sigma_i\|R_iX\|_2^2
+}_{\text{channelwise Weyl bound}},
+\]
+and
+\[
+\underbrace{
+\lambda_{\max}(M_{\mathrm{data},k})
+=
+\max_{\theta,\omega}
+s_X(\theta,\omega)^2|\omega|
+\sum_i\sigma_iP_i(\omega)
+}_{\text{dyadic spectral bound}}.
+\]
+The final expression retains both the channel-specific steps and the
+frequency partition before taking the spectral maximum, and is the
+source of the depth-independent bound.
+
+The value $\rho_\sigma=2$ is therefore critical in a precise sense:
+it is the largest geometric amplification factor for which
+\eqref{eq:dyadic-depth-bound} remains independent of $k$.  Choosing
+$\rho_\sigma<2$ is more conservative and gives less amplification
+toward DC, whereas $\rho_\sigma>2$ produces a certified stability
+cost growing at most as
+$(\rho_\sigma/2)^{k-1}$.
+\end{remark}
+\paragraph{Multilevel spectral acceleration.}
+Theorem~\ref{thm:two-level} extends to the dyadic bank, with one coarse space per amplified octave. Take the surrogate \eqref{eq:surrogate} with $R=R_{\mathrm{full}}$, so that by \eqref{eq:dyadic-partition} its data term splits by octave, $X^\top R_{\mathrm{full}}^\top R_{\mathrm{full}}X=\sum_{i=0}^{k-1}A_i$. Let $\mathcal I\subseteq\{1,\dots,k-1\}$ index the low octaves to be corrected. For each $i\in\mathcal I$, let $U_i\in\R^{n\times r_i}$ be a basis for the slow directions of octave $i$, and let $U=[U_i]_{i\in\mathcal I}$ have full column rank, with $r=\sum_{i\in\mathcal I}r_i<n$. We run the two-level iteration \eqref{eq:two-level} with this $U$ and keep the notation of Theorem~\ref{thm:two-level}. Write $\mathcal P_{U_i}$ for the projector \eqref{eq:PU} built from $U_i$ alone.
+
+\begin{theorem}[Dyadic spectral contraction]
+\label{thm:dyadic-level}
+Under the assumptions of Theorem~\ref{thm:two-level}:
+\begin{enumerate}[label=\textup{(\alph*)}]
+\item \emph{(Octave decoupling)} If $U_i^\top\mathcal HU_j=0$ for all $i\neq j$ in $\mathcal I$, then
+\begin{equation}
+\label{eq:dyadic-coarse}
+C_U(f)=f+\sum_{i\in\mathcal I}U_i(U_i^\top\mathcal HU_i)^{-1}U_i^\top(b-\mathcal Hf),
+\qquad
+\mathcal P_U=\prod_{i\in\mathcal I}\mathcal P_{U_i}
+\end{equation}
+for any ordering of the product, and $\mathcal W_U=\bigcap_{i\in\mathcal I}\mathcal W_{U_i}$. The joint coarse correction is therefore computed by $|\mathcal I|$ independent $r_i\times r_i$ solves, applied simultaneously or one octave at a time, and Theorem~\ref{thm:two-level} applies to it.
+\item \emph{(Exact octave eigenspaces)} Let $\{J_i\}_{i\in\mathcal I}$ be disjoint index sets with $|J_i|=r_i$ and $\bigcup_iJ_i=\{1,\dots,r\}$. If $\operatorname{range}(U_i)=\operatorname{span}\{v_j:j\in J_i\}$ for every $i$, the hypothesis of (a) holds, and iteration \eqref{eq:two-level} with $\nu^\star$ satisfies \eqref{eq:two-level-exact}.
+\item \emph{(Octave-resolved leakage)} For index sets $J_i$ as in (b) and arbitrary $U$, let $E_i=\operatorname{span}\{v_j:j\in J_i\}$, $\lambda^{(i)}=\min_{j\in J_i}\lambda_j$, and
+\begin{equation}
+\label{eq:octave-leakage}
+\zeta_i=\sup_{v\in\mathcal W_U\setminus\{0\}}\frac{\|\Pi_{E_i}v\|_{\mathcal H}}{\|v\|_{\mathcal H}}\in[0,1].
+\end{equation}
+Then $\lambda_U^-\ge\lambda_U^{\mathrm{dy}}$ and $\lambda_U^+\le\lambda_n$, where
+\begin{equation}
+\label{eq:lambda-dy}
+\lambda_U^{\mathrm{dy}}:=\max\Big\{\underline\lambda_U,\ \lambda_{r+1}-\sum_{i\in\mathcal I}\big(\lambda_{r+1}-\lambda^{(i)}\big)\zeta_i^2\Big\}\ \ge\ \lambda_1>0,
+\end{equation}
+with $\underline\lambda_U$ as in Corollary~\ref{cor:leakage}. With the guaranteed step $\nu=2/(\lambda_n+\lambda_U^{\mathrm{dy}})$, iteration \eqref{eq:two-level} obeys
+\begin{equation}
+\label{eq:dyadic-rate}
+\|f^n-f^\star\|_{\mathcal H}\le\Big(\frac{\lambda_n-\lambda_U^{\mathrm{dy}}}{\lambda_n+\lambda_U^{\mathrm{dy}}}\Big)^n\|f^0-f^\star\|_{\mathcal H}.
+\end{equation}
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+\emph{Step 1: octave projectors.} Write $\mathcal Q_i:=U_i(U_i^\top\mathcal HU_i)^{-1}U_i^\top\mathcal H$, so that $\mathcal P_{U_i}=I-\mathcal Q_i$, and $\mathcal Q_U:=U(U^\top\mathcal HU)^{-1}U^\top\mathcal H$, so that $\mathcal P_U=I-\mathcal Q_U$. Each $U_i^\top\mathcal HU_i$ is symmetric positive definite because $U_i$ has full column rank.
+
+\emph{Step 2: decoupling (a).} If $U_i^\top\mathcal HU_j=0$ for $i\neq j$, then $U^\top\mathcal HU$ is block diagonal with blocks $U_i^\top\mathcal HU_i$, so its inverse is block diagonal with blocks $(U_i^\top\mathcal HU_i)^{-1}$. Substituting into \eqref{eq:coarse} gives the sum in \eqref{eq:dyadic-coarse}, and the same substitution gives $\mathcal Q_U=\sum_i\mathcal Q_i$. For $i\neq j$,
+\[
+\mathcal Q_i\mathcal Q_j=U_i(U_i^\top\mathcal HU_i)^{-1}\big(U_i^\top\mathcal HU_j\big)(U_j^\top\mathcal HU_j)^{-1}U_j^\top\mathcal H=0 .
+\]
+Expanding $\prod_i(I-\mathcal Q_i)$ in any order, every term containing two or more distinct factors $\mathcal Q_i$ vanishes, so the product equals $I-\sum_i\mathcal Q_i=I-\mathcal Q_U=\mathcal P_U$. Finally, $U^\top\mathcal Hv=0$ holds if and only if $U_i^\top\mathcal Hv=0$ for every $i$, so $\mathcal W_U=\bigcap_i\mathcal W_{U_i}$. Since $U$ has full column rank, Theorem~\ref{thm:two-level} applies.
+
+\emph{Step 3: exact octave eigenspaces (b).} Eigenvectors of $\mathcal H$ are $\mathcal H$-orthogonal, $v_j^\top\mathcal Hv_l=\lambda_l\delta_{jl}$. Since the $J_i$ are disjoint, $U_i^\top\mathcal HU_j=0$ for $i\neq j$, which is the hypothesis of (a). Moreover $\operatorname{range}(U)=\bigoplus_i\operatorname{span}\{v_j:j\in J_i\}=\operatorname{span}\{v_1,\dots,v_r\}$, so Step~5 of the proof of Theorem~\ref{thm:two-level} gives \eqref{eq:two-level-exact}.
+
+\emph{Step 4: octave-resolved leakage (c).} Fix $v\in\mathcal W_U\setminus\{0\}$, expand $v=\sum_jc_jv_j$, and set $w_j:=\lambda_jc_j^2/\sum_l\lambda_lc_l^2$, so that $w_j\ge0$, $\sum_jw_j=1$, and
+\[
+\frac{v^\top\mathcal H^2v}{v^\top\mathcal Hv}=\sum_j\lambda_jw_j .
+\]
+The spectral projector $\Pi_{E_i}$ is orthogonal in both inner products, so $t_i:=\sum_{j\in J_i}w_j=\|\Pi_{E_i}v\|_{\mathcal H}^2/\|v\|_{\mathcal H}^2\le\zeta_i^2$, and $\sum_{j>r}w_j=1-\sum_it_i$. Splitting the weighted average by octave, and using $\lambda_j\ge\lambda^{(i)}$ for $j\in J_i$ and $\lambda_j\ge\lambda_{r+1}$ for $j>r$,
+\[
+\frac{v^\top\mathcal H^2v}{v^\top\mathcal Hv}
+\ge\sum_i\lambda^{(i)}t_i+\lambda_{r+1}\Big(1-\sum_it_i\Big)
+=\lambda_{r+1}-\sum_i\big(\lambda_{r+1}-\lambda^{(i)}\big)t_i
+\ge\lambda_{r+1}-\sum_i\big(\lambda_{r+1}-\lambda^{(i)}\big)\zeta_i^2 ,
+\]
+where the last step uses $\lambda_{r+1}-\lambda^{(i)}\ge0$, which holds because $J_i\subseteq\{1,\dots,r\}$. Taking the infimum over $\mathcal W_U\setminus\{0\}$ bounds $\lambda_U^-$ below by the second entry of \eqref{eq:lambda-dy}. Corollary~\ref{cor:leakage} bounds it below by the first entry and gives $\underline\lambda_U\ge\lambda_1$ and $\lambda_U^+\le\lambda_n$. Hence the spectrum of $\mathcal A_U$ lies in $[\lambda_U^{\mathrm{dy}},\lambda_n]$. With $\nu=2/(\lambda_n+\lambda_U^{\mathrm{dy}})$, Step~4 of the proof of Theorem~\ref{thm:two-level} gives $\max_{\lambda\in\operatorname{spec}(\mathcal A_U)}|1-\nu\lambda|\le(\lambda_n-\lambda_U^{\mathrm{dy}})/(\lambda_n+\lambda_U^{\mathrm{dy}})$, and iterating yields \eqref{eq:dyadic-rate}.
+\end{proof}
+
+Part (a) is the coarse-space counterpart of the per-channel dual steps: once the octave coarse spaces are made $\mathcal H$-orthogonal, which costs one small Gram--Schmidt pass in the $\mathcal H$ inner product, each octave is corrected independently and the result equals the joint correction. Part (c) shows what the octave structure adds to Corollary~\ref{cor:leakage}. Leakage into octave $i$ is charged only that octave's gap $\lambda_{r+1}-\lambda^{(i)}$, rather than the full gap $\lambda_{r+1}-\lambda_1$. For example, if the deep octaves are captured exactly ($\zeta_i=0$ for every $i\neq i^\ast$), then $\zeta_U=\zeta_{i^\ast}$. The second entry of \eqref{eq:lambda-dy} is then $\lambda_{r+1}-(\lambda_{r+1}-\lambda^{(i^\ast)})\zeta_U^2$, which is strictly larger than $\underline\lambda_U$ whenever $\lambda^{(i^\ast)}>\lambda_1$ and $\zeta_U>0$. When the slow eigenvalues grow with the octave, as the ramp weighting suggests, accuracy matters most in the deepest octaves, and the upper octaves can be captured more crudely. This parallels the geometric dual-step schedule of Proposition~\ref{prop:dyadic-depth}. As with Theorem~\ref{thm:two-level}, the slow eigenvectors of $\mathcal H$ need not be Fourier-localized, so the assignment of slow modes to octaves through the sets $J_i$ must be checked on the operator itself.
+
+\paragraph{Hyperparameter selection for the dyadic bank.}
+
+The dyadic formulation introduces four groups of design parameters:
+the number of bands $k$, the relative dual-step schedule
+$\{\sigma_i/\sigma_0\}$, the per-band discrepancy tolerances
+$\{\varepsilon_i\}$, and the overall primal--dual step scale.
+These parameters do not play equivalent roles.  The step sizes
+$\tau$ and $\{\sigma_i\}$ affect only the optimization trajectory
+provided that the underlying constrained problem is fixed, whereas
+the tolerances $\{\varepsilon_i\}$ determine the feasible set.
+The depth $k$ has both numerical and modeling consequences: it
+determines how finely the residual is partitioned and, because the
+resulting constraints are imposed separately, also determines the
+number of data-fidelity constraints.
+
+This distinction is useful when tuning the method.  We therefore
+select the parameters in the order
+\[
+k
+\quad\longrightarrow\quad
+\rho_\sigma
+\quad\longrightarrow\quad
+\{\varepsilon_i\}
+\quad\longrightarrow\quad
+(\sigma_0,\tau),
+\]
+so that the spectral partition and the reconstruction model are fixed
+before the globally stable step scale is chosen.
+
+\subparagraph{Number of bands $k$.}
+The useful depth of the bank is limited by detector-frequency
+resolution.  The support of the $i$th nested Hanning window decreases
+geometrically, with characteristic half-width
+\[
+\frac{\Omega}{2^i}.
+\]
+Consequently, each additional octave contains approximately half as
+many discrete detector-frequency samples as the preceding octave.
+Once the innermost band contains only a few Fourier samples, further
+subdivision no longer represents a meaningful smooth frequency
+partition: the nominal Hanning taper is represented by too few grid
+points and the distinction between adjacent low-frequency channels
+becomes primarily a discretization effect.
+
+Let $m_0$ denote the minimum desired number of detector-frequency
+samples in the innermost octave.  A convenient depth rule is therefore
+\begin{equation}
+\label{eq:dyadic-k}
+k
+=
+\left\lfloor
+\log_2\left(\frac{N_{\rm det}}{m_0}\right)
+\right\rfloor,
+\qquad
+k\ge2.
+\end{equation}
+For example, $N_{\rm det}=1024$ and $m_0=8$ give $k=7$.
+
+Equation~\eqref{eq:dyadic-k} should be interpreted as a numerical
+resolution criterion rather than a reconstruction-resolution
+criterion.  The bank is constructed in detector-frequency space, so
+its maximum useful depth is governed primarily by $N_{\rm det}$ and
+the filter discretization, not directly by the number of reconstructed
+pixels or voxels.  Changing the reconstruction grid can nevertheless
+change the spectrum of $X$ and hence the benefit obtained from the
+additional low-frequency channels.
+
+More generally, for an arbitrary detector size one may define
+\[
+n_i
+:=
+\#\{\omega_\ell:P_i(\omega_\ell)>0\}
+\]
+on the discrete FFT grid and choose the largest $k$ for which
+$n_{k-1}\ge m_0$.  This avoids ambiguity from rounding when
+$N_{\rm det}$ is not a power of two.
+
+\subparagraph{Relative dual-step schedule $\rho_\sigma$.}
+We parameterize the data-channel steps geometrically,
+\begin{equation}
+\label{eq:dyadic-step-schedule}
+\sigma_i=\sigma_0\rho_\sigma^i,
+\qquad i=0,\ldots,k-1.
+\end{equation}
+The purpose of increasing $\sigma_i$ toward DC is to compensate for
+the progressively weaker ramp-weighted response of the low-frequency
+channels.
+
+The dyadic stability result of
+Proposition~\ref{prop:dyadic-depth} gives a more precise criterion for
+choosing $\rho_\sigma$.  Under the Fourier-slice approximation,
+\[
+\lambda_{\max}(M_{\rm data})
+=
+\sigma_0
+\max_{\theta,\omega}
+s_X(\theta,\omega)^2|\omega|
+\sum_i\rho_\sigma^iP_i(\omega).
+\]
+The nested dyadic construction implies
+\[
+|\omega|
+\sum_i\rho_\sigma^iP_i(\omega)
+\le \Omega
+\qquad\text{for}\qquad
+1\le\rho_\sigma\le2,
+\]
+independently of the depth $k$.  Thus any schedule with
+$1\le\rho_\sigma\le2$ has a depth-independent certified data-channel
+stability cost.
+
+The endpoint
+\[
+\boxed{\rho_\sigma=2}
+\]
+is distinguished because it is the largest geometric amplification
+base with this property.  It applies the strongest octave-to-octave
+increase permitted by the depth-independent bound.  In contrast, for
+$\rho_\sigma>2$ the stability bound grows as
+\[
+\left(\frac{\rho_\sigma}{2}\right)^{k-1},
+\]
+so sufficiently deep low-frequency channels eventually dominate the
+stability constraint.
+
+Accordingly, $\rho_\sigma=2$ is a natural stability-critical default.
+Values $1<\rho_\sigma<2$ provide more conservative low-frequency
+amplification, while $\rho_\sigma>2$ should be used only when an
+explicit computation of $\lambda_{\max}(M)$ demonstrates that the
+additional amplification is worth the corresponding loss of primal
+step size.
+
+We emphasize that ``critical'' here refers to the stability scaling,
+not to finite-iteration optimality.  The value of $\rho_\sigma$ that
+minimizes a particular reconstruction error after a fixed iteration
+budget may differ from $2$ and is problem dependent.
+
+\subparagraph{Per-band tolerances $\varepsilon_i$.}
+Unlike the step sizes, the discrepancy tolerances alter the
+optimization problem itself.  The dyadic identity
+\begin{equation}
+\label{eq:dyadic-energy-identity}
+\sum_{i=0}^{k-1}
+R_i^\top R_i
+=
+R_{\rm full}^\top R_{\rm full}
+\end{equation}
+implies, for every residual $r$,
+\begin{equation}
+\label{eq:dyadic-residual-energy}
+\|R_{\rm full}r\|_2^2
+=
+\sum_{i=0}^{k-1}\|R_ir\|_2^2.
+\end{equation}
+This identity means that the filter bank is lossless at the level of
+quadratic residual energy.  It does \emph{not}, however, make the
+collection of separate constraints
+\[
+\|R_ir\|_2\le\varepsilon_i\sqrt m,
+\qquad i=0,\ldots,k-1,
+\]
+equivalent to the original single constraint
+\[
+\|R_{\rm full}r\|_2\le\varepsilon\sqrt m.
+\]
+Indeed, the separate constraints imply
+\begin{equation}
+\label{eq:tolerance-total}
+\|R_{\rm full}r\|_2^2
+\le
+m\sum_{i=0}^{k-1}\varepsilon_i^2.
+\end{equation}
+Thus the choice of $\{\varepsilon_i\}$ determines how the total
+discrepancy budget is distributed across frequency.
+
+A simple total-budget-preserving choice is
+\begin{equation}
+\label{eq:tolerance-budget}
+\varepsilon_i
+=
+\varepsilon\sqrt{w_i},
+\qquad
+w_i\ge0,
+\qquad
+\sum_iw_i=1.
+\end{equation}
+Then \eqref{eq:tolerance-total} gives
+\[
+\|R_{\rm full}r\|_2
+\le
+\varepsilon\sqrt m
+\]
+whenever all band constraints are satisfied.
+The uniform allocation $w_i=1/k$ corresponds to
+\[
+\varepsilon_i=\frac{\varepsilon}{\sqrt{k}}.
+\]
+This preserves the original total discrepancy radius, although the
+feasible set is still not identical to the single-ball feasible set
+because the discrepancy is constrained separately in each band.
+
+A less conservative allocation accounts for the effective size of
+each band.  Let $m_i$ denote the number, or an effective number, of
+detector-frequency degrees of freedom represented by channel $i$.
+Setting
+\begin{equation}
+\label{eq:tolerance-dof}
+w_i=\frac{m_i}{\sum_jm_j}
+\end{equation}
+assigns a discrepancy radius proportional to the square root of the
+band dimension.  This prevents a narrow near-DC channel from receiving
+the same absolute residual budget as a much wider high-frequency
+channel merely because both are embedded in an $m$-dimensional
+sinogram vector.
+
+When a noise covariance $C_g$ for the sinogram residual is available,
+a more directly statistical choice is to match each tolerance to the
+expected filtered noise energy.  For a zero-mean residual perturbation
+$\eta$ with covariance $C_g$,
+\begin{equation}
+\label{eq:filtered-noise-energy}
+\mathbb E\|R_i\eta\|_2^2
+=
+\operatorname{tr}(R_iC_gR_i^\top).
+\end{equation}
+One may therefore choose radii of the form
+\begin{equation}
+\label{eq:tolerance-noise}
+\varepsilon_i\sqrt m
+=
+c_\varepsilon
+\sqrt{\operatorname{tr}(R_iC_gR_i^\top)},
+\end{equation}
+where $c_\varepsilon$ controls the desired discrepancy confidence
+margin.  For white residual noise, $C_g=\nu^2I$, this reduces to
+scaling the tolerance according to
+$\|R_i\|_F$.
+
+For DBT, the statistical allocation can be deliberately modified near
+DC to account for model mismatch such as scatter, blank-scan error, or
+beam-hardening effects, which are known to produce low-spatial-
+frequency inconsistencies in the underlying reconstruction model.
+The use of filtered discrepancy specifically to de-emphasize such
+low-frequency inconsistencies is part of the motivation of the
+single-channel DBT formulation of \citet{sidky2025accurate}.
+Accordingly, one may introduce a low-frequency inflation factor
+$a_i\ge1$ and use
+\[
+\varepsilon_i
+=
+a_i\varepsilon_i^{\rm noise},
+\]
+with $a_i$ increasing only for the lowest octaves.
+
+\subparagraph{Global dual scale and primal step.}
+After $k$, $\rho_\sigma$, and the relative regularization steps have
+been fixed, it is convenient to separate the \emph{relative} dual
+preconditioner from its global scale.  Write
+\begin{equation}
+\label{eq:dual-common-scale}
+\sigma_i=s\,r_i,
+\qquad
+r_i=\rho_\sigma^i,
+\qquad
+\sigma_d=s\,r_d,
+\end{equation}
+where $s>0$ is a common dual scale.  Then
+\[
+M=s\widehat M,
+\]
+with
+\begin{equation}
+\label{eq:M-ratio}
+\widehat M
+=
+\sum_{i=0}^{k-1}
+r_iX^\top R_i^\top R_iX
++
+\sum_d
+r_d\partial_d^\top\partial_d.
+\end{equation}
+Let
+\[
+\ell:=\lambda_{\max}(\widehat M),
+\]
+estimated by power iteration.  The exact stability condition becomes
+\begin{equation}
+\label{eq:scale-product}
+\tau s\ell<1.
+\end{equation}
+Thus, after the relative steps are selected, stability fixes only the
+product $\tau s$, not the ratio $\tau/s$.  With safety margin
+$\delta\in(0,1)$ we set
+\begin{equation}
+\label{eq:scale-saturation}
+\tau s
+=
+\frac{1-\delta}{\ell}.
+\end{equation}
+
+A convenient balance parameter is
+\[
+q:=\frac{\tau}{s}.
+\]
+Equations~\eqref{eq:scale-product}--\eqref{eq:scale-saturation}
+then give explicitly
+\begin{equation}
+\label{eq:tau-s-explicit}
+\tau
+=
+\sqrt{
+\frac{(1-\delta)q}{\ell}
+},
+\qquad
+s
+=
+\sqrt{
+\frac{1-\delta}{q\ell}
+}.
+\end{equation}
+Thus $q$ determines the primal-versus-dual balance while the product
+is fixed by the spectral stability limit.
+
+The value of $q$ does not affect the stability product but can affect
+transient convergence.  If no reliable estimate of the relative
+primal and dual scales is available, $q$ may be chosen from the
+single-channel implementation and retained when changing only the
+dyadic channel ratios.  Alternatively, a short logarithmic sweep in
+$q$ can be performed without retuning $\rho_\sigma$, since
+\eqref{eq:tau-s-explicit} maintains the same stability margin for
+every candidate.
+
+\subparagraph{Optional channel-by-channel stability allocation.}
+The geometric schedule is attractive because it requires only one
+parameter, but the exact stability-budget result of
+Proposition~\ref{prop:dyadic-budget} also permits an adaptive
+schedule.  Suppose $\tau$ and the steps of channels
+$0,\ldots,i-1$ have been fixed and define
+\[
+Q_i
+=
+\tau^{-1}I
+-
+B
+-
+\sum_{j=0}^{i-1}\sigma_jA_j.
+\]
+The largest step that may be assigned to the next octave is
+\[
+\sigma_i^{\max}
+=
+\left[
+\lambda_{\max}
+\left(
+Q_i^{-1/2}A_iQ_i^{-1/2}
+\right)
+\right]^{-1}.
+\]
+Thus one may choose
+\begin{equation}
+\label{eq:adaptive-octave-step}
+\sigma_i
+=
+(1-\delta_i)\sigma_i^{\max}
+\end{equation}
+with channel-specific safety margins $\delta_i>0$.
+
+This construction uses the actual overlap between the new octave and
+the stability budget left by all preceding channels.  It therefore
+provides an operator-adaptive alternative to the fixed geometric rule
+$\sigma_i\propto2^i$.  The geometric schedule is preferable when a
+simple scanner-independent parameterization is desired; the adaptive
+schedule is preferable when the cost of estimating the generalized
+eigenvalues is acceptable and maximal certified low-frequency
+amplification is the goal.
+
+\subparagraph{Practical tuning procedure.}
+The preceding considerations lead to the following default procedure:
+\begin{enumerate}[label=\textup{(\roman*)}]
+\item
+Choose the largest depth $k$ for which the innermost octave is
+represented by at least $m_0$ detector-frequency samples.
+
+\item
+Set the relative data-channel schedule to
+$r_i=2^i$.  Reduce the base below $2$ only if a more conservative
+low-frequency amplification is desired; use a base above $2$ only
+after explicitly verifying the resulting weighted normal operator.
+
+\item
+Choose the discrepancy allocation independently of the step sizes.
+For simulated noiseless data, a controlled total-budget allocation
+such as $\varepsilon_i=\varepsilon\sqrt{w_i}$ is appropriate.
+For measured data, use band-dependent tolerances matched to filtered
+noise energy and inflate only the lowest octaves when additional
+near-DC model mismatch is expected.
+
+\item
+Fix the relative TV steps $r_d$ and compute
+\[
+\ell
+=
+\lambda_{\max}
+\left(
+\sum_i r_iX^\top R_i^\top R_iX
++
+\sum_dr_d\partial_d^\top\partial_d
+\right)
+\]
+by power iteration.
+
+\item
+Choose a primal--dual balance $q=\tau/s$ and set
+\[
+\tau
+=
+\sqrt{\frac{(1-\delta)q}{\ell}},
+\qquad
+s
+=
+\sqrt{\frac{1-\delta}{q\ell}},
+\qquad
+\sigma_i=sr_i,
+\qquad
+\sigma_d=sr_d.
+\]
+
+\item
+Optionally replace the geometric low-octave steps by the
+channel-by-channel generalized-eigenvalue ceiling
+\eqref{eq:adaptive-octave-step} when a maximally aggressive
+operator-adaptive schedule is desired.
+\end{enumerate}
+
+This parameterization separates three effects that are otherwise easy
+to conflate.  The depth $k$ determines the spectral resolution of the
+fidelity decomposition; the tolerances $\{\varepsilon_i\}$ determine
+how much discrepancy is permitted in each band and therefore affect
+the reconstructed solution; and the steps
+$\tau,\{\sigma_i\},\{\sigma_d\}$ determine how rapidly the fixed
+optimization problem is traversed.  The critical dyadic schedule
+$\rho_\sigma=2$ concerns only the last of these: it is a
+stability-efficient way to redistribute dual motion toward the
+low-frequency octaves, not a prescription for changing the amount of
+low-frequency data agreement required at the solution.
+\section{Experiments}
+\label{sec:experiments}
+
+We evaluate the two-channel formulation on 2D limited-angle fan-beam reconstruction with two aims: to examine, on the actual reconstruction operator, the band separation that Section~\ref{sec:main} relies on, and to assess whether amplifying the low-frequency dual step accelerates the convergence of low-frequency image content.
+
+\subsection{Setup}
+
+All reconstructions use a $256\times256$ image on a $10\,\mathrm{cm}$ field of view and a circular fan-beam scan of $25$ views over a $50^\circ$ arc with $1024$ detector bins (source-to-origin $50\,\mathrm{cm}$, source-to-detector $100\,\mathrm{cm}$), with He--Yuan relaxation $\rho=1.75$. The single-channel fidelity filter is the ramp-weighted square-root Hanning window $R[c]$ with $c=4$. The two-channel filters are its exact partition \eqref{eq:Rlo}--\eqref{eq:two-channel-partition}: the low channel uses $c_{\mathrm{lo}}=8$, so that its window is half the width of the single-channel window and concentrated at DC, and the high channel carries the complementary difference. Tolerances are $\varepsilon_{\mathrm{hi}}=\varepsilon$ and $\varepsilon_{\mathrm{lo}}=1.25\,\varepsilon$. The single-channel baseline uses scalar steps saturating $\tau\sigma\|K\|^2=1$. The two-channel runs place $\tau$ and $\sigma_{\mathrm{hi}}$ at the same operator-norm boundary and scale only the low-frequency dual, $\sigma_{\mathrm{lo}}=s\,\sigma_{\mathrm{hi}}$, with $s\in\{1,4,8\}$; here $s=1$ is the matched-tolerance split with no step amplification. We use five phantoms: the breast phantom of the abstract, a modified Shepp--Logan phantom~\citep{shepp1974fourier}, and three analytic anthropomorphic phantoms (a head, a jaw, and a Defrise-type stack of disks), each taken as a 2D slice and peak-normalized so that the sinogram magnitude is comparable across phantoms. Image error is reported as the RMSE against the ground-truth phantom.
+
+\subsection{Stability diagnostic}
+
+The condition $\tau\lambda_{\max}(M)<1$ and the band separation of Section~\ref{sec:main} depend only on the operator and filters, not on the phantom; Table~\ref{tab:stability} summarizes both. The two data-channel normal operators differ in leading eigenvalue by about a factor of five, and their dominant eigenvectors are numerically orthogonal, consistent with the nearly disjoint dominant subspaces assumed in Section~\ref{sec:main}. Writing the certified margin as $\tau\lambda_{\max}(M)=\lambda_{\max}(\widetilde M(s))/\lambda_{\max}(\widetilde M(1))$, where $\widetilde M(s)$ weights the low channel by $s$, the margin stays at the single-channel boundary ($\approx 1$) for $s$ up to roughly $6$, and over this range the low channel contributes essentially no energy to the limiting eigenmode; beyond the crossover, at $s=8$, the low channel governs $\lambda_{\max}(M)$ and the margin exceeds one. Within the certified range the low-frequency step can thus be amplified without reducing $\tau$. We therefore operate at $s=4$, the largest amplification that holds $\tau\lambda_{\max}(M)$ at the single-channel boundary, so that the primal step is taken at its maximal certified value; setting the steps from the conservative worst-channel surrogate \eqref{eq:worst-channel} would instead reduce $\tau$ and sacrifice much of the gain.
+
+\begin{table}[t]
+\centering
+\caption{Operator-level stability diagnostic (geometry and filters only). Left: leading eigenvalues of the two data-channel normal operators and the magnitude of the inner product of their dominant eigenvectors. Right: certified margin $\tau\lambda_{\max}(M)$ and the low-channel share of the limiting eigenmode as the low-frequency step scale $s$ varies. $s=1$ coincides with the single-channel step-size boundary.}
+\label{tab:stability}
+\begin{tabular}{lc}
+\toprule
+$\lambda_{\max}(X^\top F_{\mathrm{hi}}^2 X)$ & $4.51$\\
+$\lambda_{\max}(X^\top F_{\mathrm{lo}}^2 X)$ & $0.92$\\
+$|\langle v_{\mathrm{hi}},v_{\mathrm{lo}}\rangle|$ & $0.00$\\
+\bottomrule
+\end{tabular}
+\qquad
+\begin{tabular}{lccc}
+\toprule
+$s$ & $1$ & $4$ & $8$\\
+\midrule
+$\tau\lambda_{\max}(M)$ & $1.000$ & $1.000$ & $1.183$\\
+low-band energy share & $0.00$ & $0.00$ & $0.61$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Convergence}
+
+Table~\ref{tab:rmse} reports the image RMSE at iteration $500$ for the single-channel baseline together with the relative reduction of each two-channel setting. The matched-tolerance split without amplification ($s=1$) stays within a few percent of the baseline on all phantoms. The certified setting $s=4$ lowers the RMSE on every phantom at this iteration count, by $9$ to $36\%$, while the uncertified setting $s=8$ adds at most a few further percentage points.
+
+Figure~\ref{fig:conv} indicates that these reductions are not confined to the final iterate: the $s=4$ and $s=8$ curves separate from the single-channel and $s=1$ curves within the first tens of iterations and remain below them, apart from a short interval near iteration $50$ in the oscillatory phase where the curves cross. The size of the reduction varies across phantoms; it is larger for the head and Defrise phantoms than for the more textured jaw, possibly reflecting their greater low-frequency content, though we do not investigate this further. Figures~\ref{fig:ladder-breast}--\ref{fig:ladder-defrise} show the corresponding iteration ladders for all five phantoms. For the Defrise phantom (Figure~\ref{fig:ladder-defrise}) the single-channel iterate retains a low-frequency shading across the disk stack over several hundred iterations, whereas the $s=4$ iterate resolves the stacked disks earlier.
+
+Two comparisons are being made here and they are not of the same kind. The three two-channel settings $s\in\{1,4,8\}$ share the tolerances $\varepsilon_{\mathrm{hi}},\varepsilon_{\mathrm{lo}}$ and therefore the same feasible set and the same saddle point; the step sizes affect only the iterate trajectory, so the differences among them are in convergence speed at a fixed iteration budget and not in the reconstruction reached at convergence. The single-channel baseline, by contrast, is a different constrained problem: \eqref{eq:single} imposes one $\ell_2$ constraint on the full filtered residual whereas \eqref{eq:two} imposes two, one per band, and by \eqref{eq:tolerance-total} the latter is not equivalent to the former for any choice of $\varepsilon_{\mathrm{hi}},\varepsilon_{\mathrm{lo}}$. Part of the single-channel to two-channel difference may therefore reflect a different optimum rather than faster convergence to a common one; Section~\ref{sec:experiments} does not separate the two effects, and the $\varepsilon$ study below bounds only the sensitivity to the tolerances themselves.
+
+\begin{table}[t]
+\centering
+\caption{Image RMSE at iteration $500$ for the single-channel baseline, and the relative RMSE reduction of the two-channel method at low-frequency step scales $s\in\{1,4,8\}$ (positive values indicate lower RMSE than single-channel). $s=4$ satisfies the certified condition $\tau\lambda_{\max}(M)\approx1$; $s=8$ exceeds it.}
+\label{tab:rmse}
+\begin{tabular}{lrrrr}
+\toprule
+ & & \multicolumn{3}{c}{RMSE reduction (\%)}\\
+\cmidrule(l){3-5}
+Phantom & Single RMSE & $s{=}1$ & $s{=}4$ & $s{=}8$\\
+\midrule
+Breast       & $0.098$ & $+3.5$ & $+22.0$ & $+23.8$\\
+Shepp--Logan & $0.086$ & $-1.6$ & $+9.1$  & $+10.7$\\
+Head         & $0.157$ & $+3.7$ & $+35.9$ & $+39.2$\\
+Jaw          & $0.083$ & $-7.7$ & $+16.4$ & $+18.6$\\
+Defrise      & $0.070$ & $-1.0$ & $+30.6$ & $+33.2$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\begin{minipage}{0.32\linewidth}\centering\includegraphics[width=\linewidth]{figs/breast_convergence.png}\\{\small (a) Breast}\end{minipage}\hfill
+\begin{minipage}{0.32\linewidth}\centering\includegraphics[width=\linewidth]{figs/shepp_logan_convergence.png}\\{\small (b) Shepp--Logan}\end{minipage}\hfill
+\begin{minipage}{0.32\linewidth}\centering\includegraphics[width=\linewidth]{figs/head_convergence.png}\\{\small (c) Head}\end{minipage}
+
+\medskip
+\begin{minipage}{0.32\linewidth}\centering\includegraphics[width=\linewidth]{figs/jaw_convergence.png}\\{\small (d) Jaw}\end{minipage}\hspace{0.03\linewidth}
+\begin{minipage}{0.32\linewidth}\centering\includegraphics[width=\linewidth]{figs/defrise_convergence.png}\\{\small (e) Defrise}\end{minipage}
+\caption{Image RMSE versus iteration for all five phantoms, comparing single-channel reconstruction with the two-channel method at $s\in\{1,4,8\}$.}
+\label{fig:conv}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/breast_iter_ladder.png}
+\caption{Breast reconstruction at selected iterations: single-channel (top) and two-channel with $s=4$ (bottom). RMSE against the ground truth is annotated for each iterate.}
+\label{fig:ladder-breast}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/shepp_logan_iter_ladder.png}
+\caption{Shepp--Logan reconstruction at selected iterations: single-channel (top) and two-channel with $s=4$ (bottom), with RMSE annotated.}
+\label{fig:ladder-shepp}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/head_iter_ladder.png}
+\caption{Head reconstruction at selected iterations: single-channel (top) and two-channel with $s=4$ (bottom), with RMSE annotated.}
+\label{fig:ladder-head}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/jaw_iter_ladder.png}
+\caption{Jaw reconstruction at selected iterations: single-channel (top) and two-channel with $s=4$ (bottom), with RMSE annotated.}
+\label{fig:ladder-jaw}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figs/defrise_iter_ladder.png}
+\caption{Defrise reconstruction at selected iterations: single-channel (top) and two-channel with $s=4$ (bottom), with RMSE annotated.}
+\label{fig:ladder-defrise}
+\end{figure}
+
+\subsection{Sensitivity to the data tolerance}
+
+The tolerances $\varepsilon_c$ enter the model only through the data-constraint set, not through the step-size condition $\tau\lambda_{\max}(M)<1$; that condition depends on $K$ and the step sizes alone. Changing $\varepsilon$ therefore moves the saddle point but does not affect convergence, provided the constraints remain feasible. Table~\ref{tab:eps} reports a preliminary check on the breast phantom with the step sizes fixed at the maximal certified amplification $s=4$. Loosening the global tolerance for single-channel reconstruction ($\varepsilon:1.0\to1.25$, in units of the nominal $\varepsilon$) and loosening the low-band tolerance for the two-channel method ($\varepsilon_{\mathrm{lo}}:1.0\to1.25$) each change the iteration-$500$ RMSE by at most about one percentage point, against the $\sim\!20\%$ reduction obtained from the step amplification itself. In the range tested the reconstruction is thus insensitive to $\varepsilon$, and the acceleration is attributable to the certified low-frequency step amplification rather than to the tolerance. A wider $\varepsilon$ sweep is left to future work.
+
+\begin{table}[t]
+\centering
+\caption{Sensitivity to the data tolerance (breast, $256\times256$, step sizes fixed at $s=4$). Image RMSE at two iteration counts, with reduction relative to single-channel at $\varepsilon=1.0$. Tolerances are in units of the nominal $\varepsilon$.}
+\label{tab:eps}
+\begin{tabular}{llrr}
+\toprule
+Method & tolerance & RMSE @\,200 & RMSE @\,500\\
+\midrule
+Single & $\varepsilon=1.0$ & $0.183$ & $0.0985$\\
+Single & $\varepsilon=1.25$ & $0.181$ ($+1.0\%$) & $0.0976$ ($+0.9\%$)\\
+Two-channel & $\varepsilon_{\mathrm{lo}}=1.0$ & $0.123$ ($+32.7\%$) & $0.0793$ ($+19.5\%$)\\
+Two-channel & $\varepsilon_{\mathrm{lo}}=1.25$ & $0.122$ ($+33.3\%$) & $0.0780$ ($+20.8\%$)\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\bibliography{references}
+\bibliographystyle{abbrvnat}
+
+\end{document}

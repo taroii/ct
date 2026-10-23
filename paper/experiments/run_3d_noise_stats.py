@@ -49,6 +49,10 @@ TAB = HERE / "tables"
 SOLVER_SEED = 42          # fixed on purpose: only the noise realization varies
 HERO_S = 4.0
 CHECKPOINTS = [10, 50, 100, 200, 300, 500]
+# Per-band calibration constants; hashed into the run key so a change to either
+# produces new results rather than silently reusing the old ones.
+EPS_CAL_DRAWS = 20
+EPS_CAL_K = 4.0
 
 
 def auto_i0(phantom, dx_cm, margin=50.0):
@@ -72,7 +76,9 @@ def compute(cfg):
     rc.update(itermax=cfg["itermax"], sigma_lo_scale=cfg["s"],
               seed=cfg["solver_seed"], noise_seed=cfg["noise_seed"],
               i0=cfg["i0"], eps_mode=cfg["eps_mode"],
-              eps_factor=cfg["eps_factor"], npower=cfg["npower"])
+              eps_factor=cfg["eps_factor"], npower=cfg["npower"],
+              eps_cal_draws=cfg.get("eps_cal_draws", EPS_CAL_DRAWS),
+              eps_cal_k=cfg.get("eps_cal_k", EPS_CAL_K))
     # Same geometry as run_3d_victre, passed as a copy: reconstruct() pops
     # "orbit" from the dict it receives.
     res = recon3d.reconstruct(phantom, dx_cm, cfg=rc, geom=dict(VICTRE_GEOM))
@@ -81,18 +87,23 @@ def compute(cfg):
         "ierrs_single": np.asarray(res["single"]["ierrs"], dtype=np.float64),
         "ierrs_two": np.asarray(res["two"]["ierrs"], dtype=np.float64),
         "eps_used": np.float64(noise.get("eps", rc["eps"])),
+        "eps_hi_used": np.float64(noise.get("eps_hi", np.nan)),
+        "eps_lo_used": np.float64(noise.get("eps_lo", np.nan)),
         "zero_frac": np.float64(noise.get("zero_count_frac", 0.0)),
     }
 
 
-def run(reps, i0, itermax, down, npower, force):
+def run(reps, i0, itermax, down, npower, force, eps_mode="noise"):
     store = RunStore("3d_noise_stats")
     out = []
     for k in range(reps):
         cfg = dict(phantom="victre", down=down, s=HERO_S, itermax=itermax,
                    solver_seed=SOLVER_SEED,      # fixed on purpose
                    noise_seed=1000 + k,          # the only thing that varies
-                   i0=i0, eps_mode="noise", eps_factor=1.1, npower=npower,
+                   # eps_mode is part of the key, so per-band runs are stored
+                   # alongside the originals instead of replacing them.
+                   i0=i0, eps_mode=eps_mode, eps_factor=1.1, npower=npower,
+                   eps_cal_draws=EPS_CAL_DRAWS, eps_cal_k=EPS_CAL_K,
                    # the full geometry, not a label, so a geometry change
                    # re-keys the store instead of returning stale results
                    geom=dict(VICTRE_GEOM), solver="recon3d.py")
@@ -101,7 +112,13 @@ def run(reps, i0, itermax, down, npower, force):
     return out
 
 
-def write_table(runs, i0, itermax, down):
+def _suffix(eps_mode):
+    """Per-band outputs get their own filenames: otherwise a per-band run
+    overwrites the table and figure of the original run."""
+    return "" if eps_mode == "noise" else f"_{eps_mode}"
+
+
+def write_table(runs, i0, itermax, down, eps_mode="noise"):
     cps = [c for c in CHECKPOINTS if c <= itermax]
     if itermax not in cps:
         cps.append(itermax)
@@ -110,16 +127,22 @@ def write_table(runs, i0, itermax, down):
     n = len(runs)
 
     L = [f"# 3D DBT VICTRE: Poisson-noise statistics "
-         f"(i0={i0:.0e}, {n} realizations, s={HERO_S:g}, down={down})\n",
+         f"(i0={i0:.6g}, {n} realizations, s={HERO_S:g}, down={down})\n",
          "Paired: both arms reconstruct the same realization, so the difference "
          "removes shared realization-to-realization variation. The solver seed "
          f"is fixed at {SOLVER_SEED} across all realizations and only the noise "
          "seed varies, so the spread below is measurement noise and NOT the "
          "step-size jitter that the 3D seed sweep measures. The two are "
          "different quantities and must not be reported interchangeably.\n",
-         f"eps calibrated to the noise from an independent draw: "
-         f"{eps_used.mean():.4g} +/- {eps_used.std():.2g}. "
-         f"Zero-count rays: {zf.max():.2e} worst case.\n",
+         (f"eps calibrated to the noise from an independent draw: "
+          f"{eps_used.mean():.4g} +/- {eps_used.std():.2g}. "
+          if eps_mode == "noise" else
+          f"Per-band tolerances, each sized by the noise its own band sees "
+          f"({EPS_CAL_DRAWS} independent calibration draws, margin "
+          f"mean + {EPS_CAL_K}*sd): single {eps_used.mean():.4g}, "
+          f"hi {np.nanmean([float(r['eps_hi_used']) for r in runs]):.4g}, "
+          f"lo {np.nanmean([float(r['eps_lo_used']) for r in runs]):.4g}. ")
+         + f"Zero-count rays: {zf.max():.2e} worst case.\n",
          "Positive difference = two-channel has LOWER RMSE.\n",
          "| iter | single RMSE | two RMSE | mean diff | 95% CI | median [IQR] "
          "| win rate | Wilcoxon p |",
@@ -141,12 +164,12 @@ def write_table(runs, i0, itermax, down):
               f"only that every pair had the same sign and carries no "
               f"information beyond the win rate. GPU time caps n here well "
               f"below the 2D runs, so the interval is what to read."]
-    p = TAB / "noise_stats_3d_victre.md"
+    p = TAB / f"noise_stats_3d_victre{_suffix(eps_mode)}.md"
     p.write_text("\n".join(L) + "\n")
     print(f"  saved {p}")
 
 
-def fig_bands(runs, i0):
+def fig_bands(runs, i0, eps_mode="noise"):
     S = np.vstack([r["ierrs_single"] for r in runs])
     T = np.vstack([r["ierrs_two"] for r in runs])
     it = np.arange(1, S.shape[1] + 1)
@@ -165,7 +188,7 @@ def fig_bands(runs, i0):
     ax.set_title(f"3D VICTRE: median and IQR over {len(runs)} noise "
                  f"realizations", fontsize=10)
     fig.tight_layout()
-    p = FIG / "noise_stats_3d_victre.png"
+    p = FIG / f"noise_stats_3d_victre{_suffix(eps_mode)}.png"
     fig.savefig(p, dpi=150)
     plt.close(fig)
     print(f"  saved {p}")
@@ -186,6 +209,12 @@ def main():
                     help="'auto' scales with the phantom's peak line integral")
     ap.add_argument("--force", action="store_true",
                     help="recompute even when runstore already has the result")
+    ap.add_argument("--eps-mode", default="noise",
+                    choices=["noise", "noise_per_band"],
+                    help="'noise': one tolerance from the single-channel noise, "
+                         "reused as eps_hi=1.0x, eps_lo=1.25x (the original). "
+                         "'noise_per_band': each band's tolerance sized by the "
+                         "noise that band sees.")
     args = ap.parse_args()
 
     FIG.mkdir(parents=True, exist_ok=True)
@@ -196,9 +225,10 @@ def main():
     print(f"3D VICTRE noise statistics: i0={i0:.3e}, reps={args.reps}, "
           f"itermax={args.itermax}, down={args.down}")
 
-    runs = run(args.reps, i0, args.itermax, args.down, args.npower, args.force)
-    write_table(runs, i0, args.itermax, args.down)
-    fig_bands(runs, i0)
+    runs = run(args.reps, i0, args.itermax, args.down, args.npower, args.force,
+               args.eps_mode)
+    write_table(runs, i0, args.itermax, args.down, args.eps_mode)
+    fig_bands(runs, i0, args.eps_mode)
 
     st = paired_stats(runs, min(args.itermax, CHECKPOINTS[-1]))
     print(f"  @{min(args.itermax, CHECKPOINTS[-1])}: two-channel better by "

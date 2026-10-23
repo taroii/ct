@@ -77,7 +77,8 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None,
                                   phantom_override=None, seed=42,
                                   itermax_override=None, i0=None,
                                   noise_seed=0, eps_mode='fixed',
-                                  eps_factor=1.1):
+                                  eps_factor=1.1, eps_cal_draws=20,
+                                  eps_cal_k=4.0):
     """Run both single and two-channel reconstruction for a given mfact.
 
     If snapshot_iters is a list/set of iteration numbers, the result dict
@@ -495,7 +496,56 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None,
             eps = eps_factor*rn/sqrt(nrays)
             eps_hi, eps_lo = eps, 1.25*eps
             print(f"  eps calibrated to noise: {eps:.6g}")
+        elif eps_mode == 'noise_per_band':
+            crng = np.random.default_rng(
+                (int(noise_seed)*40_503 + 777) % (2**63))
+            # Each constraint gets a ball sized by the noise IT sees, not by
+            # the single-channel noise. The 'noise' mode above sets
+            # eps_lo = 1.25*eps from a single-channel calibration, but
+            # ramp-filtered noise is ~99.5% high-band, so that ball comes out
+            # ~20x the low-band noise in 2D (~80x in 3D) -- comparable to the
+            # low-band SIGNAL, leaving the low channel free to discard
+            # large-scale contrast. Harmless when eps is the noiseless 1e-3;
+            # decisive once eps tracks the noise.
+            #
+            # The margin is not a chosen number either: each band's ball is
+            # mean + k*sd of its own noise norm over `eps_cal_draws`
+            # independent draws, so a band with few effective degrees of
+            # freedom (the low band, and more so in 3D) earns a wider margin
+            # automatically. Measured over 5 phantoms x 400 realizations, with
+            # the calibration ball redrawn per realization exactly as the
+            # runners do, k=4 with 20 draws leaves the truth infeasible in at
+            # most 0.50% of realizations (Defrise; 0.00% everywhere else, and
+            # 0.00% in the low band on every phantom). The two-channel arm's
+            # joint rate equals the single arm's, because the high band carries
+            # ~98% of the noise and so tracks the single-channel band closely.
+            #
+            # Note this makes the single and high balls TIGHTER than the flat
+            # 1.1 of 'noise' mode (implied margins ~1.02-1.09), not looser.
+            ops = {'single': fo, 'hi': R_hi, 'lo': R_lo}
+            acc = {b: [] for b in ops}
+            for _ in range(int(eps_cal_draws)):
+                c = -log(maximum(crng.poisson(_i0*exp(-truesino)), 1)/_i0)
+                d = c - truesino
+                for b, op in ops.items():
+                    acc[b].append(sqrt((op(d)**2).sum()))
+            if int(eps_cal_draws) < 2:
+                raise ValueError("eps_cal_draws must be >= 2: the margin is a "
+                                 "sample sd, undefined for a single draw")
+            ball = {b: (np.mean(v) + eps_cal_k*np.std(v, ddof=1))/sqrt(nrays)
+                    for b, v in acc.items()}
+            eps, eps_hi, eps_lo = ball['single'], ball['hi'], ball['lo']
+            print(f"  eps per-band ({eps_cal_draws} draws, k={eps_cal_k}): "
+                  f"single={eps:.6g} hi={eps_hi:.6g} lo={eps_lo:.6g} "
+                  f"(lo/single={eps_lo/eps:.5f})")
         noise_stats['eps'] = eps
+        # Persist what the arms were actually held to. Under per-band these
+        # differ per band and are the numbers the whole comparison turns on, so
+        # they must be auditable from the stored result, not just from stdout.
+        noise_stats['eps_hi'] = eps_hi
+        noise_stats['eps_lo'] = eps_lo
+        noise_stats['eps_cal_draws'] = eps_cal_draws
+        noise_stats['eps_cal_k'] = eps_cal_k
     else:
         sinodata = truesino*1.
 

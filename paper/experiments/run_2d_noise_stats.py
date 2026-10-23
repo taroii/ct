@@ -66,6 +66,10 @@ TAB.mkdir(parents=True, exist_ok=True)
 HERO_S = 4.0                    # the certified setting
 SOLVER_SEED = 42                # held FIXED across realizations, by design
 CHECKPOINTS = [10, 50, 100, 200, 500]
+# Per-band calibration constants; hashed into the run key so a change to either
+# produces new results rather than silently reusing the old ones.
+EPS_CAL_DRAWS = 20
+EPS_CAL_K = 4.0
 
 
 def auto_i0(phantom, margin=50.0):
@@ -119,25 +123,34 @@ def compute(cfg):
         MFACT, phantom_override=phantom, seed=cfg["solver_seed"],
         itermax_override=cfg["itermax"], i0=cfg["i0"],
         noise_seed=cfg["noise_seed"], eps_mode=cfg["eps_mode"],
-        eps_factor=cfg["eps_factor"])
+        eps_factor=cfg["eps_factor"],
+        eps_cal_draws=cfg.get("eps_cal_draws", EPS_CAL_DRAWS),
+        eps_cal_k=cfg.get("eps_cal_k", EPS_CAL_K))
     return {
         "ierrs_single": np.asarray(r["ierrs_single"], dtype=np.float64),
         "ierrs_two": np.asarray(r["ierrs_two"], dtype=np.float64),
         "eps_used": np.float64(r["noise"].get("eps", cfg["eps"])),
+        "eps_hi_used": np.float64(r["noise"].get("eps_hi", np.nan)),
+        "eps_lo_used": np.float64(r["noise"].get("eps_lo", np.nan)),
         "zero_frac": np.float64(r["noise"].get("zero_count_frac", 0.0)),
         "single_time": np.float64(r["single_time"]),
         "two_time": np.float64(r["two_time"]),
     }
 
 
-def run(name, reps, i0, itermax, force):
+def run(name, reps, i0, itermax, force, eps_mode="noise"):
     store = RunStore("2d_noise_stats")
     out = []
     for k in range(reps):
         cfg = dict(phantom=name, s=HERO_S, itermax=itermax,
                    solver_seed=SOLVER_SEED,      # fixed on purpose
                    noise_seed=1000 + k,          # the only thing that varies
-                   i0=i0, eps_mode="noise", eps_factor=1.1,
+                   # eps_mode is part of the key, so per-band runs are stored
+                   # alongside the originals instead of replacing them.
+                   i0=i0, eps_mode=eps_mode, eps_factor=1.1,
+                   # the numbers that DEFINE the per-band rule must be hashed,
+                   # or changing k would silently return the old arrays
+                   eps_cal_draws=EPS_CAL_DRAWS, eps_cal_k=EPS_CAL_K,
                    mfact=MFACT, cutoffparm=4.0, cutoffparm_lo=8.0, eps=0.001,
                    solver="reconstruction.py")
         out.append(store.load_or_run(cfg, compute, force=force,
@@ -150,7 +163,14 @@ def run(name, reps, i0, itermax, force):
 # --------------------------------------------------------------------------
 
 
-def write_table(name, runs, i0, itermax):
+def _suffix(eps_mode):
+    """Per-band outputs get their own filenames: otherwise a per-band run
+    overwrites the tables and figures of the original run, whose stored arrays
+    survive but whose published artifacts would not."""
+    return "" if eps_mode == "noise" else f"_{eps_mode}"
+
+
+def write_table(name, runs, i0, itermax, eps_mode="noise"):
     cps = [c for c in CHECKPOINTS if c <= itermax] + (
         [itermax] if itermax not in CHECKPOINTS else [])
     eps_used = np.array([float(r["eps_used"]) for r in runs])
@@ -162,10 +182,16 @@ def write_table(name, runs, i0, itermax):
          f"fixed at {SOLVER_SEED} across all realizations; only the noise seed "
          "varies, so the spread below is measurement noise and not step-size "
          "jitter.\n",
-         f"eps calibrated to the noise from an independent draw: "
-         f"{eps_used.mean():.4g} +/- {eps_used.std():.2g} "
-         f"(noiseless value would be 0.001). "
-         f"Zero-count rays: {zf.max():.2e} worst case.\n",
+         (f"eps calibrated to the noise from an independent draw: "
+          f"{eps_used.mean():.4g} +/- {eps_used.std():.2g} "
+          f"(noiseless value would be 0.001). "
+          if eps_mode == "noise" else
+          f"Per-band tolerances, each sized by the noise its own band sees "
+          f"({EPS_CAL_DRAWS} independent calibration draws, margin "
+          f"mean + {EPS_CAL_K}*sd): single {eps_used.mean():.4g}, "
+          f"hi {np.nanmean([float(r['eps_hi_used']) for r in runs]):.4g}, "
+          f"lo {np.nanmean([float(r['eps_lo_used']) for r in runs]):.4g}. ")
+         + f"Zero-count rays: {zf.max():.2e} worst case.\n",
          "Positive difference = two-channel has LOWER RMSE.\n",
          "| iter | single RMSE | two RMSE | mean diff | 95% CI | median [IQR] "
          "| win rate | Wilcoxon p |",
@@ -182,13 +208,13 @@ def write_table(name, runs, i0, itermax):
               "iteration is resolved by this many realizations; one that "
               "straddles zero means it is not, regardless of the point "
               "estimate's sign."]
-    p = TAB / f"noise_stats_{name}.md"
+    p = TAB / f"noise_stats_{name}{_suffix(eps_mode)}.md"
     p.write_text("\n".join(L) + "\n")
     print(f"  saved {p}")
     return cps
 
 
-def fig_bands(name, runs, i0, itermax):
+def fig_bands(name, runs, i0, itermax, eps_mode="noise"):
     S = np.vstack([r["ierrs_single"] for r in runs])
     T = np.vstack([r["ierrs_two"] for r in runs])
     it = np.arange(1, S.shape[1] + 1)
@@ -222,7 +248,7 @@ def fig_bands(name, runs, i0, itermax):
     ax.set_title("paired difference (>0 favours two-channel)", fontsize=10)
 
     fig.tight_layout()
-    p = FIG / f"noise_stats_{name}.png"
+    p = FIG / f"noise_stats_{name}{_suffix(eps_mode)}.png"
     fig.savefig(p, dpi=200, bbox_inches="tight"); plt.close(fig)
     print(f"  saved {p}")
 
@@ -238,6 +264,12 @@ def main():
                          "fixed i0 clamps zero-count rays on thick phantoms)")
     ap.add_argument("--iters", type=int, default=500)
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--eps-mode", default="noise",
+                    choices=["noise", "noise_per_band"],
+                    help="'noise': one tolerance from the single-channel noise, "
+                         "reused as eps_hi=1.0x, eps_lo=1.25x (the original). "
+                         "'noise_per_band': each band's tolerance sized by the "
+                         "noise that band sees.")
     args = ap.parse_args()
 
     names = list(PHANTOMS) if args.phantom == "all" else [args.phantom]
@@ -249,9 +281,9 @@ def main():
             i0 = float(args.i0)
         print(f"\n########## {name}: {args.reps} realizations, "
               f"i0={i0:.2e} ##########")
-        runs = run(name, args.reps, i0, args.iters, args.force)
-        write_table(name, runs, i0, args.iters)
-        fig_bands(name, runs, i0, args.iters)
+        runs = run(name, args.reps, i0, args.iters, args.force, args.eps_mode)
+        write_table(name, runs, i0, args.iters, args.eps_mode)
+        fig_bands(name, runs, i0, args.iters, args.eps_mode)
         zf = max(float(r["zero_frac"]) for r in runs)
         if zf > 1e-6:
             print(f"  NOTE: worst-case zero-count fraction {zf:.2e}; raise i0 "
