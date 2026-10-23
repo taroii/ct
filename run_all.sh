@@ -38,7 +38,8 @@ mkdir -p logs paper/experiments/figs paper/experiments/tables
 
 START=$(date +%s)
 FAILED=()
-declare -a TIMINGS
+declare -a TIMINGS=()        # assigned, not just declared: `declare -a X`
+                             # leaves X unset, so ${#X[@]} trips `set -u`
 
 hdr() { printf '\n\033[1m=== %s ===\033[0m\n' "$*"; }
 
