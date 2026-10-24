@@ -53,7 +53,14 @@ NOISE_SEED = 1000
 def stored_trace(noise_seed, itermax, eps_mode):
     """The run_3d_noise_stats traces for this realization, for the guard."""
     for jp in sorted(STORE.glob("*.json")):
-        c = json.loads(jp.read_text())["config"]
+        # A single unreadable manifest must not cost a completed GPU run: the
+        # guard is a cross-check, not the product.
+        try:
+            c = json.loads(jp.read_text())["config"]
+        except Exception as e:
+            print(f"  (skipping unreadable manifest {jp.name}: "
+                  f"{type(e).__name__})")
+            continue
         if (c.get("noise_seed") == noise_seed and c.get("itermax") == itermax
                 and c.get("eps_mode") == eps_mode and c.get("s") == HERO_S):
             with np.load(jp.with_suffix(".npz")) as d:
@@ -92,7 +99,17 @@ def main():
     si = np.asarray(res["single"]["ierrs"], float)
     tw = np.asarray(res["two"]["ierrs"], float)
 
-    # Guard: same experiment as the table, or the figure is not usable.
+    mid = phantom.shape[0] // 2
+    gt = np.asarray(phantom[mid], float)
+    rs = np.asarray(res["single"]["recon"][mid], float)
+    rt = np.asarray(res["two"]["recon"][mid], float)
+    np.savez_compressed(OUT / f"slices_seed{args.noise_seed}_{args.eps_mode}.npz",
+                        gt=gt, single=rs, two=rt, ierrs_single=si, ierrs_two=tw,
+                        i0=i0, itermax=args.itermax)
+    print(f"saved {OUT / f'slices_seed{args.noise_seed}_{args.eps_mode}.npz'} "
+          f"(restyle the figure from this without a GPU)")
+
+    # Only now, with the GPU work safely on disk, run the cross-check.
     st = stored_trace(args.noise_seed, args.itermax, args.eps_mode)
     if st is None:
         print("GUARD: no stored run to compare against -- cannot confirm this "
@@ -103,16 +120,6 @@ def main():
         print(f"GUARD: max |diff| vs stored run -- single {d1:.2e}, two {d2:.2e}"
               + ("  OK" if max(d1, d2) <= 1e-6 else
                  "  *** MISMATCH: config has drifted, do not use this figure ***"))
-
-    mid = phantom.shape[0] // 2
-    gt = np.asarray(phantom[mid], float)
-    rs = np.asarray(res["single"]["recon"][mid], float)
-    rt = np.asarray(res["two"]["recon"][mid], float)
-    np.savez_compressed(OUT / f"slices_seed{args.noise_seed}_{args.eps_mode}.npz",
-                        gt=gt, single=rs, two=rt, ierrs_single=si, ierrs_two=tw,
-                        i0=i0, itermax=args.itermax)
-    print(f"saved {OUT / f'slices_seed{args.noise_seed}_{args.eps_mode}.npz'} "
-          f"(restyle the figure from this without a GPU)")
 
     # ---- figure: matched window top row, shared error scale bottom row ----
     vmax = float(np.percentile(gt, 99.5))
