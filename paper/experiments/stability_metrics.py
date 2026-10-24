@@ -103,6 +103,12 @@ def load_runs(results_dir: Path) -> dict[str, list[dict]]:
                 "s": cfg.get("s"),
                 "i0": cfg.get("i0"),
                 "itermax": cfg.get("itermax"),
+                # eps_mode and its two constants are part of a run's identity:
+                # the per-band and original runs differ ONLY in these, so a
+                # config tuple without them silently pools two experiments.
+                "eps_mode": cfg.get("eps_mode"),
+                "eps_cal_draws": cfg.get("eps_cal_draws"),
+                "eps_cal_k": cfg.get("eps_cal_k"),
                 "label": meta.get("label", jp.stem),
             }
         by_phantom.setdefault(cfg["phantom"], []).append(run)
@@ -123,18 +129,25 @@ def select_config(name: str, runs: list[dict], args) -> list[dict]:
     keep = [r for r in runs
             if (args.s is None or r["s"] == args.s)
             and (args.itermax is None or r["itermax"] == args.itermax)
+            and (args.eps_mode is None or r["eps_mode"] == args.eps_mode)
             and (args.i0 is None or (r["i0"] is not None
                                      and abs(r["i0"] - args.i0) <= 1e-6 * abs(args.i0)))]
-    configs = sorted({(r["i0"], r["itermax"], r["s"]) for r in keep},
-                     key=lambda c: tuple(-1 if v is None else v for v in c))
+
+    def ident(r):
+        return (r["i0"], r["itermax"], r["s"], r["eps_mode"],
+                r["eps_cal_draws"], r["eps_cal_k"])
+
+    configs = sorted({ident(r) for r in keep},
+                     key=lambda c: tuple("" if v is None else str(v) for v in c))
     if len(configs) > 1:
-        listing = "\n".join(f"    i0={c[0]:.6g}  itermax={c[1]}  s={c[2]}"
-                             f"  ({sum((r['i0'], r['itermax'], r['s']) == c for r in keep)} runs)"
+        listing = "\n".join(f"    i0={c[0]:.6g}  itermax={c[1]}  s={c[2]}  "
+                             f"eps_mode={c[3]} draws={c[4]} k={c[5]}"
+                             f"  ({sum(ident(r) == c for r in keep)} runs)"
                              for c in configs)
         raise SystemExit(
             f"{name}: the store holds {len(configs)} different configurations, "
             f"which must not be pooled:\n{listing}\n"
-            f"Pick one with --i0 / --itermax / --s.")
+            f"Pick one with --eps-mode / --i0 / --itermax / --s.")
     return keep
 
 
@@ -522,6 +535,9 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--phantom", default="all",
                     help="phantom name, or 'all' (default)")
+    ap.add_argument("--eps-mode", default=None,
+                    help="use only runs from this tolerance mode "
+                         "(noise | noise_per_band)")
     ap.add_argument("--i0", type=float, default=None,
                     help="use only runs at this i0 (needed if the store holds several)")
     ap.add_argument("--itermax", type=int, default=None,

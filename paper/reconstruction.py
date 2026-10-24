@@ -78,7 +78,7 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None,
                                   itermax_override=None, i0=None,
                                   noise_seed=0, eps_mode='fixed',
                                   eps_factor=1.1, eps_cal_draws=20,
-                                  eps_cal_k=4.0):
+                                  eps_cal_k=4.0, eps_lo_mult=1.0):
     """Run both single and two-channel reconstruction for a given mfact.
 
     If snapshot_iters is a list/set of iteration numbers, the result dict
@@ -535,6 +535,11 @@ def run_reconstruction_for_mfact(mfact, snapshot_iters=None,
             ball = {b: (np.mean(v) + eps_cal_k*np.std(v, ddof=1))/sqrt(nrays)
                     for b, v in acc.items()}
             eps, eps_hi, eps_lo = ball['single'], ball['hi'], ball['lo']
+            # Robustness handle, NOT a tuning knob: eps_lo_mult=1.0 is the rule
+            # and is what every reported run uses. Sweeping it answers the only
+            # question a reader can ask about a derived constant -- whether the
+            # result depends on landing exactly on it.
+            eps_lo = eps_lo * float(eps_lo_mult)
             print(f"  eps per-band ({eps_cal_draws} draws, k={eps_cal_k}): "
                   f"single={eps:.6g} hi={eps_hi:.6g} lo={eps_lo:.6g} "
                   f"(lo/single={eps_lo/eps:.5f})")
