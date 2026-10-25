@@ -400,7 +400,7 @@ def main():
     # --- the certified-stability ratio vs sigma_lo_scale ---
     lam_base, _ = lam_max(make_Mtilde(nusino, nuxgrad, nuygrad, 1.0))
     print(f"\nlambda_max(Mtilde(1)) = ||K_two||^2 = {lam_base:.6e}")
-    print("\n  s = sigma_lo_scale | tau*lambda_max(M) | certified? | "
+    print("\n  s = sigma_lo_scale | tau*lambda_max(M) | vs single-channel | "
           "tau must shrink x")
     print("  " + "-" * 64)
     results = {}
@@ -408,10 +408,14 @@ def main():
         ap = make_Mtilde(nusino, nuxgrad, nuygrad, s)
         lam_s, v_s = lam_max(ap)
         ratio = lam_s / lam_base                 # = tau*lambda_max(M)
-        # within 0.5% of the single-channel boundary (=1) counts as "at budget"
-        certified = "YES" if ratio < 1.005 else "NO"
+        # Report the margin as computed. A ratio of 1.0001 is a
+        # power-iteration estimate sitting ON the single-channel boundary, not
+        # strictly below it; calling that "certified" would be a claim the
+        # measurement does not support.
+        where = ("at boundary" if abs(ratio - 1.0) <= 5e-3
+                 else ("below" if ratio < 1.0 else "above"))
         results[s] = (ratio, v_s)
-        print(f"  {s:>17.1f} | {ratio:>17.4f} | {certified:>10} | "
+        print(f"  {s:>17.1f} | {ratio:>17.4f} | {where:>17} | "
               f"{max(ratio,1.0):>13.3f}")
 
     print("\nBlock-energy share of the limiting mode (dominant eigvec of "
@@ -425,10 +429,12 @@ def main():
               f"{be['tv_x']:>6.3f}  {be['tv_y']:>6.3f}  {be['l1']:>6.3f}")
 
     print("\nReading:")
-    print("  * tau*lambda_max(M) > 1  => the certified condition is violated;")
+    print("  * tau*lambda_max(M) > 1  => the step-size condition is violated;")
     print("    the solver was running unstable PDHG (benefit is a transient).")
-    print("  * If it stays ~1 even at large s, the low band is spectrally")
-    print("    disjoint and the acceleration is in fact certified.")
+    print("  * If it stays AT 1 even at large s, the low band is spectrally")
+    print("    disjoint, so amplifying it costs nothing against the")
+    print("    single-channel step-size budget. That is a relative claim; it")
+    print("    is not the same as the margin being strictly below 1.")
     print("  * 'lo' energy share shows whether the low band drives the")
     print("    limiting eigenmode (it does <=> raising sigma_lo costs tau).")
 
@@ -450,14 +456,21 @@ def main():
     lines.append("## Sharp condition vs sigma_lo_scale\n")
     lines.append("tau*lambda_max(M) = lambda_max(Mtilde(s)) / lambda_max(Mtilde(1)); "
                  "s=1 is the single-channel boundary (=1).\n")
-    lines.append("| sigma_lo_scale | tau*lambda_max(M) | certified (<1)? | "
-                 "lo energy share of limiting mode |")
+    lines.append("| sigma_lo_scale | tau*lambda_max(M) | vs single-channel "
+                 "boundary | lo energy share of limiting mode |")
     lines.append("|---|---|---|---|")
     for s in SIGMA_LO_SCALES:
         ratio, v_s = results[s]
         be = block_energies(v_s, nusino, nuxgrad, nuygrad, s)
-        cert = "yes" if ratio < 1.005 else "no"
-        lines.append(f"| {s:.0f} | {ratio:.4f} | {cert} | {be['lo']:.3f} |")
+        where = ("at boundary" if abs(ratio - 1.0) <= 5e-3
+                 else ("below" if ratio < 1.0 else "above"))
+        lines.append(f"| {s:.0f} | {ratio:.4f} | {where} | {be['lo']:.3f} |")
+    lines.append("")
+    lines.append("The margin is reported as computed, on the same convention "
+                 "as `stability_curve.md`. Values are power-iteration "
+                 "estimates, so a margin within the iteration's own accuracy "
+                 "of 1 is reported as 'at boundary' rather than as strictly "
+                 "below it.")
     out.write_text("\n".join(lines) + "\n")
     print(f"\nWrote {out}")
 

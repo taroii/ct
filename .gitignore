@@ -71,3 +71,5 @@ paper/experiments/results/
 # history heavy. Regenerate rather than pull.
 paper/experiments/figs/
 paper/experiments/tables/
+
+overleaf/
