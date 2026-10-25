@@ -38,6 +38,12 @@ STORE3D = HERE / "results" / "3d_noise_stats"
 
 EPS_MODE = "noise_per_band"
 HERO_S = 4.0
+# Pin the iteration budget as well as the tolerance mode. Runs at a different
+# itermax are a different experiment, and _load matches on config alone, so
+# without this a longer rerun would be pooled into the same n and silently
+# widen (or narrow) every confidence interval in the table.
+ITERMAX_2D = 500
+ITERMAX_3D = 600
 ORDER = ["breast", "head", "defrise", "jaw", "shepp_logan"]
 LABEL = {"breast": "Breast", "head": "Head", "defrise": "Defrise",
          "jaw": "Jaw", "shepp_logan": "Shepp--Logan"}
@@ -165,7 +171,9 @@ def tab_noise(early=100, late=500):
          rf"reduction relative to single-channel at the same iteration, the "
          rf"$95\%$ confidence interval of the mean paired difference at "
          rf"iteration ${late}$. WINLINE The 3D row is the DBT geometry of "
-         rf"Section~\ref{{sec:experiments}}; GPU time caps $n$ there.}}",
+         rf"Section~\ref{{sec:experiments}}; GPU time caps $n$ there. "
+         rf"2D runs use a {ITERMAX_2D}-iteration budget and the 3D run "
+         rf"{ITERMAX_3D}.}}",
          r"\label{tab:noise}", r"\begin{tabular}{lrrrrrr}", r"\toprule",
          r" & & \multicolumn{2}{c}{Single RMSE} & "
          r"\multicolumn{2}{c}{Reduction (\%)} & \\",
@@ -174,7 +182,8 @@ def tab_noise(early=100, late=500):
          rf"$95\%$ CI @${late}$ \\", r"\midrule"]
     wins = []
     for p in ORDER:
-        runs = _load(STORE2D, phantom=p, eps_mode=EPS_MODE, s=HERO_S)
+        runs = _load(STORE2D, phantom=p, eps_mode=EPS_MODE, s=HERO_S,
+                     itermax=ITERMAX_2D)
         if not runs:
             print(f"  (no runs for {p})"); continue
         a, b = paired_stats(runs, early), paired_stats(runs, late)
@@ -182,7 +191,7 @@ def tab_noise(early=100, late=500):
         L.append(f"{LABEL[p]:<13}& ${b['n']}$ & ${a['single']:.3f}$ & "
                  f"${b['single']:.3f}$ & ${a['rel']:+.1f}$ & "
                  f"${b['rel']:+.1f}$ & $[{b['lo']:+.3f},{b['hi']:+.3f}]$" + r"\\")
-    runs3 = _load(STORE3D, eps_mode=EPS_MODE, s=HERO_S)
+    runs3 = _load(STORE3D, eps_mode=EPS_MODE, s=HERO_S, itermax=ITERMAX_3D)
     if runs3:
         a, b = paired_stats(runs3, early), paired_stats(runs3, late)
         wins += [a["win"], b["win"]]

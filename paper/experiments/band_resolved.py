@@ -112,25 +112,27 @@ def run_case(phantom, itermax, noisy):
 
 def fig_bands(name, res, itermax):
     fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.0), sharey=True)
-    for ax, key, title in ((axes[0], "noiseless", "noiseless data"),
-                           (axes[1], "noisy", "Poisson noise, per-band tolerances")):
+    for ax, key, title in ((axes[0], "noiseless", "Noiseless data"),
+                           (axes[1], "noisy", "Poisson noise")):
         if key not in res:
             ax.set_visible(False)
             continue
         d = res[key]
         for arm, colour, lab in (("single", "k", "single-channel"),
-                                 ("two", "#1f77b4", f"two-channel $s={HERO_S:g}$")):
+                                 ("two", "#1f77b4", f"two-channel ($s={HERO_S:g}$)")):
             it, lo, hi = d[arm]
             ax.loglog(it, lo, "-", color=colour, lw=2.0, label=f"{lab}, low band")
             ax.loglog(it, hi, "--", color=colour, lw=1.3, alpha=0.75,
                       label=f"{lab}, high band")
-        ax.set_xlabel("iteration")
+        ax.set_xlabel("Iteration")
         ax.grid(True, alpha=0.3, which="both")
         ax.set_title(title, fontsize=10)
-    axes[0].set_ylabel("relative band error")
+    axes[0].set_ylabel("Relative band error")
     axes[0].legend(fontsize=7, loc="lower left")
-    fig.suptitle(f"{name}: error resolved by data channel "
-                 f"(low band solid, high band dashed)", fontsize=10)
+    # Titles name the figure; the solid/dashed key and the reading of it
+    # belong in the caption, where there is room to be precise.
+    fig.suptitle(f"Band-resolved error vs iteration ({name.capitalize()})",
+                 fontsize=10)
     fig.tight_layout()
     p = FIG / f"band_resolved_{name}.png"
     fig.savefig(p, dpi=150)

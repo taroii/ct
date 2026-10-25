@@ -138,6 +138,18 @@ def compute(cfg):
     }
 
 
+def _itertag(itermax):
+    """Keep runs at different budgets in different files.
+
+    The .md written here is read back by paper_figures._gain_at for the
+    mechanism panel, which is captioned at iteration 500. Without this tag a
+    longer rerun overwrites that file and silently moves the panel to a
+    different budget than its caption claims. 500 keeps the bare name so the
+    published paths do not move.
+    """
+    return "" if itermax == 500 else f"_it{itermax}"
+
+
 def run(name, reps, i0, itermax, force, eps_mode="noise"):
     store = RunStore("2d_noise_stats")
     out = []
@@ -208,7 +220,7 @@ def write_table(name, runs, i0, itermax, eps_mode="noise"):
               "iteration is resolved by this many realizations; one that "
               "straddles zero means it is not, regardless of the point "
               "estimate's sign."]
-    p = TAB / f"noise_stats_{name}{_suffix(eps_mode)}.md"
+    p = TAB / f"noise_stats_{name}{_suffix(eps_mode)}{_itertag(itermax)}.md"
     p.write_text("\n".join(L) + "\n")
     print(f"  saved {p}")
     return cps
@@ -248,7 +260,7 @@ def fig_bands(name, runs, i0, itermax, eps_mode="noise"):
     ax.set_title("paired difference (>0 favours two-channel)", fontsize=10)
 
     fig.tight_layout()
-    p = FIG / f"noise_stats_{name}{_suffix(eps_mode)}.png"
+    p = FIG / f"noise_stats_{name}{_suffix(eps_mode)}{_itertag(itermax)}.png"
     fig.savefig(p, dpi=200, bbox_inches="tight"); plt.close(fig)
     print(f"  saved {p}")
 

@@ -48,7 +48,10 @@ TAB = HERE / "tables"
 
 SOLVER_SEED = 42          # fixed on purpose: only the noise realization varies
 HERO_S = 4.0
-CHECKPOINTS = [10, 50, 100, 200, 300, 500]
+# Table rows only -- not part of the run key, so extending this changes no
+# result. 600 is kept so a longer run's table still reports, directly and
+# without truncation arithmetic, the budget the published 3D row uses.
+CHECKPOINTS = [10, 50, 100, 200, 300, 500, 600, 1000, 1500]
 # Per-band calibration constants; hashed into the run key so a change to either
 # produces new results rather than silently reusing the old ones.
 EPS_CAL_DRAWS = 20
@@ -118,6 +121,13 @@ def _suffix(eps_mode):
     return "" if eps_mode == "noise" else f"_{eps_mode}"
 
 
+def _itertag(itermax):
+    """Keep the default budget's filenames stable, and give any other budget
+    its own. A longer rerun otherwise overwrites, at the very end of a job
+    measured in hours, the table the current results rest on."""
+    return "" if itermax == 600 else f"_it{itermax}"
+
+
 def write_table(runs, i0, itermax, down, eps_mode="noise"):
     cps = [c for c in CHECKPOINTS if c <= itermax]
     if itermax not in cps:
@@ -164,12 +174,12 @@ def write_table(runs, i0, itermax, down, eps_mode="noise"):
               f"only that every pair had the same sign and carries no "
               f"information beyond the win rate. GPU time caps n here well "
               f"below the 2D runs, so the interval is what to read."]
-    p = TAB / f"noise_stats_3d_victre{_suffix(eps_mode)}.md"
+    p = TAB / f"noise_stats_3d_victre{_suffix(eps_mode)}{_itertag(itermax)}.md"
     p.write_text("\n".join(L) + "\n")
     print(f"  saved {p}")
 
 
-def fig_bands(runs, i0, eps_mode="noise"):
+def fig_bands(runs, i0, eps_mode="noise", itermax=600):
     S = np.vstack([r["ierrs_single"] for r in runs])
     T = np.vstack([r["ierrs_two"] for r in runs])
     it = np.arange(1, S.shape[1] + 1)
@@ -188,7 +198,7 @@ def fig_bands(runs, i0, eps_mode="noise"):
     ax.set_title(f"3D VICTRE: median and IQR over {len(runs)} noise "
                  f"realizations", fontsize=10)
     fig.tight_layout()
-    p = FIG / f"noise_stats_3d_victre{_suffix(eps_mode)}.png"
+    p = FIG / f"noise_stats_3d_victre{_suffix(eps_mode)}{_itertag(itermax)}.png"
     fig.savefig(p, dpi=150)
     plt.close(fig)
     print(f"  saved {p}")
@@ -228,7 +238,7 @@ def main():
     runs = run(args.reps, i0, args.itermax, args.down, args.npower, args.force,
                args.eps_mode)
     write_table(runs, i0, args.itermax, args.down, args.eps_mode)
-    fig_bands(runs, i0, args.eps_mode)
+    fig_bands(runs, i0, args.eps_mode, args.itermax)
 
     st = paired_stats(runs, min(args.itermax, CHECKPOINTS[-1]))
     print(f"  @{min(args.itermax, CHECKPOINTS[-1])}: two-channel better by "

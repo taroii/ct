@@ -101,7 +101,7 @@ def main():
     fig, ax = plt.subplots(figsize=(5.8, 4.0))
     ax.axhline(single, color="k", ls="--", lw=1.6, label="single-channel")
     ax.semilogx(mults, two, "o-", color="#1f77b4", lw=1.8, ms=5,
-                label=f"two-channel $s={HERO_S:g}$")
+                label=f"two-channel ($s={HERO_S:g}$)")
     rule = two[list(mults).index(1.0)]
     ax.plot([1.0], [rule], "o", ms=12, mfc="none", mec="crimson", mew=2,
             label="per-band rule (all reported runs)")

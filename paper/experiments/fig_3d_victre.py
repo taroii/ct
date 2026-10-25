@@ -51,6 +51,17 @@ STORE = HERE / "results" / "3d_noise_stats"
 NOISE_SEED = 1000
 
 
+def _itertag(itermax):
+    """Keep runs at different budgets in different files.
+
+    The npz and the png used to be named by seed and tolerance mode alone, so
+    a longer rerun silently overwrote the shorter one it was supposed to be
+    compared against -- and the slices it overwrote cost GPU hours to make.
+    600 keeps the bare name so the published figure's path does not move.
+    """
+    return "" if itermax == 600 else f"_it{itermax}"
+
+
 def stored_trace(noise_seed, itermax, eps_mode, s):
     """The run_3d_noise_stats traces for this realization, for the guard."""
     for jp in sorted(STORE.glob("*.json")):
@@ -87,19 +98,29 @@ def make_panel(gt, rs, rt, si, tw, s, itermax, out_path):
     # Colorbars get their own grid columns. Attaching them to an image axis
     # steals width from the neighbouring cell, which is what clipped the
     # convergence panel's title and label in the first version of this figure.
-    outer = fig.add_gridspec(1, 2, width_ratios=[3.05, 1.5], wspace=0.24,
+    # wspace has to clear BOTH colorbar labels and the curve panel's y-label,
+    # which sit on either side of the same gap.
+    outer = fig.add_gridspec(1, 2, width_ratios=[3.05, 1.5], wspace=0.34,
                              left=0.035, right=0.965, top=0.86, bottom=0.10)
     gi = outer[0, 0].subgridspec(2, 4, width_ratios=[1, 1, 1, 0.062],
                                  wspace=0.07, hspace=0.26)
 
-    for col, (img, title) in enumerate((
-            (gt, "ground truth"),
-            (rs, f"single-channel\nslice RMSE {rmse(rs):.4f}"),
-            (rt, f"two-channel $s={s:g}$\nslice RMSE {rmse(rt):.4f}"))):
+    # Titles name the panel; the slice RMSE goes inside the panel as an
+    # inset, the way the 2D galleries carry theirs, so that the titles stay
+    # short and the two figures read the same way.
+    for col, (img, title, sc) in enumerate((
+            (gt, "Ground truth", None),
+            (rs, "Single-channel", rmse(rs)),
+            (rt, f"Two-channel ($s={s:g}$)", rmse(rt)))):
         ax = fig.add_subplot(gi[0, col])
         im = ax.imshow(img, cmap="gray", vmin=0.0, vmax=vmax)
         ax.set_title(title, fontsize=9)
         ax.set_xticks([]); ax.set_yticks([])
+        if sc is not None:
+            ax.text(0.03, 0.97, f"{sc:.4f}", transform=ax.transAxes,
+                    ha="left", va="top", fontsize=7.5, color="w",
+                    bbox=dict(boxstyle="square,pad=0.18", fc="k", ec="none",
+                              alpha=0.55))
     cb = fig.colorbar(im, cax=fig.add_subplot(gi[0, 3]))
     cb.set_label(r"$\mu$ (cm$^{-1}$)", fontsize=7)
     cb.ax.tick_params(labelsize=6)
@@ -107,21 +128,21 @@ def make_panel(gt, rs, rt, si, tw, s, itermax, out_path):
     fig.add_subplot(gi[1, 0]).axis("off")
 
     for col, (img, title) in enumerate(
-            ((np.abs(rs - gt), "|single $-$ truth|"),
-             (np.abs(rt - gt), "|two $-$ truth|")), start=1):
+            ((np.abs(rs - gt), "Error, single-channel"),
+             (np.abs(rt - gt), "Error, two-channel")), start=1):
         ax = fig.add_subplot(gi[1, col])
         im = ax.imshow(img, cmap="magma", vmin=0.0, vmax=emax)
         ax.set_title(title, fontsize=9)
         ax.set_xticks([]); ax.set_yticks([])
     cb = fig.colorbar(im, cax=fig.add_subplot(gi[1, 3]))
-    cb.set_label("absolute error", fontsize=7)
+    cb.set_label("Absolute error", fontsize=7)
     cb.ax.tick_params(labelsize=6)
 
     ax = fig.add_subplot(outer[0, 1])
     it = np.arange(1, len(si) + 1)
     ax.semilogx(it, si, "-", color="0.15", lw=1.8, label="single-channel")
     ax.semilogx(it, tw, "-", color="#1f77b4", lw=1.8,
-                label=f"two-channel $s={s:g}$")
+                label=f"two-channel ($s={s:g}$)")
     imin = int(np.argmin(si))
     ax.plot(imin + 1, si[imin], "o", color="0.15", ms=5, mfc="white", mew=1.4)
     # Park the label in the empty band between the two curves at late
@@ -132,16 +153,14 @@ def make_panel(gt, rs, rt, si, tw, s, itermax, out_path):
                 ha="right", fontsize=7, color="0.3",
                 arrowprops=dict(arrowstyle="->", color="0.5", lw=0.8,
                                 shrinkB=4))
-    ax.set_xlabel("iteration")
-    ax.set_ylabel("image RMSE (whole volume)")
+    ax.set_xlabel("Iteration")
+    ax.set_ylabel("Image RMSE (whole volume)")
     ax.grid(True, alpha=0.3, which="both")
     ax.legend(fontsize=8, loc="upper right")
-    ax.set_title(f"convergence, this realization\n"
-                 f"final {si[-1]:.4f} vs {tw[-1]:.4f} "
-                 f"({100 * (si[-1] - tw[-1]) / si[-1]:+.1f}%)", fontsize=9)
+    ax.set_title("Volume RMSE vs iteration", fontsize=9)
 
-    fig.suptitle(f"3D DBT VICTRE, central slice at iteration {itermax}", y=0.965,
-                 fontsize=11)
+    fig.suptitle(f"3D DBT VICTRE reconstruction, iteration {itermax}",
+                 y=0.965, fontsize=11)
     fig.savefig(out_path, dpi=170)
     plt.close(fig)
     print(f"saved {out_path}")
@@ -174,11 +193,13 @@ def main():
     if args.from_npz:
         with np.load(args.from_npz) as d:
             s = float(d["s"]) if "s" in d.files else float(args.s)
+            it = int(d["itermax"])
             make_panel(d["gt"], d["single"], d["two"],
                        np.asarray(d["ierrs_single"], float),
                        np.asarray(d["ierrs_two"], float),
-                       s, int(d["itermax"]),
-                       FIG / f"recon3d_victre_panel_{args.eps_mode}.png")
+                       s, it,
+                       FIG / f"recon3d_victre_panel_{args.eps_mode}"
+                             f"{_itertag(it)}.png")
         return
 
     # Solver imports live here: restyling must work without ASTRA.
@@ -206,7 +227,8 @@ def main():
     gt = np.asarray(phantom[mid], float)
     rs = np.asarray(res["single"]["recon"][mid], float)
     rt = np.asarray(res["two"]["recon"][mid], float)
-    npz = OUT / f"slices_seed{args.noise_seed}_{args.eps_mode}.npz"
+    npz = (OUT / f"slices_seed{args.noise_seed}_{args.eps_mode}"
+                 f"{_itertag(args.itermax)}.npz")
     np.savez_compressed(npz, gt=gt, single=rs, two=rt, ierrs_single=si,
                         ierrs_two=tw, i0=i0, itermax=args.itermax, s=HERO_S,
                         noise_seed=args.noise_seed, eps_mode=args.eps_mode)
@@ -227,7 +249,8 @@ def main():
                  "  *** MISMATCH: config has drifted, do not use this figure ***"))
 
     make_panel(gt, rs, rt, si, tw, HERO_S, args.itermax,
-               FIG / f"recon3d_victre_panel_{args.eps_mode}.png")
+               FIG / f"recon3d_victre_panel_{args.eps_mode}"
+                     f"{_itertag(args.itermax)}.png")
 
 
 if __name__ == "__main__":
