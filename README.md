@@ -15,14 +15,14 @@ sharp condition `tau * lambda_max(M) < 1`.
 src/        every module the paper depends on, and nothing else
 scripts/    setup_env.sh (dependencies), pipeline.sh (the whole run)
 results/    raw results, content-addressed by config   (gitignored)
-figures/    the figures the manuscript cites, and only those
-out/        generator scratch: everything drawn along the way (gitignored)
+out/        generator scratch: figures, tables, LaTeX fragments (gitignored)
 data/       phantoms and the VICTRE downsample cache
 ```
 
-`figures/` is written by `src/sync.py`, which reads the manuscript's
-`\includegraphics` calls — so "which figures does the paper use" is answered by
-the paper, not by a list someone maintains. `out/` can be deleted at any time.
+Figures land in `out/figs/` and table fragments in `out/tables/tex/`. Both are
+regenerable from `results/`, so `out/` can be deleted at any time. Nothing here
+writes into a document: the repo produces figures and `.tex` fragments, and
+what you do with them is outside it.
 
 ## Requirements
 
@@ -156,7 +156,7 @@ python src/bands.py --phantom breast --reps 20
 |---|---|---|
 | `results/` | raw arrays, one `.npz` per run with a sibling `.json` manifest | no |
 | `out/figs`, `out/tables` | every figure and table a runner draws | no |
-| `figures/` | the figures the manuscript cites | yes |
+| `out/tables/tex` | standalone LaTeX fragments, one per table | no |
 
 Each manifest records the full config, package versions, git commit, GPU and
 wall-clock, so a result stays auditable months later instead of being just a
@@ -178,13 +178,10 @@ STAGES=analysis bash scripts/pipeline.sh
 
 ```bash
 python src/audit.py --itermax-2d 2000 --itermax-3d 2000   # realization counts
-python src/sync.py --check                                # tables and figures in the .tex
 ```
 
-`audit.py` fails if anything the manuscript reports rests on fewer than 20
-noise realizations, and names what it could not check rather than passing
-silently. `sync.py` rewrites the manuscript's inlined tables and copies cited
-figures into `figures/`; `--check` reports drift and changes nothing.
+`audit.py` fails if any reported number rests on fewer than 20 noise
+realizations, and names what it could not check rather than passing silently.
 
 ## Two kinds of repeated runs — they are not interchangeable
 

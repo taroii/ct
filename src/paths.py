@@ -25,18 +25,11 @@ FIG = OUT / "figs"
 TAB = OUT / "tables"
 TEX = TAB / "tex"
 
-# The figures the manuscript actually cites, and nothing else. Populated by
-# sync.py from main.tex's \includegraphics, so the set is derived rather
-# than curated. Tracked.
-FIGURES = ROOT / "figures"
-
-# Inputs and the manuscript.
+# Inputs.
 DATA = ROOT / "data"
-OVERLEAF = ROOT / "overleaf"
-MAIN_TEX = OVERLEAF / "main.tex"
 
 
 def ensure():
     """Make the output directories. Cheap, idempotent, called by the runners."""
-    for d in (RESULTS, FIG, TAB, TEX, FIGURES):
+    for d in (RESULTS, FIG, TAB, TEX):
         d.mkdir(parents=True, exist_ok=True)

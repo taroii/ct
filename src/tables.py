@@ -1,10 +1,9 @@
-"""Emit the Experiments section's LaTeX tables straight from the runstore.
+"""Emit the experiment tables as standalone LaTeX fragments from the runstore.
 
-Every number in the manuscript's tables is produced here, from the same files
-the figures are drawn from, so a table and a figure cannot disagree and a
-rerun cannot leave a stale digit behind in the .tex. The fragments are written
-to tables/tex/ and also printed, so they can be pasted into a self-contained
-Overleaf document; the generator stays in the repo as the provenance.
+Every number is produced here, from the same files the figures are drawn
+from, so a table and a figure cannot disagree. Each fragment is written to
+out/tables/tex/ and also printed; nothing is inserted into any document, and
+where the fragments end up is not this repo's concern.
 
 Sources, one per table and no mixing:
   tab:stability  results/stability_curve/margin_vs_s.json  (+ the band
@@ -111,18 +110,16 @@ def tab_stability():
 
     cross = s[np.argmax(lo > 0.5)] if (lo > 0.5).any() else float("nan")
     L = [r"\begin{table}[t]", r"\centering",
-         r"\caption{Operator-level stability diagnostic: geometry and filters "
-         r"only, with no phantom and no reconstruction. \textbf{Left:} leading "
-         r"eigenvalues of the two data-channel normal operators and the "
-         r"overlap of their dominant eigenvectors. \textbf{Right:} the sharp "
-         r"margin $\tau\lambda_{\max}(M)=\lambda_{\max}(\widetilde M(s))/"
-         r"\lambda_{\max}(\widetilde M(1))$, normalised so the single-channel "
-         r"step-size boundary is exactly $1$, and the low channel's share of "
-         r"the limiting eigenmode. Values are power-iteration estimates and "
-         r"are reported as computed; a margin within the iteration's own "
-         r"accuracy of $1$ sits \emph{at} the single-channel boundary rather "
-         rf"than strictly below it. The low band first owns the limiting "
-         rf"eigenmode at $s={cross:g}$.}}",
+         r"\caption{Operator-level stability diagnostic, from geometry and "
+         r"filters only. Left: leading eigenvalues of the two data-channel "
+         r"normal operators and the overlap of their dominant eigenvectors. "
+         r"Right: the margin $\tau\lambda_{\max}(M)=\lambda_{\max}"
+         r"(\widetilde M(s))/\lambda_{\max}(\widetilde M(1))$, normalized "
+         r"so the single-channel step-size boundary is $1$, and the low "
+         r"channel's share of the limiting eigenmode. Values are "
+         r"power-iteration estimates reported as computed; a margin within "
+         r"the iteration's accuracy of $1$ lies at the single-channel "
+         r"boundary.}",
          r"\label{tab:stability}",
          r"\begin{tabular}{lc}", r"\toprule",
          rf"$\lambda_{{\max}}(X^\top F_{{\mathrm{{hi}}}}^2 X)$ & ${lam_hi}$\\",

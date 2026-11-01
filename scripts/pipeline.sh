@@ -3,14 +3,18 @@
 # left alone for hours.
 #
 #     tmux new -s ct
-#     ./run_all.sh 2>&1 | tee logs/run_all_$(date +%Y%m%d_%H%M).log
+#     bash scripts/pipeline.sh 2>&1 | tee logs/pipeline_$(date +%Y%m%d_%H%M).log
 #     # Ctrl-b d to detach, tmux attach -t ct to come back
 #
-# Safe to re-run. The 2D stages go through runstore, which keys results on a
-# config hash: unchanged config returns the stored arrays instantly, changed
-# methodology gets a new key. So an interrupted run resumes where it stopped
-# rather than starting over. The 3D stages are not yet on runstore (see
-# STATUS.md item 2) and DO recompute, which is why they are staged last.
+# Everything runs sequentially, one stage at a time.
+#
+# Safe to re-run, and that is the intended way to use it. Every solve goes
+# through runstore, which keys results on a config hash: unchanged config
+# returns the stored arrays instantly, changed methodology gets a new key. An
+# interrupted run therefore resumes where it stopped rather than starting
+# over, and a run whose 3D stages died at 3am can be restarted in the morning
+# without recomputing the 2D night behind it. The 3D figure and sweep stages
+# are the exception and do recompute, which is why they are staged last.
 #
 # Env knobs:
 #   STAGES="2d 3d"   which stage groups to run (default: all)
@@ -111,8 +115,8 @@ if has_stage diag; then
     stage "2D operator stability diagnostic" \
         $PY src/stability.py
 
-    # Feeds tab:stability's margin column and fig:bandsplit(b). Neither is
-    # derivable from the diagnostic above: it reports one s, this sweeps s.
+    # Feeds tab:stability's margin and low-band-share columns. Not derivable
+    # from the diagnostic above: that reports one s, this sweeps s.
     stage "2D stability margin vs step scale" \
         $PY src/stability_curve.py
 
@@ -139,7 +143,19 @@ if has_stage 2d; then
     # ~1e3) and silently biases those line integrals low.
     stage "2D Poisson noise statistics (${REPS} realizations, all phantoms)" \
         $PY src/noise2d.py --phantom all \
-            --reps "$REPS" --iters "$ITERMAX2D"
+            --reps "$REPS" --iters "$ITERMAX2D" \
+            --eps-mode noise_per_band
+
+    # The s=1 control: the same two-channel split with the amplification
+    # switched off, on the same noise draws. Without it nothing separates
+    # "splitting the fidelity helped" from "amplifying the low-frequency step
+    # helped", because the two arms differ in both at once. s is part of the
+    # config hash, so these neither overwrite the s=4 runs nor get pooled
+    # with them; tables.py intersects the two sets on the noise seed.
+    stage "2D Poisson noise, s=1 control (${REPS} realizations, all phantoms)" \
+        $PY src/noise2d.py --phantom all \
+            --reps "$REPS" --iters "$ITERMAX2D" --s 1 \
+            --eps-mode noise_per_band
 fi
 
 # --------------------------------------------------------------------------
@@ -163,6 +179,26 @@ if has_stage 3d; then
         $PY src/noise3d.py --down 4 \
             --reps "$REPS3D" --itermax "$ITERMAX3D" \
             --eps-mode noise_per_band
+
+    # The 3D counterpart of the 2D s=1 control above. This is the expensive
+    # one -- a second full set of REPS3D paired GPU solves -- so it runs
+    # immediately after the s=4 statistics, while the night is still young
+    # and before the stages that do not resume.
+    stage "3D VICTRE Poisson noise, s=1 control (${REPS3D} realizations)" \
+        $PY src/noise3d.py --down 4 \
+            --reps "$REPS3D" --itermax "$ITERMAX3D" --s 1 \
+            --eps-mode noise_per_band
+
+    # Noiseless 3D, so the noiseless table has a 3D row instead of being 2D
+    # only. Exact data makes the solve deterministic: there is no realization
+    # to average and --reps does not apply, so this is one solve per step
+    # scale, not REPS3D of them. Stored under the 3d_convergence experiment,
+    # away from the noise statistics.
+    for slo in 1 4; do
+        stage "3D VICTRE noiseless, s=$slo" \
+            $PY src/noise3d.py --noiseless --s "$slo" \
+                --down 4 --itermax "$ITERMAX3D"
+    done
 
     # fig:dbt. Writes its slices to results/figures3d/ so the figure can be
     # restyled later on a machine with no GPU.
@@ -217,14 +253,9 @@ if has_stage analysis; then
     stage "reconstruction galleries" \
         $PY src/galleries.py --itermax "$ITERMAX2D" --eps-mode noise_per_band
 
-    stage "manuscript tables" \
+    stage "experiment tables" \
         $PY src/tables.py \
             --itermax-2d "$ITERMAX2D" --itermax-3d "$ITERMAX3D"
-
-    # The manuscript carries inlined copies so the Overleaf bundle is
-    # self-contained; this is what keeps them from drifting from the store.
-    stage "sync tables into the manuscript" \
-        $PY src/sync.py
 
     # Last, and allowed to fail the run: this is the check that no reported
     # number rests on too few realizations. A pipeline that produced the
@@ -248,6 +279,6 @@ if ((${#FAILED[@]})); then
     exit 1
 fi
 echo "all stages completed"
-echo "scratch  -> out/figs/, out/tables/   (regenerable, gitignored)"
-echo "cited    -> figures/                  (written by src/sync.py)"
+echo "figures  -> out/figs/                (regenerable, gitignored)"
+echo "tables   -> out/tables/tex/           (LaTeX fragments, gitignored)"
 echo "raw      -> results/                  (runstore, gitignored)"
