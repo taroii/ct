@@ -93,16 +93,29 @@ def compute(cfg):
     }
 
 
-def run(reps, i0, itermax, down, npower, force, eps_mode="noise"):
-    store = RunStore("3d_noise_stats")
+def run(reps, i0, itermax, down, npower, force, eps_mode="noise",
+        s=HERO_S, noiseless=False):
+    """Paired single/two-channel 3D solves, one per noise realization.
+
+    `noiseless` runs the same solver on exact data (i0=0 disables the Poisson
+    draw in recon3d), which makes the result deterministic: there is one
+    realization, not `reps` of them, and it lands in its own experiment so a
+    noiseless trace can never be pooled into a noise statistic. The fixed
+    tolerance it falls back on -- eps=0.001 with eps_lo_ratio=1.25, from
+    recon3d.DEFAULTS -- is the same convention the 2D noiseless runs use, so
+    the 3D row of the noiseless table is comparable to the 2D rows above it.
+    """
+    store = RunStore("3d_convergence" if noiseless else "3d_noise_stats")
     out, failed = [], []
-    for k in range(reps):
-        cfg = dict(phantom="victre", down=down, s=HERO_S, itermax=itermax,
+    for k in range(1 if noiseless else reps):
+        cfg = dict(phantom="victre", down=down, s=s, itermax=itermax,
                    solver_seed=SOLVER_SEED,      # fixed on purpose
-                   noise_seed=1000 + k,          # the only thing that varies
+                   noise_seed=None if noiseless else 1000 + k,
                    # eps_mode is part of the key, so per-band runs are stored
                    # alongside the originals instead of replacing them.
-                   i0=i0, eps_mode=eps_mode, eps_factor=1.1, npower=npower,
+                   i0=0.0 if noiseless else i0,
+                   eps_mode="fixed" if noiseless else eps_mode,
+                   eps_factor=1.1, npower=npower,
                    eps_cal_draws=EPS_CAL_DRAWS, eps_cal_k=EPS_CAL_K,
                    # the full geometry, not a label, so a geometry change
                    # re-keys the store instead of returning stale results
@@ -115,8 +128,10 @@ def run(reps, i0, itermax, down, npower, force, eps_mode="noise"):
         # a bad configuration: the realization is worth retrying later, and
         # the nineteen after it are worth attempting now.
         try:
+            label = (f"victre_noiseless_s{s:g}" if noiseless
+                     else f"victre_i0{i0:.0e}_rep{k}")
             out.append(store.load_or_run(cfg, compute, force=force,
-                                         label=f"victre_i0{i0:.0e}_rep{k}"))
+                                         label=label))
         except Exception as e:                      # noqa: BLE001
             failed.append((1000 + k, type(e).__name__, str(e).strip()[:160]))
             print(f"\n*** realization {k} (seed {1000 + k}) FAILED: "
@@ -237,6 +252,14 @@ def main():
                     help="'auto' scales with the phantom's peak line integral")
     ap.add_argument("--force", action="store_true",
                     help="recompute even when runstore already has the result")
+    ap.add_argument("--s", type=float, default=HERO_S,
+                    help=f"low-frequency dual step scale (default {HERO_S:g}). "
+                         "s=1 is the matched split with no amplification, "
+                         "which is the control for the amplification itself.")
+    ap.add_argument("--noiseless", action="store_true",
+                    help="exact data: one deterministic realization, stored "
+                         "under the 3d_convergence experiment. Ignores --reps "
+                         "and --i0.")
     ap.add_argument("--eps-mode", default="noise",
                     choices=["noise", "noise_per_band"],
                     help="'noise': one tolerance from the single-channel noise, "
@@ -249,12 +272,28 @@ def main():
     TAB.mkdir(parents=True, exist_ok=True)
 
     phantom, dx_cm = load_phantom(args.down)
-    i0 = auto_i0(phantom, dx_cm) if args.i0 == "auto" else float(args.i0)
-    print(f"3D VICTRE noise statistics: i0={i0:.3e}, reps={args.reps}, "
-          f"itermax={args.itermax}, down={args.down}")
+    i0 = 0.0 if args.noiseless else (
+        auto_i0(phantom, dx_cm) if args.i0 == "auto" else float(args.i0))
+    if args.noiseless:
+        print(f"3D VICTRE noiseless convergence: s={args.s:g}, "
+              f"itermax={args.itermax}, down={args.down}")
+    else:
+        print(f"3D VICTRE noise statistics: i0={i0:.3e}, reps={args.reps}, "
+              f"s={args.s:g}, itermax={args.itermax}, down={args.down}")
 
     runs = run(args.reps, i0, args.itermax, args.down, args.npower, args.force,
-               args.eps_mode)
+               args.eps_mode, s=args.s, noiseless=args.noiseless)
+    if args.noiseless:
+        # The noise table and the band figure are both statistics over
+        # realizations; neither means anything for a single exact solve.
+        r = runs[0]
+        sg, tw = r["ierrs_single"], r["ierrs_two"]
+        print(f"\n  iter    single      s={args.s:g}    reduction")
+        for it in (10, 50, 100, 200, 500, 1000, 2000):
+            if it <= len(sg):
+                a, b = float(sg[it - 1]), float(tw[it - 1])
+                print(f"  {it:5d}  {a:.5f}  {b:.5f}   {100 * (a - b) / a:+.1f}%")
+        return
     write_table(runs, i0, args.itermax, args.down, args.eps_mode)
     fig_bands(runs, i0, args.eps_mode, args.itermax)
 

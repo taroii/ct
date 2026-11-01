@@ -38,6 +38,14 @@ STORE3D = RESULTS / "3d_noise_stats"
 
 EPS_MODE = "noise_per_band"
 HERO_S = 4.0
+# The control: the same two-channel split with no amplification. It isolates
+# the step-up from the split, because s=1 and s=4 solve the identical problem
+# and differ only in the trajectory.
+CTRL_S = 1.0
+# Tables report RMSE x 10^2 so the entries are one- or two-digit numbers
+# instead of a column of leading zeros. The caption states the factor.
+RSCALE = 100.0
+STORE3D_CLEAN = RESULTS / "3d_convergence"
 # Pin the iteration budget as well as the tolerance mode. Runs at a different
 # itermax are a different experiment, and _load matches on config alone, so
 # without this a longer rerun would be pooled into the same n and silently
@@ -73,6 +81,11 @@ def _pct(cell):
     """'0.07678 (+22.0%)' -> 22.0"""
     m = re.search(r"\(([-+][\d.]+)%\)", cell)
     return float(m.group(1)) if m else float("nan")
+
+
+def _rm(x):
+    """An RMSE as it is printed in the tables: scaled, fixed width."""
+    return "--" if x is None or not np.isfinite(x) else f"{RSCALE * x:.2f}"
 
 
 def _val(cell):
@@ -127,26 +140,76 @@ def tab_stability():
 
 
 # ------------------------------------------------------------- noiseless RMSE
+def _clean3d(it, s):
+    """Image RMSE of both arms at iteration `it` from the noiseless 3D run."""
+    if not STORE3D_CLEAN.exists():
+        return None, None
+    for jp in sorted(STORE3D_CLEAN.glob("*.json")):
+        if jp.name.startswith("._"):
+            continue
+        try:
+            c = json.loads(jp.read_text())["config"]
+        except Exception:
+            continue
+        if c.get("s") != s or c.get("phantom") != "victre":
+            continue
+        with np.load(jp.with_suffix(".npz")) as d:
+            sg = np.asarray(d["ierrs_single"], float)
+            tw = np.asarray(d["ierrs_two"], float)
+        if len(sg) < it:
+            print(f"  (noiseless 3D s={s:g} ran only {len(sg)} iterations, "
+                  f"need {it})")
+            return None, None
+        return float(sg[it - 1]), float(tw[it - 1])
+    return None, None
+
+
 def tab_rmse(it=500):
+    """Noiseless RMSE for the baseline and the two certified step scales.
+
+    s=8 is not reported. It sits above the step-size boundary
+    (tau*lambda_max(M)=1.18 in Table~\ref{tab:stability}), so it is outside
+    the regime the paper certifies; quoting its RMSE invites the reader to
+    use a setting the stability analysis does not cover.
+    """
+    miss = []
     L = [r"\begin{table}[t]", r"\centering",
-         rf"\caption{{Noiseless data: image RMSE at iteration ${it}$ for the "
-         r"single-channel baseline, and the relative RMSE reduction of the "
-         r"two-channel method at low-frequency step scales $s\in\{1,4,8\}$ "
-         r"(positive means lower RMSE than single-channel). $s=4$ holds "
-         r"$\tau\lambda_{\max}(M)$ at the single-channel boundary; $s=8$ "
-         r"exceeds it.}",
-         r"\label{tab:rmse}", r"\begin{tabular}{lrrrr}", r"\toprule",
-         r" & & \multicolumn{3}{c}{RMSE reduction (\%)}\\",
-         r"\cmidrule(l){3-5}",
-         r"Phantom & Single RMSE & $s{=}1$ & $s{=}4$ & $s{=}8$\\", r"\midrule"]
-    for p in ORDER:
-        rows = {int(r[0]): r for r in _md_rows(TAB / f"{p}_rmse.md")}
+         rf"\caption{{Noiseless data: image RMSE ($\times10^{{-2}}$) at "
+         rf"iteration ${it}$ for the single-channel baseline and for the "
+         rf"two-channel method at low-frequency step scales $s=1$ and $s=4$. "
+         rf"$s=1$ is the same split with no amplification, so the difference "
+         rf"between the $s=1$ and $s=4$ columns is the effect of the "
+         rf"step-up alone, and the difference between the single-channel and "
+         rf"$s=1$ columns is the effect of the split alone. Both scales hold "
+         rf"$\tau\lambda_{{\max}}(M)$ at the single-channel boundary "
+         rf"(Table~\ref{{tab:stability}}). CLEAN3D}}",
+         r"\label{tab:rmse}", r"\begin{tabular}{lrrr}", r"\toprule",
+         r"Phantom & Single & $s{=}1$ & $s{=}4$\\", r"\midrule"]
+    for ph in ORDER:
+        rows = {int(r[0]): r for r in _md_rows(TAB / f"{ph}_rmse.md")}
         r = rows[it]
-        L.append(f"{LABEL[p]:<13}& ${_val(r[1]):.3f}$ & "
-                 f"${_pct(r[2]):+.1f}$ & ${_pct(r[3]):+.1f}$ & "
-                 f"${_pct(r[4]):+.1f}$" + r"\\")
+        L.append(f"{LABEL[ph]:<13}& ${_rm(_val(r[1]))}$ & "
+                 f"${_rm(_val(r[2]))}$ & ${_rm(_val(r[3]))}$" + r"\\")
+    sg1, tw1 = _clean3d(it, CTRL_S)
+    sg4, tw4 = _clean3d(it, HERO_S)
+    single3 = sg4 if sg4 is not None else sg1
+    if single3 is None:
+        miss.append("the 3D row")
+        print("  (tab_rmse: no noiseless 3D run -- "
+              "python src/noise3d.py --noiseless --s 1 / --s 4)")
+    else:
+        L += [r"\midrule",
+              f"3D DBT       & ${_rm(single3)}$ & ${_rm(tw1)}$ & "
+              f"${_rm(tw4)}$" + r"\\"]
     L += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
-    return "\n".join(L)
+    tex = "\n".join(L)
+    # Built as one string rather than squeezed afterwards: a blanket
+    # whitespace collapse over the whole table also eats the column padding.
+    note = (r"The 3D row is the DBT geometry of Section~\ref{sec:experiments}."
+            if single3 is not None else
+            r"\textbf{Provisional:} the noiseless 3D run has not been "
+            r"completed, so that row is absent.")
+    return tex.replace("CLEAN3D", note)
 
 
 # ------------------------------------------------------------- noise summary
@@ -167,7 +230,64 @@ def _load(store, **match):
     return runs
 
 
-def tab_noise(early=100, late=None):
+def _load_seeded(store, **match):
+    """Same as _load, but keyed by noise realization.
+
+    The s=1 control and the s=4 arm are separate runs, so a column-by-column
+    mean over whatever each one happens to have would compare them on
+    different noise draws and quietly stop being paired. Keying on the seed
+    lets the caller intersect first and compare like with like.
+    """
+    out = {}
+    for jp in sorted(store.glob("*.json")):
+        if jp.name.startswith("._"):
+            continue
+        try:
+            c = json.loads(jp.read_text())["config"]
+        except Exception:
+            continue
+        if any(c.get(k) != v for k, v in match.items()):
+            continue
+        with np.load(jp.with_suffix(".npz")) as d:
+            out[c.get("noise_seed")] = dict(
+                ierrs_single=np.asarray(d["ierrs_single"], float),
+                ierrs_two=np.asarray(d["ierrs_two"], float))
+    return out
+
+
+def _arm_cells(store, itermax, iters, **match):
+    """Mean RMSE per arm at each checkpoint, paired across the two s values.
+
+    Returns (cells, n, stats4) where cells maps iteration -> (single, s1, s4).
+    """
+    r4 = _load_seeded(store, s=HERO_S, itermax=itermax, **match)
+    r1 = _load_seeded(store, s=CTRL_S, itermax=itermax, **match)
+    if not r4:
+        return None, 0, None
+    seeds = sorted(set(r4) & set(r1)) if r1 else sorted(r4)
+    runs4 = [r4[k] for k in sorted(r4)]
+    cells, stats4 = {}, {}
+    for it in iters:
+        a = paired_stats(runs4, it)
+        stats4[it] = a
+        s1 = None
+        if r1 and seeds:
+            # Paired on the shared draws only, and the baseline is taken from
+            # the same runs, so every number in the row sees one noise set.
+            sg = np.array([r4[k]["ierrs_single"][it - 1] for k in seeds])
+            t1 = np.array([r1[k]["ierrs_two"][it - 1] for k in seeds])
+            chk = np.array([r1[k]["ierrs_single"][it - 1] for k in seeds])
+            if np.max(np.abs(sg - chk)) > 1e-9:
+                print(f"  WARNING: the single-channel trace differs between "
+                      f"the s=1 and s=4 runs at iteration {it} "
+                      f"(max |diff| {np.max(np.abs(sg - chk)):.3g}); the two "
+                      f"sets are not the same realizations")
+            s1 = float(t1.mean())
+        cells[it] = (a["single"], s1, a["two"])
+    return cells, len(runs4), stats4
+
+
+def tab_noise(early=500, late=None):
     """Paired RMSE at an early checkpoint and at the published budget.
 
     `late` defaults to the budget rather than a literal: the two were set
@@ -175,72 +295,78 @@ def tab_noise(early=100, late=None):
     on reporting iteration 500 of them -- the right data at the wrong column.
     """
     late = ITERMAX_2D if late is None else late
+    iters = (early, late)
     L = [r"\begin{table}[t]", r"\centering",
-         rf"\caption{{Poisson noise, paired over independent realizations: "
-         rf"both arms reconstruct the same realization, and the solver seed is "
-         rf"fixed so the spread is measurement noise and not step-size jitter. "
-         rf"Image RMSE at iterations ${early}$ and ${late}$, with the "
-         rf"reduction relative to single-channel at the same iteration, the "
-         rf"$95\%$ confidence interval of the mean paired difference at "
-         rf"iteration ${late}$. WINLINE The 3D row is the DBT geometry of "
-         rf"Section~\ref{{sec:experiments}}; GPU time caps $n$ there. "
-         # Same budget in both dimensions reads as one clause, not two.
-         # Joined with + because an adjacent literal followed by '(' is a
-         # call, not implicit concatenation.
+         rf"\caption{{Poisson noise: image RMSE ($\times10^{{-2}}$) at "
+         rf"iterations ${early}$ and ${late}$, averaged over independent "
+         rf"realizations. The comparison is paired: every arm reconstructs "
+         rf"the same realizations, and the solver seed is fixed so the "
+         rf"spread is measurement noise and not step-size jitter. $s=1$ is "
+         rf"the two-channel split with no amplification. WINLINE The 3D row "
+         rf"is the DBT geometry of Section~\ref{{sec:experiments}}. "
          + (rf"All runs use a ${ITERMAX_2D}$-iteration budget.}}"
-          if ITERMAX_2D == ITERMAX_3D else
-          rf"2D runs use a ${ITERMAX_2D}$-iteration budget and the 3D run "
-          rf"a ${ITERMAX_3D}$-iteration one.}}"),
+            if ITERMAX_2D == ITERMAX_3D else
+            rf"2D runs use a ${ITERMAX_2D}$-iteration budget and the 3D run "
+            rf"a ${ITERMAX_3D}$-iteration one.}}"),
          r"\label{tab:noise}", r"\begin{tabular}{lrrrrrr}", r"\toprule",
-         r" & & \multicolumn{2}{c}{Single RMSE} & "
-         r"\multicolumn{2}{c}{Reduction (\%)} & \\",
-         r"\cmidrule(lr){3-4}\cmidrule(lr){5-6}",
-         rf"Phantom & $n$ & @${early}$ & @${late}$ & @${early}$ & @${late}$ & "
-         rf"$95\%$ CI @${late}$ \\", r"\midrule"]
-    wins, thin = [], []
-    for p in ORDER:
-        runs = _load(STORE2D, phantom=p, eps_mode=EPS_MODE, s=HERO_S,
-                     itermax=ITERMAX_2D)
-        if not runs:
-            print(f"  (no runs for {p})"); continue
-        a, b = paired_stats(runs, early), paired_stats(runs, late)
-        wins += [a["win"], b["win"]]
-        if b["n"] < MIN_REPS:
-            thin.append(rf"{LABEL[p]} ($n={b['n']}$)")
-        L.append(f"{LABEL[p]:<13}& ${b['n']}$ & ${a['single']:.3f}$ & "
-                 f"${b['single']:.3f}$ & ${a['rel']:+.1f}$ & "
-                 f"${b['rel']:+.1f}$ & $[{b['lo']:+.3f},{b['hi']:+.3f}]$" + r"\\")
-    runs3 = _load(STORE3D, eps_mode=EPS_MODE, s=HERO_S, itermax=ITERMAX_3D)
-    if runs3:
-        a, b = paired_stats(runs3, early), paired_stats(runs3, late)
-        wins += [a["win"], b["win"]]
-        if b["n"] < MIN_REPS:
-            thin.append(rf"3D DBT ($n={b['n']}$)")
-        L += [r"\midrule",
-              f"3D DBT & ${b['n']}$ & ${a['single']:.3f}$ & "
-              f"${b['single']:.3f}$ & ${a['rel']:+.1f}$ & ${b['rel']:+.1f}$ & "
-              f"$[{b['lo']:+.3f},{b['hi']:+.3f}]$" + r"\\"]
+         rf" & \multicolumn{{3}}{{c}}{{Iteration ${early}$}} & "
+         rf"\multicolumn{{3}}{{c}}{{Iteration ${late}$}}\\",
+         r"\cmidrule(lr){2-4}\cmidrule(lr){5-7}",
+         r"Phantom & Single & $s{=}1$ & $s{=}4$ & Single & $s{=}1$ & "
+         r"$s{=}4$\\", r"\midrule"]
+    wins, thin, noctrl, ns = [], [], [], []
+    for ph in ORDER:
+        cells, nrep, st = _arm_cells(STORE2D, ITERMAX_2D, iters,
+                                     phantom=ph, eps_mode=EPS_MODE)
+        if cells is None:
+            print(f"  (no runs for {ph})"); continue
+        ns.append(nrep)
+        wins += [st[i]["win"] for i in iters]
+        if nrep < MIN_REPS:
+            thin.append(rf"{LABEL[ph]} ($n={nrep}$)")
+        if cells[late][1] is None:
+            noctrl.append(LABEL[ph])
+        L.append(f"{LABEL[ph]:<13}& " + " & ".join(
+            f"${_rm(v)}$" for i in iters for v in cells[i]) + r"\\")
+        print(f"  {LABEL[ph]:<13} n={nrep}  " + "  ".join(
+            f"@{i}: {st[i]['rel']:+.1f}%" for i in iters))
+    c3, n3, st3 = _arm_cells(STORE3D, ITERMAX_3D, iters,
+                             eps_mode=EPS_MODE)
+    if c3 is not None:
+        ns.append(n3)
+        wins += [st3[i]["win"] for i in iters]
+        if n3 < MIN_REPS:
+            thin.append(rf"3D DBT ($n={n3}$)")
+        if c3[late][1] is None:
+            noctrl.append("3D DBT")
+        L += [r"\midrule", "3D DBT       & " + " & ".join(
+            f"${_rm(v)}$" for i in iters for v in c3[i]) + r"\\"]
+        print(f"  {'3D DBT':<13} n={n3}  " + "  ".join(
+            f"@{i}: {st3[i]['rel']:+.1f}%" for i in iters))
     L += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    flags = []
     if thin:
-        # Say it in the caption rather than leaving the reader to notice the
-        # n column: a row below the floor is provisional, not merely smaller.
         verb = "rests" if len(thin) == 1 else "rest"
-        L[2] = L[2].rstrip("}") + (
-            r" \textbf{Provisional:} " + ", ".join(thin)
-            + rf" {verb} on fewer than ${MIN_REPS}$ realizations." + "}")
+        flags.append(", ".join(thin)
+                     + rf" {verb} on fewer than ${MIN_REPS}$ realizations.")
+    if noctrl:
+        flags.append("the $s=1$ control has not been run for "
+                     + ", ".join(noctrl) + ".")
+        print(f"  (tab_noise: no s=1 control for {', '.join(noctrl)} -- "
+              f"python src/noise2d.py --s 1 ... / noise3d.py --s 1 ...)")
+    if flags:
+        L[2] = L[2].rstrip("}") + r" \textbf{Provisional:} " \
+            + " ".join(flags) + "}"
     tex = "\n".join(L)
-    # Only claim a clean sweep if every row actually swept.
     if wins and min(wins) == 1.0:
-        note = (rf"The two-channel arm had the lower RMSE in every one of "
-                rf"these paired realizations, at both iteration counts.")
+        note = ("The two-channel arm at $s=4$ had the lower RMSE in every one "
+                "of these paired realizations, at both iteration counts.")
     else:
-        note = (rf"Win rates over both iteration counts range from "
+        note = (rf"Win rates for $s=4$ over both iteration counts range from "
                 rf"{100 * min(wins):.0f}\% to {100 * max(wins):.0f}\%.")
-    print(f"  win rates over both iteration counts: "
-          f"{', '.join(f'{100 * w:.0f}%' for w in wins)}")
+    if ns:
+        print(f"  realizations per row: {ns}")
     return tex.replace("WINLINE", note)
-
-
 
 
 # -------------------------------------------------------------- oracle table

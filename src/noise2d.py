@@ -134,11 +134,11 @@ def compute(cfg):
     }
 
 
-def run(name, reps, i0, itermax, force, eps_mode="noise"):
+def run(name, reps, i0, itermax, force, eps_mode="noise", s=HERO_S):
     store = RunStore("2d_noise_stats")
     out = []
     for k in range(reps):
-        cfg = dict(phantom=name, s=HERO_S, itermax=itermax,
+        cfg = dict(phantom=name, s=s, itermax=itermax,
                    solver_seed=SOLVER_SEED,      # fixed on purpose
                    noise_seed=1000 + k,          # the only thing that varies
                    # eps_mode is part of the key, so per-band runs are stored
@@ -150,7 +150,7 @@ def run(name, reps, i0, itermax, force, eps_mode="noise"):
                    mfact=MFACT, cutoffparm=4.0, cutoffparm_lo=8.0, eps=0.001,
                    solver="reconstruction.py")
         out.append(store.load_or_run(cfg, compute, force=force,
-                                     label=f"{name}_i0{i0:.0e}_rep{k}"))
+                                     label=f"{name}_i0{i0:.0e}_s{s:g}_rep{k}"))
     return out
 
 
@@ -260,6 +260,10 @@ def main():
                          "fixed i0 clamps zero-count rays on thick phantoms)")
     ap.add_argument("--iters", type=int, default=500)
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--s", type=float, default=HERO_S,
+                    help=f"low-frequency dual step scale (default {HERO_S:g}). "
+                         "s=1 is the matched split with no amplification, the "
+                         "control that separates the split from the step-up.")
     ap.add_argument("--eps-mode", default="noise",
                     choices=["noise", "noise_per_band"],
                     help="'noise': one tolerance from the single-channel noise, "
@@ -276,10 +280,17 @@ def main():
         else:
             i0 = float(args.i0)
         print(f"\n########## {name}: {args.reps} realizations, "
-              f"i0={i0:.2e} ##########")
-        runs = run(name, args.reps, i0, args.iters, args.force, args.eps_mode)
-        write_table(name, runs, i0, args.iters, args.eps_mode)
-        fig_bands(name, runs, i0, args.iters, args.eps_mode)
+              f"i0={i0:.2e}, s={args.s:g} ##########")
+        runs = run(name, args.reps, i0, args.iters, args.force,
+                   args.eps_mode, s=args.s)
+        if args.s == HERO_S:
+            # The per-phantom table and band figure are written for the
+            # published setting only; a control run must not overwrite them.
+            write_table(name, runs, i0, args.iters, args.eps_mode)
+            fig_bands(name, runs, i0, args.iters, args.eps_mode)
+        else:
+            print(f"  (s={args.s:g} is a control run: stored, but the "
+                  f"per-phantom table and figure are left at s={HERO_S:g})")
         zf = max(float(r["zero_frac"]) for r in runs)
         if zf > 1e-6:
             print(f"  NOTE: worst-case zero-count fraction {zf:.2e}; raise i0 "
