@@ -299,8 +299,7 @@ def tab_noise(early=500, late=None):
          rf"realizations. The comparison is paired: every arm reconstructs "
          rf"the same realizations, and the solver seed is fixed so the "
          rf"spread is measurement noise and not step-size jitter. $s=1$ is "
-         rf"the two-channel split with no amplification. WINLINE The 3D row "
-         rf"is the DBT geometry of Section~\ref{{sec:experiments}}. "
+         rf"the two-channel split with no amplification. WINLINE D3LINE"
          + (rf"All runs use a ${ITERMAX_2D}$-iteration budget.}}"
             if ITERMAX_2D == ITERMAX_3D else
             rf"2D runs use a ${ITERMAX_2D}$-iteration budget and the 3D run "
@@ -329,7 +328,12 @@ def tab_noise(early=500, late=None):
             f"@{i}: {st[i]['rel']:+.1f}%" for i in iters))
     c3, n3, st3 = _arm_cells(STORE3D, ITERMAX_3D, iters,
                              eps_mode=EPS_MODE)
-    if c3 is not None:
+    if c3 is None:
+        norow3d = True
+        print("  (tab_noise: no 3D runs at all -- row omitted; "
+              "python src/noise3d.py --down 4 ...)")
+    else:
+        norow3d = False
         ns.append(n3)
         wins += [st3[i]["win"] for i in iters]
         if n3 < MIN_REPS:
@@ -346,6 +350,9 @@ def tab_noise(early=500, late=None):
         verb = "rests" if len(thin) == 1 else "rest"
         flags.append(", ".join(thin)
                      + rf" {verb} on fewer than ${MIN_REPS}$ realizations.")
+    if norow3d:
+        flags.append("the 3D run has not been completed, so that row is "
+                     "absent.")
     if noctrl:
         flags.append("the $s=1$ control has not been run for "
                      + ", ".join(noctrl) + ".")
@@ -363,7 +370,9 @@ def tab_noise(early=500, late=None):
                 rf"{100 * min(wins):.0f}\% to {100 * max(wins):.0f}\%.")
     if ns:
         print(f"  realizations per row: {ns}")
-    return tex.replace("WINLINE", note)
+    d3 = "" if norow3d else (r"The 3D row is the DBT geometry of "
+                             r"Section~\ref{sec:experiments}. ")
+    return tex.replace("WINLINE", note).replace("D3LINE", d3)
 
 
 # -------------------------------------------------------------- oracle table

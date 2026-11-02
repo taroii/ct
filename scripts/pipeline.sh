@@ -18,7 +18,6 @@
 #
 # Env knobs:
 #   STAGES="2d 3d"   which stage groups to run (default: all)
-#   ITERS=5000       2D long-run length
 #   SEEDS="1 2 3"    seeds for the multi-seed stability checks
 #   REPS=30          Poisson noise realizations for the 2D statistics stage
 #   MIN_REPS=20      floor enforced by the audit stage; nothing reported may
@@ -28,13 +27,18 @@
 #   ITERMAX3D=2000   iteration budget for the 3D statistics stage
 #   REPS3D=10        Poisson noise realizations for the 3D statistics stage
 #   PY=python        interpreter
-#   SKIP_SLOW=1      skip the 20000-iteration reference runs and 3D sweeps
+#   SKIP_SLOW=1      skip the 3D seed and sigma_lo sweeps (itermax 300). They
+#                    probe step-size sensitivity and are not read by any table.
+#   DOWN3D=4         3D downsample factor, checked by the preflight
+#   SKIP_GPU_CHECK=1 start even if ASTRA, CUDA or the phantom look unusable
 
 set -uo pipefail            # NOT -e: one failing stage must not kill the night
 
 cd "$(dirname "$0")/.."
 PY="${PY:-python}"
-ITERS="${ITERS:-5000}"
+# Stage output is piped through tee, which makes stdout a pipe rather than a
+# tty; python would then block-buffer and an hour-long stage would look hung.
+export PYTHONUNBUFFERED=1
 SEEDS="${SEEDS:-1 2 3 4 5}"
 REPS="${REPS:-30}"
 # 3D realizations are separately tunable: each is a full single+two GPU solve,
@@ -48,6 +52,10 @@ MIN_REPS="${MIN_REPS:-20}"
 # at one iteration count and computed at another.
 ITERMAX2D="${ITERMAX2D:-2000}"
 ITERMAX3D="${ITERMAX3D:-2000}"
+# The 3D downsample factor. Defined here because the preflight has to check for
+# the phantom cache at the same factor the stages will ask for; a check at one
+# factor and a run at another is no check at all.
+DOWN3D="${DOWN3D:-4}"
 # Realizations for the two sweeps that were historically single-realization.
 REPS_TOL="${REPS_TOL:-20}"
 REPS_BAND="${REPS_BAND:-20}"
@@ -66,21 +74,30 @@ hdr() { printf '\n\033[1m=== %s ===\033[0m\n' "$*"; }
 # Run a stage, keep going on failure, record how long it took. A stage that dies
 # at 3am must not silently look like a stage that was never reached, so failures
 # are collected and reported in the summary at the end.
+# Each stage also gets its own log. A stage that dies leaves a traceback
+# somewhere in a six-figure-second transcript, which is the difference between
+# a diagnosable failure and the string "rc=1"; the summary quotes the tail of
+# each one so the end of the run explains itself.
+slug() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]' '_' | sed 's/^_//; s/_$//'; }
+
 stage() {
     local name="$1"; shift
     hdr "$name"
     echo "\$ $*"
-    local t0 t1
+    local t0 t1 rc log
+    log="logs/stage_$(slug "$name").log"
     t0=$(date +%s)
-    if "$@"; then
-        t1=$(date +%s)
+    # PIPESTATUS, not $?: $? is tee's exit status, which is 0 even when the
+    # stage it is logging has died.
+    "$@" 2>&1 | tee "$log"
+    rc=${PIPESTATUS[0]}
+    t1=$(date +%s)
+    if [[ $rc -eq 0 ]]; then
         TIMINGS+=("$(printf '%-42s %6ss  ok' "$name" "$((t1 - t0))")")
     else
-        local rc=$?
-        t1=$(date +%s)
         TIMINGS+=("$(printf '%-42s %6ss  FAILED (rc=%s)' "$name" "$((t1 - t0))" "$rc")")
-        FAILED+=("$name")
-        echo ">>> STAGE FAILED: $name (rc=$rc) -- continuing"
+        FAILED+=("$name|$log")
+        echo ">>> STAGE FAILED: $name (rc=$rc) -- continuing; log: $log"
     fi
 }
 
@@ -106,6 +123,58 @@ EOF
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader 2>/dev/null \
     || echo "nvidia-smi: not found (3D stages will fail)"
 git rev-parse HEAD 2>/dev/null | sed 's/^/commit  /'
+
+# Every 3D stage needs a CUDA-capable ASTRA, and the 3D block runs last.
+# Without this gate the run spends the entire 2D night first and only then
+# fails every 3D stage in turn, which is exactly how a pipeline reports
+# fourteen failures and no reason for any of them. Probe once, up front, and
+# refuse to start rather than deliver two thirds of a pipeline.
+if has_stage 3d && [[ "${SKIP_GPU_CHECK:-0}" != "1" ]]; then
+    if ! $PY - "$DOWN3D" <<'EOF'
+import sys
+try:
+    import astra
+except Exception as e:
+    sys.exit(f"ASTRA will not import: {type(e).__name__}: {e}")
+try:
+    usable = astra.astra.use_cuda()
+except Exception as e:
+    sys.exit(f"ASTRA cannot report CUDA status: {type(e).__name__}: {e}")
+if not usable:
+    sys.exit("ASTRA imports but reports no usable CUDA device.")
+
+# A GPU is not enough: every 3D stage loads the phantom as its first act, and
+# the volume arrives either as a committed downsample cache or as the 601 MB
+# .raw that is gitignored and so absent from a fresh checkout. Ask the repo
+# itself where it will look, so this check cannot drift from the real one.
+sys.path.insert(0, "src")
+try:
+    from victre3d import cache_path, phantom_files, phantom_id
+except Exception as e:
+    sys.exit(f"cannot import victre3d: {type(e).__name__}: {e}")
+d = int(sys.argv[1])
+cache, raw = cache_path(d), phantom_files()[1]
+if not cache.exists() and not raw.exists():
+    sys.exit(f"phantom {phantom_id()!r} is unavailable at down={d}: neither the "
+             f"cache ({cache}) nor the source raw ({raw}) exists.")
+EOF
+    then
+        cat >&2 <<'MSG'
+
+=== refusing to start ===
+The 3D stages cannot run in this interpreter, and they are staged last: a run
+started now would spend the whole 2D night before failing on every one of them.
+
+Pick one:
+  2D work only       STAGES="diag 2d analysis" bash scripts/pipeline.sh
+  another python     PY=/path/to/python bash scripts/pipeline.sh
+  build the cache    python src/victre3d.py --cache-only --down N   (needs the .raw)
+  go anyway          SKIP_GPU_CHECK=1 bash scripts/pipeline.sh
+
+MSG
+        exit 1
+    fi
+fi
 
 # --------------------------------------------------------------------------
 # Diagnostics. Cheap, and they gate the interpretation of everything else --
@@ -176,7 +245,7 @@ if has_stage 3d; then
     # so the budget here sets the ceiling, and anything shorter can still be
     # read off the stored trace afterwards.
     stage "3D VICTRE Poisson noise statistics (${REPS3D} realizations)" \
-        $PY src/noise3d.py --down 4 \
+        $PY src/noise3d.py --down "$DOWN3D" \
             --reps "$REPS3D" --itermax "$ITERMAX3D" \
             --eps-mode noise_per_band
 
@@ -185,7 +254,7 @@ if has_stage 3d; then
     # immediately after the s=4 statistics, while the night is still young
     # and before the stages that do not resume.
     stage "3D VICTRE Poisson noise, s=1 control (${REPS3D} realizations)" \
-        $PY src/noise3d.py --down 4 \
+        $PY src/noise3d.py --down "$DOWN3D" \
             --reps "$REPS3D" --itermax "$ITERMAX3D" --s 1 \
             --eps-mode noise_per_band
 
@@ -197,17 +266,17 @@ if has_stage 3d; then
     for slo in 1 4; do
         stage "3D VICTRE noiseless, s=$slo" \
             $PY src/noise3d.py --noiseless --s "$slo" \
-                --down 4 --itermax "$ITERMAX3D"
+                --down "$DOWN3D" --itermax "$ITERMAX3D"
     done
 
     # fig:dbt. Writes its slices to results/figures3d/ so the figure can be
     # restyled later on a machine with no GPU.
     stage "3D DBT reconstruction panel" \
-        $PY src/figures3d.py --down 4 --itermax "$ITERMAX3D" \
+        $PY src/figures3d.py --down "$DOWN3D" --itermax "$ITERMAX3D" \
             --eps-mode noise_per_band
 
     stage "3D VICTRE (500 iters)" \
-        $PY src/victre3d.py --down 4 --itermax 500
+        $PY src/victre3d.py --down "$DOWN3D" --itermax 500
 
 
     if [[ "$SKIP_SLOW" != "1" ]]; then
@@ -216,7 +285,7 @@ if has_stage 3d; then
         # from overwriting each other's figures and tables.
         for s in $SEEDS; do
             stage "3D VICTRE seed $s (stability check)" \
-                $PY src/victre3d.py --down 4 --itermax 300 \
+                $PY src/victre3d.py --down "$DOWN3D" --itermax 300 \
                     --seed "$s" --tag "seed$s"
         done
 
@@ -226,7 +295,7 @@ if has_stage 3d; then
         # three; 3D has only ever run s=4.
         for slo in 1 4 8; do
             stage "3D VICTRE sigma_lo scale s=$slo" \
-                $PY src/victre3d.py --down 4 --itermax 300 \
+                $PY src/victre3d.py --down "$DOWN3D" --itermax 300 \
                     --slo "$slo" --tag "s$slo"
         done
     fi
@@ -272,7 +341,11 @@ hdr "summary"
 printf '\ntotal wall-clock: %s s\n' "$(( $(date +%s) - START ))"
 if ((${#FAILED[@]})); then
     printf '\n\033[1;31m%s stage(s) FAILED:\033[0m\n' "${#FAILED[@]}"
-    printf '  - %s\n' "${FAILED[@]}"
+    for entry in "${FAILED[@]}"; do
+        printf '  - %s\n' "${entry%%|*}"
+        f="${entry#*|}"
+        [[ -s "$f" ]] && sed -e 's/^/      /' <(tail -n 6 "$f")
+    done
     echo
     echo "Re-running is cheap for the 2D stages: runstore returns completed"
     echo "runs instantly, so only the failed work recomputes."

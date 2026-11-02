@@ -288,11 +288,17 @@ def main():
         # realizations; neither means anything for a single exact solve.
         r = runs[0]
         sg, tw = r["ierrs_single"], r["ierrs_two"]
+        # The final iterate is always reported, not just the fixed
+        # checkpoints: a run shorter than the first checkpoint would otherwise
+        # print a header over an empty table and look like it had failed.
+        cps = [it for it in (10, 50, 100, 200, 500, 1000, 2000)
+               if it <= len(sg)]
+        if len(sg) not in cps:
+            cps.append(len(sg))
         print(f"\n  iter    single      s={args.s:g}    reduction")
-        for it in (10, 50, 100, 200, 500, 1000, 2000):
-            if it <= len(sg):
-                a, b = float(sg[it - 1]), float(tw[it - 1])
-                print(f"  {it:5d}  {a:.5f}  {b:.5f}   {100 * (a - b) / a:+.1f}%")
+        for it in cps:
+            a, b = float(sg[it - 1]), float(tw[it - 1])
+            print(f"  {it:5d}  {a:.5f}  {b:.5f}   {100 * (a - b) / a:+.1f}%")
         return
     write_table(runs, i0, args.itermax, args.down, args.eps_mode)
     fig_bands(runs, i0, args.eps_mode, args.itermax)

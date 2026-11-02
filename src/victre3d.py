@@ -76,7 +76,11 @@ CACHE = DATA / "victre_cache"
 def cache_path(d, pid=None):
     # The phantom id is part of the key: two phantoms downsampled the same way
     # are different volumes, and a cache that conflates them is a silent swap.
-    return CACHE / f"victre_{(pid or phantom_id()).lstrip('_')}_down{d}.npz"
+    # The id goes in verbatim, exactly as it appears in the .mhd/.raw basename,
+    # so the cache name can be read back off the phantom it came from. Mangling
+    # it here -- stripping or collapsing characters to make some older filename
+    # match -- is what turns a cache miss into an unreproducible rebuild.
+    return CACHE / f"victre_{pid or phantom_id()}_down{d}.npz"
 
 
 def load_phantom(d, use_cache=True):
